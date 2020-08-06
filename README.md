@@ -1,1 +1,1 @@
-# electus
+# eligere
