@@ -19,5 +19,7 @@ namespace EligereES.Models.Extensions
         }
 
         public string Role { get; set; }
+        public string CompanyId { get; set; }
+        public string Login { get; set; }
     }
 }

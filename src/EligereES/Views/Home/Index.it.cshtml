@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["Title"] = "Eligere";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Eligere</h1>
+
+    @if (false && this.User.IsInRole(EligereRoles.Admin))
+    {
+        <h4>Strumenti di amministrazione</h4>
+        <hr/>
+    }
+
+    @if (this.User.IsInRole(EligereRoles.ElectionOfficer))
+    {
+        <h4>Funzioni ufficio elettorale</h4>
+
+        <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="People" asp-action="Index">Gestione anagrafica</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Elections" asp-action="Index">Gestione elezioni</a></li>
+        </ul>
+        <hr/>
+    }
+
+    @if (this.User.IsInRole(EligereRoles.PollingStationStaff))
+    {
+        <h4>Funzioni per le commissioni di seggio</h4>
+        <hr/>
+    }
+
+    @if ((this.User.IsInRole(EligereRoles.Admin)) && this.User.IsInRole(EligereRoles.Voter))
+    {
+        <h2>Funzioni per l'elettore</h2>
+        <hr/>
+    }
+
+    @if (!this.User.Identity.IsAuthenticated)
+    {
+        <a class="nav-link text-dark" asp-area="AzureAD" asp-controller="Account" asp-action="SignIn">Accesso al sistema</a>
+    }
+</div>

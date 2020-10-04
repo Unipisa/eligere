@@ -60,7 +60,7 @@ namespace EligereES.Controllers
                     break;
             }
             int pageSize = 3;
-            return View(await PaginatedList<Person>.CreateAsync(people.AsNoTracking(), pageNumber ?? 1, pageSize));
+            return View(await PaginatedList<Models.DB.Person>.CreateAsync(people.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: People/Details/5
@@ -201,10 +201,11 @@ namespace EligereES.Controllers
                 {
                     var firstName = csv.GetField<string>(0);
                     var lastName = csv.GetField<string>(1);
-                    var publicId = csv.GetField<string>(2);
-                    var birthDate = csv.GetField<DateTime>(3);
+                    var companyId = csv.GetField<string>(2);
+                    var publicId = csv.GetField<string>(3);
                     var birthPlace = csv.GetField<string>(4);
-                    var role = csv.GetField<string>(5);
+                    var birthDate = csv.GetField<DateTime>(5);
+                    var role = csv.GetField<string>(6);
 
                     // For the moment is a weak check before insert
                     if (await _context.Person.CountAsync(p => p.PublicId == publicId) > 0)
@@ -222,7 +223,7 @@ namespace EligereES.Controllers
                             PublicId = publicId, 
                             BirthDate = birthDate, 
                             BirthPlace = birthPlace, 
-                            Attributes = (new PersonAttributes() { Role = role }).ToJson()
+                            Attributes = (new PersonAttributes() { Role = role, CompanyId = companyId }).ToJson()
                         };
                         _context.Person.Add(toadd);
                         result.Add((toadd, null, null));

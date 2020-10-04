@@ -1,0 +1,54 @@
+﻿@model IEnumerable<(EligereES.Models.DB.Person person, (string firstName, string lastName, string publicId, DateTime birthDate, string birthPlace, string role)? data, string reason)>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Result
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.person.FirstName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.person.LastName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.person.PublicId)
+            </th>
+            <th>
+                Notes
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @if (item.reason == null)
+                {
+                    <img width="32" src="/img/ok.png" />
+                }
+                else
+                {
+                    <img width="32" src="/img/warn.png" />
+                }
+                    </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.person.FirstName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.person.LastName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.person.PublicId)
+            </td>
+            <td>
+                @if (item.reason != null)
+                {
+                    @item.reason
+                }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

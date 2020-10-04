@@ -1,7 +1,7 @@
-﻿@model IEnumerable<EligereES.Models.Election>
+﻿@model IEnumerable<EligereES.Models.DB.Election>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Elections";
 }
 
 <h1>Index</h1>
@@ -19,9 +19,6 @@
                 @Html.DisplayNameFor(model => model.Description)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Configuration)
-            </th>
-            <th>
                 @Html.DisplayNameFor(model => model.PollStartDate)
             </th>
             <th>
@@ -31,22 +28,26 @@
                 @Html.DisplayNameFor(model => model.ElectorateListClosingDate)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.ElectionTypeFkNavigation)
+                Polling station commissions
+            </th>
+            <th>
+                Electorate
+            </th>
+            <th>
+                Candidates
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
 @foreach (var item in Model) {
+
         <tr>
             <td>
                 @Html.DisplayFor(modelItem => item.Name)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Configuration)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.PollStartDate)
@@ -58,7 +59,19 @@
                 @Html.DisplayFor(modelItem => item.ElectorateListClosingDate)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.ElectionTypeFkNavigation.DefaultConfiguration)
+                <a asp-action="EditPollingStations" asp-route-id="@item.Id">
+                    @Html.DisplayFor(modelItem => item.PollingStationCommission.Count)
+                </a>
+            </td>
+            <td>
+                <a asp-action="Voters" asp-route-id="@item.Id">
+                    @Html.DisplayFor(modelItem => item.Voter.Count) <!-- This can be improved for performance -->
+                </a>
+            </td>
+            <td>
+                <a asp-action="Candidates" asp-route-id="@item.Id">
+                    @Html.DisplayFor(modelItem => item.EligibleCandidate.Count) <!-- This can be improved for performance -->
+                </a>
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |

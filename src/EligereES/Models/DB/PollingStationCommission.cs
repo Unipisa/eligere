@@ -7,7 +7,8 @@ namespace EligereES.Models.DB
     {
         public PollingStationCommission()
         {
-            RelPollingStationPollingStationCommission = new HashSet<RelPollingStationPollingStationCommission>();
+            PollingStationCommissioner = new HashSet<PollingStationCommissioner>();
+            RelPollingStationSystemPollingStationCommission = new HashSet<RelPollingStationSystemPollingStationCommission>();
         }
 
         public Guid Id { get; set; }
@@ -15,8 +16,11 @@ namespace EligereES.Models.DB
         public string Location { get; set; }
         public string DigitalLocation { get; set; }
         public string Description { get; set; }
+        public Guid? PresidentFk { get; set; }
 
         public virtual Election ElectionFkNavigation { get; set; }
-        public virtual ICollection<RelPollingStationPollingStationCommission> RelPollingStationPollingStationCommission { get; set; }
+        public virtual PollingStationCommissioner PresidentFkNavigation { get; set; }
+        public virtual ICollection<PollingStationCommissioner> PollingStationCommissioner { get; set; }
+        public virtual ICollection<RelPollingStationSystemPollingStationCommission> RelPollingStationSystemPollingStationCommission { get; set; }
     }
 }

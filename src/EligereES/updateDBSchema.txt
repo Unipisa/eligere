@@ -1,6 +1,5 @@
 To update run the following (-f to update)
 
- dotnet ef dbcontext scaffold 'Data Source=(LocalDB)\MSSQLLocalDB;Database="ESDB";Integrated Security=True' Microsoft.EntityFrameworkCore.SqlServer
- -c ESDB -o Models\DB -f
+ dotnet ef dbcontext scaffold 'Data Source=(LocalDB)\MSSQLLocalDB;Database="ESDB";Integrated Security=True' Microsoft.EntityFrameworkCore.SqlServer -c ESDB -o Models\DB -f
 
 Note that you should have the LocalDB mounted as ESDB (you can do so by opening SQL Studio, connect (localdb)\MSSQLLocalDB and rename the mounted file.
