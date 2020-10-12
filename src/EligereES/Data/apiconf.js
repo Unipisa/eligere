@@ -1,0 +1,1 @@
+{"VotingSystemTicketAPI":"https://localhost:44392/Vote/ElectionCard"}

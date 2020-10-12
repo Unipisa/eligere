@@ -1,0 +1,9 @@
+﻿@model List<string>
+
+    <ul>
+        @for (var i = 0; i < Model.Count; i++)
+        {
+            <li><a href="@Model[i]">Guardian @i key</a></li>
+        }
+    </ul>
+<a class="btn btn-primary" asp-controller="Home" asp-action="ClearKeys">Done</a>

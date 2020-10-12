@@ -1,0 +1,260 @@
+2020/10/11-08:28:59.870613 3ddc RocksDB version: 6.2.2
+2020/10/11-08:28:59.872038 3ddc Git sha rocksdb_build_git_sha:@6d113fc066c5816887eb19c84d12c0677a68af2b@
+2020/10/11-08:28:59.872086 3ddc Compile date Aug 20 2019
+2020/10/11-08:28:59.872122 3ddc DB SUMMARY
+2020/10/11-08:28:59.873613 3ddc CURRENT file:  CURRENT
+2020/10/11-08:28:59.873667 3ddc IDENTITY file:  IDENTITY
+2020/10/11-08:28:59.873802 3ddc MANIFEST file:  MANIFEST-000128 size: 227 Bytes
+2020/10/11-08:28:59.873837 3ddc SST files in C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration dir, Total Num: 3, files: 000049.sst 000055.sst 000076.sst 
+2020/10/11-08:28:59.873872 3ddc Write Ahead Log file in C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration: 000129.log size: 0 ; 
+2020/10/11-08:28:59.873905 3ddc                         Options.error_if_exists: 0
+2020/10/11-08:28:59.873929 3ddc                       Options.create_if_missing: 1
+2020/10/11-08:28:59.873951 3ddc                         Options.paranoid_checks: 1
+2020/10/11-08:28:59.873972 3ddc                                     Options.env: 0000024020DE7500
+2020/10/11-08:28:59.873996 3ddc                                Options.info_log: 00000244AD02BCC0
+2020/10/11-08:28:59.874018 3ddc                Options.max_file_opening_threads: 16
+2020/10/11-08:28:59.874041 3ddc                              Options.statistics: 0000000000000000
+2020/10/11-08:28:59.874064 3ddc                               Options.use_fsync: 0
+2020/10/11-08:28:59.874095 3ddc                       Options.max_log_file_size: 0
+2020/10/11-08:28:59.874124 3ddc                  Options.max_manifest_file_size: 1073741824
+2020/10/11-08:28:59.874158 3ddc                   Options.log_file_time_to_roll: 0
+2020/10/11-08:28:59.874191 3ddc                       Options.keep_log_file_num: 1000
+2020/10/11-08:28:59.874216 3ddc                    Options.recycle_log_file_num: 0
+2020/10/11-08:28:59.874239 3ddc                         Options.allow_fallocate: 1
+2020/10/11-08:28:59.874263 3ddc                        Options.allow_mmap_reads: 0
+2020/10/11-08:28:59.874296 3ddc                       Options.allow_mmap_writes: 0
+2020/10/11-08:28:59.874324 3ddc                        Options.use_direct_reads: 0
+2020/10/11-08:28:59.874350 3ddc                        Options.use_direct_io_for_flush_and_compaction: 0
+2020/10/11-08:28:59.874378 3ddc          Options.create_missing_column_families: 0
+2020/10/11-08:28:59.874412 3ddc                              Options.db_log_dir: 
+2020/10/11-08:28:59.874446 3ddc                                 Options.wal_dir: C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration
+2020/10/11-08:28:59.874473 3ddc                Options.table_cache_numshardbits: 6
+2020/10/11-08:28:59.874501 3ddc                      Options.max_subcompactions: 1
+2020/10/11-08:28:59.874529 3ddc                  Options.max_background_flushes: -1
+2020/10/11-08:28:59.874555 3ddc                         Options.WAL_ttl_seconds: 0
+2020/10/11-08:28:59.874586 3ddc                       Options.WAL_size_limit_MB: 0
+2020/10/11-08:28:59.874617 3ddc             Options.manifest_preallocation_size: 4194304
+2020/10/11-08:28:59.874649 3ddc                     Options.is_fd_close_on_exec: 1
+2020/10/11-08:28:59.874691 3ddc                   Options.advise_random_on_open: 1
+2020/10/11-08:28:59.874720 3ddc                    Options.db_write_buffer_size: 0
+2020/10/11-08:28:59.874746 3ddc                    Options.write_buffer_manager: 000002401FDD0870
+2020/10/11-08:28:59.874770 3ddc         Options.access_hint_on_compaction_start: 1
+2020/10/11-08:28:59.874796 3ddc  Options.new_table_reader_for_compaction_inputs: 0
+2020/10/11-08:28:59.875069 3ddc           Options.random_access_max_buffer_size: 1048576
+2020/10/11-08:28:59.875095 3ddc                      Options.use_adaptive_mutex: 0
+2020/10/11-08:28:59.875108 3ddc                            Options.rate_limiter: 0000000000000000
+2020/10/11-08:28:59.875121 3ddc     Options.sst_file_manager.rate_bytes_per_sec: 0
+2020/10/11-08:28:59.875181 3ddc                       Options.wal_recovery_mode: 2
+2020/10/11-08:28:59.875201 3ddc                  Options.enable_thread_tracking: 0
+2020/10/11-08:28:59.875218 3ddc                  Options.enable_pipelined_write: 0
+2020/10/11-08:28:59.875232 3ddc         Options.allow_concurrent_memtable_write: 1
+2020/10/11-08:28:59.875245 3ddc      Options.enable_write_thread_adaptive_yield: 1
+2020/10/11-08:28:59.875258 3ddc             Options.write_thread_max_yield_usec: 100
+2020/10/11-08:28:59.875270 3ddc            Options.write_thread_slow_yield_usec: 3
+2020/10/11-08:28:59.875283 3ddc                               Options.row_cache: None
+2020/10/11-08:28:59.875295 3ddc                              Options.wal_filter: None
+2020/10/11-08:28:59.875308 3ddc             Options.avoid_flush_during_recovery: 0
+2020/10/11-08:28:59.875321 3ddc             Options.allow_ingest_behind: 0
+2020/10/11-08:28:59.875329 3ddc             Options.preserve_deletes: 0
+2020/10/11-08:28:59.875336 3ddc             Options.two_write_queues: 0
+2020/10/11-08:28:59.875344 3ddc             Options.manual_wal_flush: 0
+2020/10/11-08:28:59.875352 3ddc             Options.atomic_flush: 0
+2020/10/11-08:28:59.875363 3ddc             Options.avoid_unnecessary_blocking_io: 0
+2020/10/11-08:28:59.875373 3ddc             Options.max_background_jobs: 2
+2020/10/11-08:28:59.875383 3ddc             Options.max_background_compactions: -1
+2020/10/11-08:28:59.875407 3ddc             Options.avoid_flush_during_shutdown: 0
+2020/10/11-08:28:59.875426 3ddc           Options.writable_file_max_buffer_size: 1048576
+2020/10/11-08:28:59.875440 3ddc             Options.delayed_write_rate : 16777216
+2020/10/11-08:28:59.875452 3ddc             Options.max_total_wal_size: 0
+2020/10/11-08:28:59.875465 3ddc             Options.delete_obsolete_files_period_micros: 21600000000
+2020/10/11-08:28:59.875477 3ddc                   Options.stats_dump_period_sec: 600
+2020/10/11-08:28:59.875489 3ddc                 Options.stats_persist_period_sec: 600
+2020/10/11-08:28:59.875502 3ddc                 Options.stats_history_buffer_size: 1048576
+2020/10/11-08:28:59.875514 3ddc                          Options.max_open_files: -1
+2020/10/11-08:28:59.875527 3ddc                          Options.bytes_per_sync: 0
+2020/10/11-08:28:59.875539 3ddc                      Options.wal_bytes_per_sync: 0
+2020/10/11-08:28:59.875551 3ddc                   Options.strict_bytes_per_sync: 0
+2020/10/11-08:28:59.875564 3ddc       Options.compaction_readahead_size: 0
+2020/10/11-08:28:59.875576 3ddc Compression algorithms supported:
+2020/10/11-08:28:59.876060 3ddc 	kZSTD supported: 1
+2020/10/11-08:28:59.876186 3ddc 	kSnappyCompression supported: 1
+2020/10/11-08:28:59.876206 3ddc 	kBZip2Compression supported: 0
+2020/10/11-08:28:59.876221 3ddc 	kZlibCompression supported: 1
+2020/10/11-08:28:59.876247 3ddc 	kLZ4Compression supported: 1
+2020/10/11-08:28:59.876258 3ddc 	kXpressCompression supported: 0
+2020/10/11-08:28:59.876269 3ddc 	kLZ4HCCompression supported: 1
+2020/10/11-08:28:59.876279 3ddc 	kZSTDNotFinalCompression supported: 1
+2020/10/11-08:28:59.876304 3ddc Fast CRC32 supported: Supported on x86
+2020/10/11-08:28:59.882077 3ddc [db\version_set.cc:4053] Recovering from manifest file: C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration/MANIFEST-000128
+2020/10/11-08:28:59.884207 3ddc [db\column_family.cc:482] --------------- Options for column family [default]:
+2020/10/11-08:28:59.884230 3ddc               Options.comparator: leveldb.BytewiseComparator
+2020/10/11-08:28:59.884239 3ddc           Options.merge_operator: None
+2020/10/11-08:28:59.884247 3ddc        Options.compaction_filter: None
+2020/10/11-08:28:59.884254 3ddc        Options.compaction_filter_factory: None
+2020/10/11-08:28:59.884261 3ddc         Options.memtable_factory: SkipListFactory
+2020/10/11-08:28:59.884269 3ddc            Options.table_factory: BlockBasedTable
+2020/10/11-08:28:59.884662 3ddc            table_factory options:   flush_block_policy_factory: FlushBlockBySizePolicyFactory (00000244ACDD2C80)
+  cache_index_and_filter_blocks: 0
+  cache_index_and_filter_blocks_with_high_priority: 0
+  pin_l0_filter_and_index_blocks_in_cache: 0
+  pin_top_level_index_and_filter: 1
+  index_type: 0
+  data_block_index_type: 0
+  index_shortening: 1
+  data_block_hash_table_util_ratio: 0.750000
+  hash_index_allow_collision: 1
+  checksum: 1
+  no_block_cache: 0
+  block_cache: 00000244ACE2E090
+  block_cache_name: LRUCache
+  block_cache_options:
+    capacity : 8388608
+    num_shard_bits : 4
+    strict_capacity_limit : 0
+    memory_allocator : None
+    high_pri_pool_ratio: 0.000
+  block_cache_compressed: 0000000000000000
+  persistent_cache: 0000000000000000
+  block_size: 4096
+  block_size_deviation: 10
+  block_restart_interval: 16
+  index_block_restart_interval: 1
+  metadata_block_size: 4096
+  partition_filters: 0
+  use_delta_encoding: 1
+  filter_policy: nullptr
+  whole_key_filtering: 1
+  verify_compression: 0
+  read_amp_bytes_per_bit: 0
+  format_version: 2
+  enable_index_compression: 1
+  block_align: 0
+2020/10/11-08:28:59.884719 3ddc        Options.write_buffer_size: 67108864
+2020/10/11-08:28:59.884731 3ddc  Options.max_write_buffer_number: 2
+2020/10/11-08:28:59.884740 3ddc          Options.compression: Snappy
+2020/10/11-08:28:59.884750 3ddc                  Options.bottommost_compression: Disabled
+2020/10/11-08:28:59.884762 3ddc       Options.prefix_extractor: nullptr
+2020/10/11-08:28:59.884772 3ddc   Options.memtable_insert_with_hint_prefix_extractor: nullptr
+2020/10/11-08:28:59.884781 3ddc             Options.num_levels: 7
+2020/10/11-08:28:59.884797 3ddc        Options.min_write_buffer_number_to_merge: 1
+2020/10/11-08:28:59.884811 3ddc     Options.max_write_buffer_number_to_maintain: 0
+2020/10/11-08:28:59.884823 3ddc            Options.bottommost_compression_opts.window_bits: -14
+2020/10/11-08:28:59.884834 3ddc                  Options.bottommost_compression_opts.level: 32767
+2020/10/11-08:28:59.884846 3ddc               Options.bottommost_compression_opts.strategy: 0
+2020/10/11-08:28:59.884858 3ddc         Options.bottommost_compression_opts.max_dict_bytes: 0
+2020/10/11-08:28:59.884877 3ddc         Options.bottommost_compression_opts.zstd_max_train_bytes: 0
+2020/10/11-08:28:59.884892 3ddc                  Options.bottommost_compression_opts.enabled: false
+2020/10/11-08:28:59.884908 3ddc            Options.compression_opts.window_bits: -14
+2020/10/11-08:28:59.884921 3ddc                  Options.compression_opts.level: 32767
+2020/10/11-08:28:59.884928 3ddc               Options.compression_opts.strategy: 0
+2020/10/11-08:28:59.884935 3ddc         Options.compression_opts.max_dict_bytes: 0
+2020/10/11-08:28:59.884943 3ddc         Options.compression_opts.zstd_max_train_bytes: 0
+2020/10/11-08:28:59.884950 3ddc                  Options.compression_opts.enabled: false
+2020/10/11-08:28:59.884957 3ddc      Options.level0_file_num_compaction_trigger: 4
+2020/10/11-08:28:59.884964 3ddc          Options.level0_slowdown_writes_trigger: 20
+2020/10/11-08:28:59.884972 3ddc              Options.level0_stop_writes_trigger: 36
+2020/10/11-08:28:59.884979 3ddc                   Options.target_file_size_base: 67108864
+2020/10/11-08:28:59.884986 3ddc             Options.target_file_size_multiplier: 1
+2020/10/11-08:28:59.884993 3ddc                Options.max_bytes_for_level_base: 268435456
+2020/10/11-08:28:59.885005 3ddc                      Options.snap_refresh_nanos: 500000000
+2020/10/11-08:28:59.885013 3ddc Options.level_compaction_dynamic_level_bytes: 0
+2020/10/11-08:28:59.885020 3ddc          Options.max_bytes_for_level_multiplier: 10.000000
+2020/10/11-08:28:59.885038 3ddc Options.max_bytes_for_level_multiplier_addtl[0]: 1
+2020/10/11-08:28:59.885046 3ddc Options.max_bytes_for_level_multiplier_addtl[1]: 1
+2020/10/11-08:28:59.885054 3ddc Options.max_bytes_for_level_multiplier_addtl[2]: 1
+2020/10/11-08:28:59.885061 3ddc Options.max_bytes_for_level_multiplier_addtl[3]: 1
+2020/10/11-08:28:59.885068 3ddc Options.max_bytes_for_level_multiplier_addtl[4]: 1
+2020/10/11-08:28:59.885075 3ddc Options.max_bytes_for_level_multiplier_addtl[5]: 1
+2020/10/11-08:28:59.885085 3ddc Options.max_bytes_for_level_multiplier_addtl[6]: 1
+2020/10/11-08:28:59.885094 3ddc       Options.max_sequential_skip_in_iterations: 8
+2020/10/11-08:28:59.885102 3ddc                    Options.max_compaction_bytes: 1677721600
+2020/10/11-08:28:59.885109 3ddc                        Options.arena_block_size: 8388608
+2020/10/11-08:28:59.885117 3ddc   Options.soft_pending_compaction_bytes_limit: 68719476736
+2020/10/11-08:28:59.885124 3ddc   Options.hard_pending_compaction_bytes_limit: 274877906944
+2020/10/11-08:28:59.885131 3ddc       Options.rate_limit_delay_max_milliseconds: 100
+2020/10/11-08:28:59.885139 3ddc                Options.disable_auto_compactions: 0
+2020/10/11-08:28:59.885147 3ddc                        Options.compaction_style: kCompactionStyleLevel
+2020/10/11-08:28:59.885156 3ddc                          Options.compaction_pri: kMinOverlappingRatio
+2020/10/11-08:28:59.885163 3ddc Options.compaction_options_universal.size_ratio: 1
+2020/10/11-08:28:59.885170 3ddc Options.compaction_options_universal.min_merge_width: 2
+2020/10/11-08:28:59.885178 3ddc Options.compaction_options_universal.max_merge_width: 4294967295
+2020/10/11-08:28:59.885185 3ddc Options.compaction_options_universal.max_size_amplification_percent: 200
+2020/10/11-08:28:59.885193 3ddc Options.compaction_options_universal.compression_size_percent: -1
+2020/10/11-08:28:59.885201 3ddc Options.compaction_options_universal.stop_style: kCompactionStopStyleTotalSize
+2020/10/11-08:28:59.885208 3ddc Options.compaction_options_fifo.max_table_files_size: 1073741824
+2020/10/11-08:28:59.885216 3ddc Options.compaction_options_fifo.allow_compaction: 0
+2020/10/11-08:28:59.885223 3ddc                   Options.table_properties_collectors: 
+2020/10/11-08:28:59.885230 3ddc                   Options.inplace_update_support: 0
+2020/10/11-08:28:59.885239 3ddc                 Options.inplace_update_num_locks: 10000
+2020/10/11-08:28:59.885250 3ddc               Options.memtable_prefix_bloom_size_ratio: 0.000000
+2020/10/11-08:28:59.885262 3ddc               Options.memtable_whole_key_filtering: 0
+2020/10/11-08:28:59.885273 3ddc   Options.memtable_huge_page_size: 0
+2020/10/11-08:28:59.885281 3ddc                           Options.bloom_locality: 0
+2020/10/11-08:28:59.885288 3ddc                    Options.max_successive_merges: 0
+2020/10/11-08:28:59.885295 3ddc                Options.optimize_filters_for_hits: 0
+2020/10/11-08:28:59.885302 3ddc                Options.paranoid_file_checks: 0
+2020/10/11-08:28:59.885309 3ddc                Options.force_consistency_checks: 0
+2020/10/11-08:28:59.885317 3ddc                Options.report_bg_io_stats: 0
+2020/10/11-08:28:59.885324 3ddc                               Options.ttl: 0
+2020/10/11-08:28:59.885331 3ddc          Options.periodic_compaction_seconds: 0
+2020/10/11-08:28:59.892069 3ddc [db\version_set.cc:4267] Recovered from manifest file:C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration/MANIFEST-000128 succeeded,manifest_file_number is 128, next_file_number is 130, last_sequence is 4, log_number is 127,prev_log_number is 0,max_column_family is 0,min_log_number_to_keep is 0
+2020/10/11-08:28:59.892111 3ddc [db\version_set.cc:4276] Column family [default] (ID 0), log number is 127
+2020/10/11-08:28:59.894093 3ddc EVENT_LOG_v1 {"time_micros": 1602397739894042, "job": 1, "event": "recovery_started", "log_files": [129]}
+2020/10/11-08:28:59.894129 3ddc [db\db_impl_open.cc:597] Recovering log #129 mode 2
+2020/10/11-08:28:59.894497 3ddc [db\version_set.cc:3546] Creating manifest 131
+2020/10/11-08:28:59.917736 3ddc EVENT_LOG_v1 {"time_micros": 1602397739917720, "job": 1, "event": "recovery_finished"}
+2020/10/11-08:28:59.934726 3ddc DB pointer 00000244ACFBA3D0
+2020/10/11-08:28:59.937083 506c [db\db_impl.cc:779] ------- DUMPING STATS -------
+2020/10/11-08:28:59.937123 506c [db\db_impl.cc:780] 
+** DB Stats **
+Uptime(secs): 0.1 total, 0.1 interval
+Cumulative writes: 0 writes, 0 keys, 0 commit groups, 0.0 writes per commit group, ingest: 0.00 GB, 0.00 MB/s
+Cumulative WAL: 0 writes, 0 syncs, 0.00 writes per sync, written: 0.00 GB, 0.00 MB/s
+Cumulative stall: 00:00:0.000 H:M:S, 0.0 percent
+Interval writes: 0 writes, 0 keys, 0 commit groups, 0.0 writes per commit group, ingest: 0.00 MB, 0.00 MB/s
+Interval WAL: 0 writes, 0 syncs, 0.00 writes per sync, written: 0.00 MB, 0.00 MB/s
+Interval stall: 00:00:0.000 H:M:S, 0.0 percent
+
+** Compaction Stats [default] **
+Level    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  L0      3/0    2.48 KB   0.8      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0
+ Sum      3/0    2.48 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0
+ Int      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0
+
+** Compaction Stats [default] **
+Priority    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Uptime(secs): 0.1 total, 0.1 interval
+Flush(GB): cumulative 0.000, interval 0.000
+AddFile(GB): cumulative 0.000, interval 0.000
+AddFile(Total Files): cumulative 0, interval 0
+AddFile(L0 Files): cumulative 0, interval 0
+AddFile(Keys): cumulative 0, interval 0
+Cumulative compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Interval compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Stalls(count): 0 level0_slowdown, 0 level0_slowdown_with_compaction, 0 level0_numfiles, 0 level0_numfiles_with_compaction, 0 stop for pending_compaction_bytes, 0 slowdown for pending_compaction_bytes, 0 memtable_compaction, 0 memtable_slowdown, interval 0 total count
+
+** File Read Latency Histogram By Level [default] **
+
+** Compaction Stats [default] **
+Level    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  L0      3/0    2.48 KB   0.8      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0
+ Sum      3/0    2.48 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0
+ Int      0/0    0.00 KB   0.0      0.0     0.0      0.0       0.0      0.0       0.0   0.0      0.0      0.0      0.00              0.00         0    0.000       0      0
+
+** Compaction Stats [default] **
+Priority    Files   Size     Score Read(GB)  Rn(GB) Rnp1(GB) Write(GB) Wnew(GB) Moved(GB) W-Amp Rd(MB/s) Wr(MB/s) Comp(sec) CompMergeCPU(sec) Comp(cnt) Avg(sec) KeyIn KeyDrop
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Uptime(secs): 0.1 total, 0.0 interval
+Flush(GB): cumulative 0.000, interval 0.000
+AddFile(GB): cumulative 0.000, interval 0.000
+AddFile(Total Files): cumulative 0, interval 0
+AddFile(L0 Files): cumulative 0, interval 0
+AddFile(Keys): cumulative 0, interval 0
+Cumulative compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Interval compaction: 0.00 GB write, 0.00 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.0 seconds
+Stalls(count): 0 level0_slowdown, 0 level0_slowdown_with_compaction, 0 level0_numfiles, 0 level0_numfiles_with_compaction, 0 stop for pending_compaction_bytes, 0 slowdown for pending_compaction_bytes, 0 memtable_compaction, 0 memtable_slowdown, interval 0 total count
+
+** File Read Latency Histogram By Level [default] **

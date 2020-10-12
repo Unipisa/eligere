@@ -17,6 +17,7 @@ namespace EligereES.Models.DB
         public string DigitalLocation { get; set; }
         public string Description { get; set; }
         public Guid? PresidentFk { get; set; }
+        public Guid? PollingStationGroupId { get; set; }
 
         public virtual Election ElectionFkNavigation { get; set; }
         public virtual PollingStationCommissioner PresidentFkNavigation { get; set; }

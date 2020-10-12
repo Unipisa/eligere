@@ -1,0 +1,202 @@
+﻿@using System.Text.Json
+@model (string, VoteInformation)
+
+@{
+    ViewData["Title"] = "Scheda elettorale";
+    var (tickets, info) = Model;
+}
+
+<div class="modal" id="voteResult">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vote result</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <span id="voteMessage"></span>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="askVoteDialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Inserire voto nell'urna sicura</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="askVoteText">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="castVote()">Inserire il voto</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center offset-2 col-8">
+    <h3 class="display-4" style="font-size: 1.4rem;"><i>scheda elettorale</i><br /><span id="electionName"></span></h3>
+    <div class="container">
+        <form id="voteData">
+            <div class="form-group text-left offset-2 col-8">
+                <input type="hidden" name="tickets" value="@tickets" />
+                <input type="hidden" name="election" id="election" />
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="schedaBianca" name="ballotType" value="emptyBallot" class="custom-control-input">
+                    <label class="custom-control-label" for="schedaBianca">Scheda bianca</label>
+                </div>
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="schedaNulla" name="ballotType" value="spoiledBallot" class="custom-control-input">
+                    <label class="custom-control-label" for="schedaNulla">Scheda nulla</label>
+                </div>
+                <div class="custom-control custom-radio">
+                    <input type="radio" id="vote" name="ballotType" value="castedBallot" class="custom-control-input">
+                    <label class="custom-control-label" for="vote">Preferenza</label>
+                    <input type="text" class="form-control" placeholder="Candidato" name="candidate" id="candidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear()" onkeyup="completeCandidate(this.value, 'completionlist', 'candidate', null)">
+                    <div id="completionlist" class="position-relative"></div>
+                </div>
+
+            </div>
+        </form>
+        <hr />
+        <button type="button" class="btn btn-primary" onclick="askVote()">Vota</button>
+    </div>
+</div>
+<script type="text/javascript">
+    var cardData = @{ WriteLiteral(JsonSerializer.Serialize<VoteInformation>(info)); };
+
+    function findElection(id) {
+        for (var i = 0; i < cardData.ElectionDescription.length; i++)
+            if (cardData.ElectionDescription[i].ElectionId == id)
+                return cardData.ElectionDescription[i];
+        return null;
+    }
+
+    window.addEventListener('load', () => {
+        if (cardData.UsedTickets.length > 0) {
+            for (var i = 0; i < cardData.UsedTickets.length; i++) {
+                var t = cardData.UsedTickets[i];
+                alert('Il voto per "' + t.ElectionName + '" è già stato inserito nell\'urna');
+            }
+        }
+
+        $('#candidate').hide();
+        $('#schedaBianca').change(radioVoteChanged)
+        $('#schedaNulla').change(radioVoteChanged)
+        $('#vote').change(radioVoteChanged)
+        UseTicket();
+    });
+
+    function enableAndClear() {
+        $('#candidate').val('');
+    }
+
+    function radioVoteChanged() {
+        if ($('#vote').is(':checked')) {
+            $('#candidate').show();
+        } else {
+            $('#candidate').hide();
+            $('#candidate').val('');
+        }
+    }
+
+    function UseTicket() {
+        if (cardData.AvailableTickets.length == 0) {
+            document.location = '@(Url.Content("~"))/Vote/VoteConclusion';
+            return;
+        }
+        var ticket = cardData.AvailableTickets[0];
+        var election = findElection(ticket.ElectionId);
+        $('#electionName').html(election.ElectionName);
+        $('#schedaBianca').prop('checked', false);
+        $('#schedaNulla').prop('checked', false);
+        $('#vote').prop('checked', false);
+        $('#election').val(ticket.ElectionId);
+        $('#candidate').val('');
+        $('#candidate').hide();
+    }
+
+    var completionid = null;
+    function selectPerson(tgt, ptxt, phid, id, dn) {
+        $('#' + tgt).html('');
+        $('#' + ptxt).val(dn);
+        if (phid) $('#' + phid).val(id);
+    }
+
+    function stuffQuote(s) {
+        return s.replace('\'', '\\\'');
+    }
+
+    function completeCandidate(val, tgt, ptxt, phid) {
+        if (completionid) clearTimeout(completionid);
+        completionid = setTimeout(() => {
+            completionid = null;
+            var election = findElection($('#election').val())
+            var v = election.Candidates.filter(c => c.FullName.toUpperCase().indexOf(val.toUpperCase()) > -1);
+            $('#' + tgt).html('');
+            if (val.length == 0) return;
+            var content = '<table class="table table-hover"><tbody>';
+            for (i = 0; i < Math.min(v.length, 5); i++) {
+                var qphid = phid ? "'" + phid + "'" : "null";
+                var completion = v[i].FullName;
+                content += '<tr><td style="cursor: default" onclick="selectPerson(\'' + tgt + '\', \'' + ptxt + '\', ' + qphid + ', \'' + v[i].id + '\', \'' + stuffQuote(completion) + '\')">' + v[i].FullName + '</td></tr>';
+            }
+            content += '</tbody></table>';
+            if (v.length > 0)
+                $('#' + tgt).html(content);
+        }, 700);
+    }
+
+    function askVote() {
+        var election = findElection($('#election').val())
+        // Check candidato valido
+        var txt = 'Elezione: <em>' + election.ElectionName + '</em><br/>';
+        if ($('#schedaBianca').is(':checked')) {
+            txt += '<b>Scheda bianca</b>';
+        } else if ($('#schedaNulla').is(':checked')) {
+            txt += '<b>Scheda annullata</b>';
+        } else if ($('#vote').is(':checked')) {
+            txt += $('#candidate').val();
+        } else {
+            alert('Non si è effettuata alcuna selezione nella scheda!');
+            return;
+        }
+
+        $('#askVoteText').html(txt);
+        $('#askVoteDialog').modal('show');
+    }
+    function castVote() {
+        $.ajax({
+            type: 'post',
+            url: '@(Url.Content("~"))/Vote/CastBallot',
+            data: $('#voteData').serialize()
+        }).done((v) => {
+            $('#askVoteDialog').modal('hide');
+            if (v.status == 200) {
+                $('#voteMessage').html('Voto immesso nell\'urna')
+                $('#voteResult').modal('show');
+                var ticket = cardData.AvailableTickets.shift();
+                cardData.UsedTickets.push(ticket);
+                UseTicket();
+            }
+            else {
+                $('#voteMessage').html(v.message)
+                $('#voteResult').modal('show');
+            }
+        }).fail((v) => {
+            $('#voteMessage').html('Errore nell\'inserimento del voto nell\'urna')
+            $('#voteResult').modal('show');
+        });
+    }
+
+</script>

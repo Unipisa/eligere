@@ -2,6 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>a646c8b2-07ed-45c7-a09a-486b0e32165c</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RocksDbNative" Version="6.2.2" />
+    <PackageReference Include="RocksDbSharp" Version="6.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="..\..\..\..\Dev%2540Unipi\eligere\src\EligereVS\wwwroot\Data\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ElectionGuardWebAPIClient\ElectionGuardWebAPIClient.csproj" />
+  </ItemGroup>
 
 </Project>

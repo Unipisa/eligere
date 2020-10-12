@@ -1,0 +1,95 @@
+﻿@using EligereES.Models.DB
+@model (Person, Dictionary<Guid, Election>, int, Dictionary<PollingStationCommission, List<PollingStationCommissioner>>)
+
+@{
+    var (p, e, ae, l) = Model;
+}
+
+<script type="text/javascript">
+    function GoRecognize() {
+        document.location = '@(Url.Content("~"))/PSCommission/Recognize/' + $('#cfvoter').val();
+    }
+
+    var completionid = null;
+    function selectPerson(tgt, ptxt, phid, id, dn) {
+        $('#' + tgt).html('');
+        $('#' + ptxt).val(dn);
+        if (phid) $('#' + phid).val(id);
+    }
+    function completeVoter(val, tgt, ptxt, phid) {
+        if (completionid) clearTimeout(completionid);
+        //if (val == '')
+        var timeid = setTimeout(() => {
+            completionid = null;
+            $.ajax({
+                url: '@(Url.Content("~"))/api/v1.0/People/?search=' + encodeURIComponent(val),
+                method: 'GET'
+            }).done((v) => {
+                $('#' + tgt).html('');
+                var content = '<table class="table table-hover"><tbody>';
+                for (i = 0; i < Math.min(v.length, 5); i++) {
+                    var qphid = phid ? "'" + phid + "'" : "null";
+                    var completion = v[i].publicId;
+                    content += '<tr><td style="cursor: default" onclick="selectPerson(\'' + tgt + '\', \'' + ptxt + '\', ' + qphid + ', \'' + v[i].id + '\', \'' + completion + '\')">' + v[i].firstName + ' ' + v[i].lastName + ' (' + v[i].publicId + ')</td></tr>';
+                }
+                content += '</tbody></table>';
+                if (v.length > 0)
+                  $('#' + tgt).html(content);
+            })
+        }, 700);
+    }
+</script>
+<div class="text-right">
+    @p.FirstName @p.LastName
+</div>
+<div class="text-center" style="margin-bottom: 60px;">
+    <h1 class="display-4">Commissione di seggio</h1>
+</div>
+
+<div class="container">
+    @if (ae > 0)
+    {
+        <div class="row">
+            <div class="input-group mb-3 w-50 col-6 offset-3">
+                <input type="text" class="form-control" placeholder="Cerca CF elettore..." id="cfvoter" aria-label="Ricerca dell'elettore" aria-describedby="basic-addon2" onkeyup="completeVoter(this.value, 'completionlist', 'cfvoter', null)">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" onclick="GoRecognize()">Riconosci</button>
+                </div>
+            </div>
+        </div>
+        <div id="completionlist" class="position-relative col-6 offset-3"></div>
+
+        <div class="text-left">
+            <p>Elezioni:</p>
+            <ul>
+                @foreach (var psc in l.Keys)
+                {
+                    @if (e[psc.ElectionFk].Active ?? false)
+                    {
+                        <li>
+                            @psc.Location (@if (psc.DigitalLocation != null)
+                            {<a href="@psc.DigitalLocation">@e[psc.ElectionFk].Name</a>}
+                        else
+                        {<span>@e[psc.ElectionFk].Name</span>})
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <div class="text-left">
+            <p>Non ci sono seggi aperti ecco le prossime elezioni.</p>
+            <p>Elezioni:</p>
+            <ul>
+                @foreach (var psc in l.Keys)
+                {
+                    <li>
+                        @psc.Location (@e[psc.ElectionFk].Name [@e[psc.ElectionFk].PollStartDate - @e[psc.ElectionFk].PollEndDate)
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

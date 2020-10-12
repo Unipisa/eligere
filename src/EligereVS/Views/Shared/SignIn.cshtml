@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "EligereVS Signin";
+}
+
+<div class="text-center">
+    <h1 class="display-4">EligereVS signin</h1>
+    @if (ViewData.ContainsKey("ESElectionConfigured") && (!(bool)ViewData["ESElectionConfigured"]))
+    {
+        <em>Election data not imported from Election System</em>
+    }
+    <div class="row offset-2 col-8 text-left">
+        <form id="pwdform" method="post" asp-controller="Home" asp-action="Signin" class="form w-100">
+            <div class="form-group">
+                <label for="masterpasswordid">Passphrase</label>
+                <input type="password" name="masterpassword" class="form-control w-100" id="masterpasswordid" placeholder="Password">
+            </div>
+            <button type="submit" class="btn btn-primary">Log in</button>
+        </form>
+    </div>
+</div>

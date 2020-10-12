@@ -18,7 +18,7 @@
         var timeid = setTimeout(() => {
             completionid = null;
             $.ajax({
-                url: '/api/v1.0/People/?search=' + encodeURIComponent(val),
+                url: '@(Url.Content("~"))/api/v1.0/People/?search=' + encodeURIComponent(val),
                 method: 'GET'
             }).done((v) => {
                 $('#' + tgt).html('');

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using EligereES.Models;
 using EligereES.Models.DB;
@@ -10,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -25,9 +28,14 @@ namespace EligereES
 
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private string contentRootPath;
+        private string evsKeyPath;
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            contentRootPath = env.ContentRootPath;
+            evsKeyPath = Path.Combine(contentRootPath, "Data/EVSKey/");
         }
 
         public IConfiguration Configuration { get; }
@@ -44,13 +52,19 @@ namespace EligereES
             services.AddAuthentication(AzureADDefaults.OpenIdScheme)
                 .AddAzureAD(options => Configuration.Bind("AzureAd", options));
 
+            services.AddDbContext<ESDB>(o => {
+                o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
+            });
+
             services.Configure<OpenIdConnectOptions>(AzureADDefaults.OpenIdScheme, opt =>
             {
                 var onTokenValidated = opt.Events.OnTokenValidated;
                 opt.Events.OnTokenValidated = (
                 async ctxt =>
                 {
-                    using (var esdb = new ESDB())
+                    var opt = new DbContextOptionsBuilder<ESDB>();
+                    
+                    using (var esdb = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
                     {
                         onTokenValidated?.Invoke(ctxt);
                         var roles = await EligereRoles.ComputeRoles(esdb, "AzureAD", ctxt.Principal.Identity.Name);
@@ -63,8 +77,9 @@ namespace EligereES
                 });
             });
 
-
-            services.AddDbContext<ESDB>();
+            services.AddDataProtection()
+               .SetApplicationName("Eligere")
+               .PersistKeysToFileSystem(new DirectoryInfo(evsKeyPath));
 
             services.AddControllersWithViews(options =>
             {

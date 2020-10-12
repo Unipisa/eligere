@@ -1,0 +1,20 @@
+﻿@model List<ElectionDescription>
+
+<div class="text-center">
+    <h1 class="display-4">Loaded configuration from Eligere ES</h1>
+
+    @foreach (var e in Model)
+    {
+        <div class="offset-2 col-8">
+            <hr />
+            <h3>@e.ElectionName [@e.PollStartDate - @e.PollEndDate]</h3>
+            <p>Candidates</p>
+            <ul class="list-group">
+                @foreach (var c in e.Candidates)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">@c.FullName (@c.PublicId)</li>
+                }
+            </ul>
+         </div>
+    }
+</div>

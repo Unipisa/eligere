@@ -1,0 +1,19 @@
+﻿@model (Dictionary<Guid, int>, Dictionary<Guid,string>)
+
+@{ 
+    var (counters, elnames) = Model;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Contatori</h1>
+    <ul class="list-group">
+        @foreach (var eid in counters.Keys)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                @elnames[eid]
+                <span class="badge badge-primary badge-pill">@counters[eid]</span>
+            </li>
+
+        }
+    </ul>
+</div>

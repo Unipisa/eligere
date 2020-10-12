@@ -26,6 +26,11 @@ namespace EligereES.Controllers
             return View();
         }
 
+        [AllowAnonymous]
+        public IActionResult PollingStation()
+        {
+            return View();
+        }
         public IActionResult Privacy()
         {
             return View();

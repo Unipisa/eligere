@@ -1,5 +1,4 @@
-﻿using EligereES.Models.Extensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace EligereES.Models.DB
@@ -18,16 +17,12 @@ namespace EligereES.Models.DB
         public string Name { get; set; }
         public string Description { get; set; }
         public string Configuration { get; set; }
-        public ElectionConfiguration ElectionConfiguration
-        {
-            get { return ElectionConfiguration.FromJson(Configuration); }
-        }
-
         public DateTime PollStartDate { get; set; }
         public DateTime PollEndDate { get; set; }
         public bool? Active { get; set; }
         public DateTime? ElectorateListClosingDate { get; set; }
         public Guid? ElectionTypeFk { get; set; }
+        public Guid? PollingStationGroupId { get; set; }
 
         public virtual ElectionType ElectionTypeFkNavigation { get; set; }
         public virtual ICollection<ElectionStaff> ElectionStaff { get; set; }

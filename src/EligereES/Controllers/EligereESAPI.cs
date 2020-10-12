@@ -13,18 +13,30 @@ using Microsoft.CodeAnalysis.CSharp;
 using CsvHelper;
 using System.Globalization;
 using EligereES.Models.Extensions;
+using Microsoft.AspNetCore.Authorization;
+using EligereES.Models;
+using System.Security.Permissions;
+using System.Net;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.DataProtection;
+using System.Text.Json;
 
 namespace EligereES.Controllers
 {
+    [Authorize]
     [Route("api/v1.0")]
     [ApiController]
     public class EligereESAPI : ControllerBase
     {
         private ESDB _context;
+        private string contentRootPath;
+        private IDataProtectionProvider dataProtector;
 
-        public EligereESAPI(ESDB ctxt)
+        public EligereESAPI(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider)
         {
             _context = ctxt;
+            contentRootPath = env.ContentRootPath;
+            dataProtector = provider;
         }
 
         [HttpGet("Election")]
@@ -119,9 +131,9 @@ namespace EligereES.Controllers
         [HttpDelete("Election/{eid}/PSCommission/{id}/Staff")]
         public async Task<List<PersonUI>> DeletePSCommissionStaff(Guid eid, Guid id, PersonUI person)
         {
-            var q = from c in _context.PollingStationCommission 
-                    join sc in _context.PollingStationCommissioner on c.Id equals sc.PollingStationCommissionFk 
-                    where c.ElectionFk == eid && c.Id == id && person.Id == sc.PersonFk 
+            var q = from c in _context.PollingStationCommission
+                    join sc in _context.PollingStationCommissioner on c.Id equals sc.PollingStationCommissionFk
+                    where c.ElectionFk == eid && c.Id == id && person.Id == sc.PersonFk
                     select sc;
             _context.PollingStationCommissioner.Remove(await q.FirstAsync());
             await _context.SaveChangesAsync();
@@ -165,7 +177,7 @@ namespace EligereES.Controllers
         public async Task<List<PollingStationSystemUI>> GetPSCommissionSystems(Guid eid, Guid id, PollingStationSystemUI system)
         {
             var q = from c in _context.PollingStationCommission
-                    join rel in _context.RelPollingStationSystemPollingStationCommission on c.Id equals rel.PollingStationCommissionFk 
+                    join rel in _context.RelPollingStationSystemPollingStationCommission on c.Id equals rel.PollingStationCommissionFk
                     where c.ElectionFk == eid && c.Id == id && rel.PollingStationSystemFk == system.Id select rel;
 
             var r = await q.FirstAsync();
@@ -238,6 +250,116 @@ namespace EligereES.Controllers
                 await _context.SaveChangesAsync();
             }
             return result;
+        }
+
+        [AllowAnonymous]
+        [HttpGet("RunningElections")]
+        public async Task<string> RunningElections()
+        {
+            var reqip = Request.HttpContext.Connection.RemoteIpAddress;
+            var conf = SetupController.GetESConfiguration(contentRootPath);
+            var acl = new List<IPAddress>();
+
+            if (conf.VotingSystemTicketAPI != null)
+            {
+                var host = new Uri(conf.VotingSystemTicketAPI).Host;
+                foreach (var a in Dns.GetHostEntry(host).AddressList)
+                {
+                    acl.Add(a);
+                }
+            }
+
+            var check = acl.FirstOrDefault(a => a.Equals(reqip));
+            if (check == default(IPAddress)) {
+                Response.StatusCode = 403;
+                return null;
+            }
+
+            var time4open = DateTime.Now + TimeSpan.FromMinutes(15); // Early comers (should be a parameter!)
+            var time4close = DateTime.Now - TimeSpan.FromMinutes(15); //Late comers (should be a parameter!)
+            var elections = from e in _context.Election
+                            where (e.Active ?? false) && (e.PollStartDate <= time4open) && (e.PollEndDate >= time4close)
+                            select e;
+            var candidates = from ec in _context.EligibleCandidate
+                             join e in elections on ec.ElectionFk equals e.Id
+                             join p in _context.Person on ec.PersonFk equals p.Id
+                             select new { Election = e, PublicId = p.PublicId, FirstName = p.FirstName, LastName = p.LastName };
+
+            var data = (await candidates.ToListAsync()).GroupBy(v => v.Election);
+            var ret = new List<ElectionDescription>();
+            foreach (var g in data)
+            {
+                var candlist = new List<ElectionCandidate>();
+                foreach (var c in g.OrderBy(ge => ge.LastName))
+                {
+                    candlist.Add(new ElectionCandidate()
+                    {
+                        PublicId = c.PublicId,
+                        FullName = $"{c.FirstName} {c.LastName}",
+                        FirstName = c.FirstName,
+                        LastName = c.LastName
+                    });
+                }
+                ret.Add(new ElectionDescription()
+                {
+                    ElectionId = g.Key.Id.ToString(),
+                    ElectionName = g.Key.Name,
+                    PollStartDate = g.Key.PollStartDate,
+                    PollEndDate = g.Key.PollEndDate,
+                    Candidates = candlist
+                });
+            }
+            var sret = JsonSerializer.Serialize<List<ElectionDescription>>(ret);
+            var dp = dataProtector.CreateProtector("EligereMetadataExchange");
+            return dp.Protect(sret);
+        }
+
+        //Todo: for security reasons would be better to use post
+        [AllowAnonymous]
+        [HttpGet("TicketUsed/{hash}")]
+        public async Task<bool> TicketUsed(string hash)
+        {
+            var reqip = Request.HttpContext.Connection.RemoteIpAddress;
+            var conf = SetupController.GetESConfiguration(contentRootPath);
+            //var acl = new List<IPAddress>();
+
+            //if (conf.VotingSystemTicketAPI != null)
+            //{
+            //    var host = new Uri(conf.VotingSystemTicketAPI).Host;
+            //    foreach (var a in Dns.GetHostEntry(host).AddressList)
+            //    {
+            //        acl.Add(a);
+            //    }
+            //}
+
+            //var check = acl.FirstOrDefault(a => a.Equals(reqip));
+            //if (check == default(IPAddress))
+            //{
+            //    Response.StatusCode = 403;
+            //    return false;
+            //}
+
+            var dp = dataProtector.CreateProtector("EligereMetadataExchange");
+            var plainHash = dp.Unprotect(hash);
+
+            var ticketq = from t in _context.VotingTicket
+                          join v in _context.Voter on t.Id equals v.VotingTicketFk
+                          where t.Hash == plainHash
+                          select t;
+
+            var ticket = await ticketq.FirstOrDefaultAsync();
+            if (ticket == null)
+                throw new Exception($"Invalid ticket hash {plainHash}");
+
+            var voter = await _context.Voter.Include(v => v.ElectionFkNavigation).FirstOrDefaultAsync(v => v.VotingTicketFk == ticket.Id);
+            if (ticket == null)
+                throw new Exception($"Internal error, inconsistent DB on ticket");
+
+            var rnd = new Random();
+            voter.Vote = DateTime.Now + TimeSpan.FromMinutes(rnd.Next(10) - 5);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 
     }

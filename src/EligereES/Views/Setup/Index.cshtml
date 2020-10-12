@@ -1,0 +1,46 @@
+﻿@model EligereES.Models.Client.ESConfiguration
+
+@{
+    ViewData["Title"] = "EligereVS Configuration";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Configuration</h1>
+</div>
+
+
+<div class="text-center" style="margin-top:50px">
+    <a asp-controller="Setup" asp-action="StartDailyElections" class="btn btn-primary">Enable today elections</a>
+</div>
+
+<div class="row offset-2 col-8 text-left">
+    <div class="text-left">
+        <h3>Endpoints</h3>
+    </div>
+    <form id="pwdform" method="post" asp-controller="Setup" asp-action="SaveAPI" class="form w-100">
+        <div class="form-group">
+            <label for="eligereesid">EligereES API endpoint</label>
+            <input type="text" name="eligerevsapi" class="form-control w-100" id="eligerevsid" value="@Model.VotingSystemTicketAPI" placeholder="https://eligerevs.unipi.it/Vote/ElectionCard">
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+
+<div class="row offset-2 col-8 text-left">
+    <div class="text-center">
+        <h3>Eligere communication Keyfile (EVS key)</h3>
+    </div>
+    <div class="form-group">
+        <form method="post" enctype="multipart/form-data" asp-controller="Setup" asp-action="UploadEVSKey" id="uploadkey" class="form w-100">
+            <div class="input-group mb-3">
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" name="file" id="keyfile">
+                    <label class="custom-file-label" for="keyfile">Choose file</label>
+                </div>
+                <div class="input-group-append">
+                    <input type="submit" class="btn btn-primary" value="Upload" />
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

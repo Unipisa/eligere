@@ -25,8 +25,8 @@ namespace ElectionGuard
 
     public class AuxiliaryKeyPair
     {
-        public BigInteger secret_key { get; set; }
-        public BigInteger public_key { get; set; }
+        public string secret_key { get; set; }
+        public string public_key { get; set; }
     }
 
     public class GuardianRequest

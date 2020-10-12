@@ -1,8 +1,79 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model VotingSystemConfiguration
+
+@{
+    ViewData["Title"] = "EligereVS Configuration";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Configuration</h1>
+</div>
+
+<div class="text-center">
+    <h3>Endpoints</h3>
+</div>
+
+<div class="text-center" style="margin-top:50px">
+    <a asp-controller="Home" asp-action="Tally" class="btn btn-primary">Tally (ends the ballot casting)</a>
+</div>
+
+<div class="text-center" style="margin-top:50px; margin-bottom:50px;">
+    <a asp-controller="Home" asp-action="GuardianKeyGen" class="btn btn-primary">Guardian key generation</a>
+</div>
+
+@if (!(bool)ViewData["ESApiEndPointConfigured"])
+{
+    <div class="text-center">
+        <em>To load Election data from Election system is mandatory to define the API endpoint</em>
+    </div>
+}
+
+@if ((bool)ViewData["ESApiEndPointConfigured"] && !(bool)ViewData["ESElectionConfigured"])
+{
+    <div class="text-center">
+        <a asp-controller="Home" asp-action="LoadESElectionConfiguration" class="btn btn-primary">Load ES Election Configuration</a>
+    </div>
+}
+else
+{
+    <div class="text-center">
+        <a asp-controller="Home" asp-action="ShowESElectionConfiguration" class="btn btn-primary">Show ES Election Configuration</a>
+    </div>
+}
+
+<div class="row offset-2 col-8 text-left">
+    <form id="pwdform" method="post" asp-controller="Home" asp-action="SaveAPI" class="form w-100">
+        <div class="form-group">
+            <label for="eligereesid">EligereES API endpoint</label>
+            <input type="text" name="eligereesapi" class="form-control w-100" id="eligereesid" value="@Model.ElectionSystemAPI" placeholder="https://eligere.unipi.it/eligere/api/v1.0">
+        </div>
+        <div class="form-group">
+            <label for="mediatorid">ElectionGuard Mediator API endpoint</label>
+            <input type="text" name="mediatorapi" class="form-control w-100" id="mediatorid" value="@Model.MediatorAPI" placeholder="https://localhost:8000">
+        </div>
+        <div class="form-group">
+            <label for="guardianid">ElectionGuard Guardian API endpoint</label>
+            <input type="text" name="guardianapi" class="form-control w-100" id="guardianid" value="@Model.GuardianAPI" placeholder="https://localhost:8001">
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+
+<div class="text-center">
+    <h3>Eligere communication Keyfile (EVS key)</h3>
+</div>
+
+<div class="row offset-2 col-8 text-left">
+    <div class="form-group">
+        <form method="post" enctype="multipart/form-data" asp-controller="Home" asp-action="UploadEVSKey" id="uploadkey" class="form w-100">
+            <div class="input-group mb-3">
+                <div class="custom-file">
+                    <input type="file" class="custom-file-input" name="file" id="keyfile">
+                    <label class="custom-file-label" for="keyfile">Choose file</label>
+                </div>
+                <div class="input-group-append">
+                    <input type="submit" class="btn btn-primary" value="Upload" />
+                </div>
+            </div>
+        </form>
+    </div>
 </div>

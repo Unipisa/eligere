@@ -2,6 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ElectionGuard;
 using System.Text.Json;
 using System.Numerics;
+using System.Collections.Generic;
 
 namespace ElectionGuardWebAPIClientTests
 {
@@ -426,6 +427,24 @@ namespace ElectionGuardWebAPIClientTests
             var pc = client.ElectionContext(ec);
             pc.Wait();
             Assert.AreEqual(new BigInteger(123455), pc.Result.elgamal_public_key);
+        }
+
+        [TestMethod]
+        public void TestGuardianCreation()
+        {
+            var guardianApi = new GuardianClient("http://localhost:8001");
+            var mediatorApi = new MediatorClient("http://localhost:8000");
+            var edesc = JsonSerializer.Deserialize<ElectionDescription>(description);
+            var guardians = new string[] { "A B", "C D", "E F", "G H", "I J" };
+            var glist = new List<Guardian>();
+            for (var i = 0; i < guardians.Length; i++)
+            {
+                var g = guardianApi.Guardian(new GuardianRequest() { id = guardians[i], sequence_order = i, number_of_guardians = 5, quorum = 3 });
+                g.Wait();
+                glist.Add(g.Result);
+            }
+            var gpkeys = glist.ConvertAll(g => new ElectionPublicKey() { key = g.auxiliary_key_pair.public_key, proof g.auxiliary_key_pair.public_key });
+            mediatorApi.ElectionCombine(new CombineElectionKeysRequest() { election_public_keys = gpkeys });
         }
     }
 }

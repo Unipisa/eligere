@@ -11,9 +11,11 @@ using CsvHelper;
 using System.Globalization;
 using System.Data;
 using EligereES.Models.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EligereES.Controllers
 {
+    [Authorize]
     public class PeopleController : Controller
     {
         private readonly ESDB _context;

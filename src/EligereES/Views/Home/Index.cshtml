@@ -1,8 +1,54 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Eligere";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Eligere</h1>
+    @if (false && this.User.IsInRole(EligereRoles.Admin))
+    {
+        <div class="col-6 offset-3">
+            <h4>Strumenti di amministrazione</h4>
+        </div>
+        <hr />
+    }
+
+    @if (this.User.IsInRole(EligereRoles.ElectionOfficer))
+    {
+        <div class="col-6 offset-3">
+            <hr />
+            <h4>Funzioni ufficio elettorale</h4>
+
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="People" asp-action="Index">Gestione anagrafica</a></li>
+                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Elections" asp-action="Index">Gestione elezioni</a></li>
+            </ul>
+        </div>
+    }
+
+    @if (this.User.IsInRole(EligereRoles.PollingStationStaff))
+    {
+        <div class="col-6 offset-3">
+            <hr />
+            <h4>Funzioni per le commissioni di seggio</h4>
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="Index">Gestione commissione</a></li>
+            </ul>
+        </div>
+    }
+
+    @if (this.User.IsInRole(EligereRoles.Admin) || this.User.IsInRole(EligereRoles.ElectionOfficer) || this.User.IsInRole(EligereRoles.Voter))
+    {
+        <div class="col-6 offset-3">
+            <hr />
+            <h4>Funzioni per l'elettore</h4>
+            <ul class="list-group">
+                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Voter" asp-action="Index">Tessera elettorale</a></li>
+            </ul>
+        </div>
+    }
+
+    @if (!this.User.Identity.IsAuthenticated)
+    {
+        <a class="nav-link text-dark" asp-area="AzureAD" asp-controller="Account" asp-action="SignIn">Accesso al sistema</a>
+    }
 </div>

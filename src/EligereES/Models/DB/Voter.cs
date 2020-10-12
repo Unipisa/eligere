@@ -12,10 +12,11 @@ namespace EligereES.Models.DB
         public Guid? RecognitionFk { get; set; }
         public bool? Dropped { get; set; }
         public string DropReason { get; set; }
-        public Guid? TicketId { get; set; }
+        public Guid? VotingTicketFk { get; set; }
 
         public virtual Election ElectionFkNavigation { get; set; }
         public virtual Person PersonFkNavigation { get; set; }
         public virtual Recognition RecognitionFkNavigation { get; set; }
+        public virtual VotingTicket VotingTicketFkNavigation { get; set; }
     }
 }

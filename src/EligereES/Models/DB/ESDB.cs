@@ -27,8 +27,10 @@ namespace EligereES.Models.DB
         public virtual DbSet<PollingStationSystem> PollingStationSystem { get; set; }
         public virtual DbSet<Recognition> Recognition { get; set; }
         public virtual DbSet<RelPollingStationSystemPollingStationCommission> RelPollingStationSystemPollingStationCommission { get; set; }
+        public virtual DbSet<TempCell> TempCell { get; set; }
         public virtual DbSet<UserLogin> UserLogin { get; set; }
         public virtual DbSet<Voter> Voter { get; set; }
+        public virtual DbSet<VotingTicket> VotingTicket { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -163,7 +165,7 @@ namespace EligereES.Models.DB
 
             modelBuilder.Entity<Person>(entity =>
             {
-                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.BirthDate).HasColumnType("datetime");
 
@@ -268,6 +270,25 @@ namespace EligereES.Models.DB
                     .HasConstraintName("FK_RelPollingStationSystemPollingStationCommission_ToPollingStationSystem");
             });
 
+            modelBuilder.Entity<TempCell>(entity =>
+            {
+                entity.HasKey(e => e.Mat);
+
+                entity.Property(e => e.Mat).HasMaxLength(50);
+
+                entity.Property(e => e.Cell)
+                    .IsRequired()
+                    .HasColumnName("cell")
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Cellint)
+                    .IsRequired()
+                    .HasColumnName("cellint")
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Cognome).IsRequired();
+            });
+
             modelBuilder.Entity<UserLogin>(entity =>
             {
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
@@ -301,6 +322,8 @@ namespace EligereES.Models.DB
 
                 entity.Property(e => e.Vote).HasColumnType("datetime");
 
+                entity.Property(e => e.VotingTicketFk).HasColumnName("VotingTicket_FK");
+
                 entity.HasOne(d => d.ElectionFkNavigation)
                     .WithMany(p => p.Voter)
                     .HasForeignKey(d => d.ElectionFk)
@@ -317,6 +340,28 @@ namespace EligereES.Models.DB
                     .WithMany(p => p.Voter)
                     .HasForeignKey(d => d.RecognitionFk)
                     .HasConstraintName("FK_Voter_ToRecognition");
+
+                entity.HasOne(d => d.VotingTicketFkNavigation)
+                    .WithMany(p => p.Voter)
+                    .HasForeignKey(d => d.VotingTicketFk)
+                    .HasConstraintName("FK_Voter_VotingTicket");
+            });
+
+            modelBuilder.Entity<VotingTicket>(entity =>
+            {
+                entity.HasIndex(e => e.Hash)
+                    .HasName("AK_VotingTicket_Hash")
+                    .IsUnique();
+
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.Content).IsRequired();
+
+                entity.Property(e => e.Hash)
+                    .IsRequired()
+                    .HasMaxLength(128);
+
+                entity.Property(e => e.VoterFk).HasColumnName("Voter_FK");
             });
 
             OnModelCreatingPartial(modelBuilder);

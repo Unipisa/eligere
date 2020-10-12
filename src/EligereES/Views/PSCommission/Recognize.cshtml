@@ -1,0 +1,58 @@
+﻿@using EligereES.Models.DB
+
+@model (Person, Dictionary<Guid, Election>, int, List<Voter>)
+
+@{ var (voter, elections, ae, allowedVotes) = Model; }  
+
+    <div class="container">
+        <h1 class="display-4" style="font-size: 1.5rem;">Elettore @Model.Item1.FirstName @Model.Item1.LastName (@Model.Item1.PublicId )</h1>
+
+        @*Assumption: OTP and expiration for all allowed votes are the same in case of election day*@
+        @if (allowedVotes.Count == 0)
+        {
+            <p>Elettore non abilitato al voto</p>
+        } else if (allowedVotes[0].RecognitionFk != null && (!allowedVotes[0].RecognitionFkNavigation.Validity.HasValue || allowedVotes[0].RecognitionFkNavigation.Validity.Value > DateTime.Now))
+        {
+            <h1 class="text-center display-4">@allowedVotes[0].RecognitionFkNavigation.Otp</h1>
+            <p>La sessione scadr&agrave; alle @allowedVotes[0].RecognitionFkNavigation.Validity.Value</p>
+        } else
+        {
+    <div class="row offset-1 col-10">
+        <form method="post" asp-controller="PSCommission" asp-action="Recognize">
+            <fieldset>
+                <div class="form-group row">
+                    <label for="mobile" class="col-2 col-form-label">Numero di cellulare</label>
+                    <div class="col-10">
+                        <input type="text" class="form-control" name="mobile" id="mobile" value="@(voter.GetPersonAttributes().Mobile != null ? voter.GetPersonAttributes().Mobile : "+39")">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="rectype" class="col-2 col-form-label">Tipo di riconoscimento</label>
+                    <select id="rectype" name="rectype" class="custom-select">
+                        <option value="KnownPerson" selected="">Riconoscimento di persona</option>
+                        <option value="ID">Carta di identit&agrave;</option>
+                        <option value="Passport">Passaporto</option>
+                        <option value="DrivingLicense">Patente</option>
+                    </select>
+                </div>
+                <div class="form-group row">
+                    <label for="idnum" class="col-2 col-form-label">Numero documento</label>
+                    <div class="col-10">
+                        <input type="text" name="idnum" class="form-control" id="idnum" value="">
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="idexp" class="col-2 col-form-label">Scadenza documento</label>
+                    <div class="col-10">
+                        <input type="date" class="form-control" name="idexp" id="idexp" value="">
+                    </div>
+                </div>
+                <div>
+
+                </div>
+            </fieldset>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+        }
+    </div>
