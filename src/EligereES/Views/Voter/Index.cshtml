@@ -6,30 +6,45 @@
 @{
     ViewData["Title"] = "Elettore";
     var (conf, voter, availableVotes) = Model;
+
+}
+
+@functions {
+    private static Random rnd = new Random();
+
+    public static string SelectCommissionLink(List<PollingStationCommission> comm)
+    {
+        var l = comm.Where(c => c.DigitalLocation != null).ToList();
+        if (l.Count == 0)
+            return null;
+
+        return l[rnd.Next(0, l.Count)].DigitalLocation;
+    }
 }
 
 @if (this.User.IsInRole(EligereRoles.ElectionOfficer))
 {
-<script type="text/javascript">
+    <script type="text/javascript">
         function impersonate() {
             document.location = '@(Url.Content("~"))/Voter/Impersonate/' + $('#cfimpersonate').val();
         }
-</script>
-<div class="input-group mb-3 w-50">
-    <input type="text" class="form-control" placeholder="CF dell'elettore da impersonare" id="cfimpersonate" aria-label="CF dell'elettore da impersonare" aria-describedby="basic-addon2">
-    <div class="input-group-append">
-        <button class="btn btn-outline-secondary" type="button" onclick="impersonate()">Impersona</button>
+    </script>
+    <div class="input-group mb-3 w-50">
+        <input type="text" class="form-control" placeholder="CF dell'elettore da impersonare" id="cfimpersonate" aria-label="CF dell'elettore da impersonare" aria-describedby="basic-addon2">
+        <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="button" onclick="impersonate()">Impersona</button>
+        </div>
     </div>
-</div>
 }
 
-<p>Bevenuto/a @if (new PersonAttributes(voter).IsProfessor()){ <span><i>Prof.</i></span> } <i>@voter.FirstName @voter.LastName</i></p>
+<p>Bevenuto/a @if (new PersonAttributes(voter).IsProfessor())
+{<span><i>Prof.</i></span>} <i>@voter.FirstName @voter.LastName</i></p>
 
 @if (availableVotes.Where(v => !v.Item4).Count() > 0)
 {
     @if (availableVotes.Where(v => !v.Item5.HasValue && (v.Item2.Active ?? false)).Count() > 0)
     {
-<script type="text/javascript">
+        <script type="text/javascript">
     function vote() {
         $.ajax({
             url: '@(Url.Content("~"))/Voter/GenerateTicket/' + $("#otpid").val().toUpperCase(),
@@ -43,70 +58,72 @@
             alert('OTP inserita non valida');
         });
     }
-</script>
-<form method="post" id="vsgate" action="@conf.VotingSystemTicketAPI">
-    <input type="hidden" id="ticketdata" name="tickets" />
-</form>
-<div class="modal" role="dialog" id="govote">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Accesso al voto</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@availableVotes[0].Item3[0].DigitalLocation" style="text-decoration: underline" target="_blank">commissione di seggio</a><br /> per l'identificazione e la generazione dell'OTP</em></p>
-                <hr/>
-                <div class="input-group mb-3 w-75 offset-2">
-                    <input type="text" class="form-control" placeholder="Codice accesso" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" onclick="vote()">Procedi al voto</button>
+        </script>
+        <form method="post" id="vsgate" action="@conf.VotingSystemTicketAPI">
+            <input type="hidden" id="ticketdata" name="tickets" />
+        </form>
+        <div class="modal" role="dialog" id="govote">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Accesso al voto</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a><br /> per l'identificazione e la generazione dell'OTP</em></p>
+                        <hr />
+                        <div class="input-group mb-3 w-75 offset-2">
+                            <input type="text" class="form-control" placeholder="Codice accesso" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="vote()">Procedi al voto</button>
+                            </div>
+                        </div>
+                        <p>Inserire il codice OTP ricevuto via SMS.</p>
+                        <p><em>In caso di mancata ricezione dell'SMS contattare 050-2212653</em></p>
+                    </div>
+                    <div class="modal-footer">
+                        &nbsp;
                     </div>
                 </div>
-                <p>Inserire il codice OTP ricevuto via SMS.</p>
-                <p><em>In caso di mancata ricezione dell'SMS contattare 050-2212653</em></p>
-            </div>
-            <div class="modal-footer">
-                &nbsp;
             </div>
         </div>
-    </div>
-</div>
-<div class="text-center">
-    <button type="button" class="btn btn-primary btn-lg w-25" onclick="javascript:$('#govote').modal('show')">Vota</button>
-</div>
+        <div class="text-center">
+            <button type="button" class="btn btn-primary btn-lg w-25" onclick="javascript:$('#govote').modal('show')">Vota</button>
+        </div>
     }
-<h3>Elezioni future</h3>
-<table class="table table-hover">
-    <thead>
-        <tr>
-            <th scope="col">Elezione</th>
-            <th scope="col">Apertura seggio</th>
-            <th scope="col">Chiusura seggio</th>
-            <th scope="col">Commissioni di seggio</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var (v, e, com, p, hasVoted) in availableVotes.Where(a => { var (v, e, c, p, d) = a; return !p; }))
-        {
-        <tr>
-            <td>@e.Name@if (hasVoted.HasValue) {<p>Votato il @hasVoted.Value</p> }</td>
-            <td>@e.PollStartDate</td>
-            <td>@e.PollEndDate</td>
-            <td>
-                <ul>
-                    @foreach (var c in com)
-                        {
-                          if (c.Location != null) {
-                    <li>@c.Location</li>
-                          }
-                        }
-                </ul>
-            </td>
-        </tr>
+    <h3>Elezioni future</h3>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Elezione</th>
+                <th scope="col">Apertura seggio</th>
+                <th scope="col">Chiusura seggio</th>
+                <th scope="col">Commissioni di seggio</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (v, e, com, p, hasVoted) in availableVotes.Where(a => { var (v, e, c, p, d) = a; return !p; }))
+            {
+                <tr>
+                    <td>@e.Name@if (hasVoted.HasValue)
+                    {<p>Votato il @hasVoted.Value</p>}</td>
+                    <td>@e.PollStartDate</td>
+                    <td>@e.PollEndDate</td>
+                    <td>
+                        <ul>
+                            @foreach (var c in com)
+                            {
+                                if (c.Location != null)
+                                {
+                                    <li>@c.Location</li>
+                                }
+                            }
+                        </ul>
+                    </td>
+                </tr>
             }
-    </tbody>
-</table>
+        </tbody>
+    </table>
 }

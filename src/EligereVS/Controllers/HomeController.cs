@@ -377,6 +377,12 @@ namespace EligereVS.Controllers
             return View();
         }
 
+        [HttpGet]
+        public IActionResult SetupCheckList()
+        {
+            return View();
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult SetupMasterPassword(string masterpassword)
