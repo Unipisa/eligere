@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Resources;
 
 namespace ElectionGuard
 {
@@ -121,22 +122,80 @@ namespace ElectionGuard
         public BallotStyle[] ballot_styles { get; set; }
     }
 
+    public enum VoteVariationType
+    {
+        unknown = 0,
+        one_of_m = 1,
+        approval = 2,
+        borda = 3,
+        cumulative = 4,
+        majority = 5,
+        n_of_m = 6,
+        plurality = 7,
+        proportional = 8,
+        range = 9,
+        rcv = 10,
+        super_majority = 11,
+        other = 12
+    }
+
+    public class SelectionDescription
+    {
+        public string object_id { get; set; }
+        public string candidate_id { get; set; }
+        public int sequence_order { get; set; }
+    }
+
+    public class Language
+    {
+        public string value { get; set; }
+        public string language { get; set; }
+    }
+
+    public class InternationalizedText
+    {
+        public Language[] text { get; set; }
+    }
+
+    public class ContestDescriptionWithPlaceholders
+    {
+        public string object_id { get; set; }
+        public string electoral_distric_id { get; set; }
+        public int sequence_order { get; set; }
+        public VoteVariationType vote_variation { get; set; }
+        public int number_elected { get; set; }
+        public int? votes_allowed { get; set; }
+        public string name { get; set; }
+        public SelectionDescription[] ballot_selections { get; set; }
+        public InternationalizedText ballot_title { get; set; }
+        public InternationalizedText ballot_subtitle { get; set; }
+    }
+
+    public class InternalElectionDescription
+    {
+        public ElectionDescription description { get; set; }
+        public GeoPoliticalUnit[] geopolitical_units { get; set; }
+        public ContestDescriptionWithPlaceholders[] contests { get; set; }
+        public BallotStyle[] ballot_styles { get; set; }
+        public string description_hash { get; set; }
+    }
+
     public class CiphertextElectionContext
     {
         public int number_of_guardians { get; set; }
         public int quorum { get; set; }
-        public BigInteger elgamal_public_key { get; set; }
-        public BigInteger description_hash { get; set; }
-        public BigInteger crypto_base_hash { get; set; }
-        public BigInteger crypto_extended_base_hash { get; set; }
+        public string elgamal_public_key { get; set; }
+        public string description_hash { get; set; }
+        public string crypto_base_hash { get; set; }
+        public string crypto_extended_base_hash { get; set; }
     }
 
     public class SchnorrProof
     {
-        public BigInteger public_key { get; set; }
-        public BigInteger commitment { get; set; }
-        public BigInteger challenge { get; set; }
-        public BigInteger response { get; set; }
+        public string public_key { get; set; }
+        public string commitment { get; set; }
+        public string challenge { get; set; }
+        public string response { get; set; }
         public string usage { get; set; } // Check
     }
 
@@ -144,7 +203,7 @@ namespace ElectionGuard
     {
         public string owner_id { get; set; }
         public SchnorrProof proof { get; set; }
-        public BigInteger key { get; set; }
+        public string key { get; set; }
 
     }
 
@@ -155,63 +214,68 @@ namespace ElectionGuard
 
     public class CombineElectionKeysRequest
     {
-        public ElectionPublicKey[] election_public_keys { get; set; }
+        public string[] election_public_keys { get; set; }
     }
 
     public class CiphertextBallotSelection
     {
-        public BigInteger description_hash { get; set; }
+        public string object_id { get; set; }
+        public string description_hash { get; set; }
         public ElGamalCiphertext ciphertext { get; set; }
-        public BigInteger crypto_hash { get; set; }
+        public string crypto_hash { get; set; }
         public bool is_placeholder_selection { get; set; }
-        public BigInteger? nonce { get; set; }
+        public string nonce { get; set; }
         public DisjunctiveChaumPedersenProof proof { get; set; }
         public ElGamalCiphertext extended_data { get; set; }
     }
 
     public class ConstantChaumPedersenProof
     {
-        public BigInteger pad { get; set; }
-        public BigInteger data { get; set; }
-        public BigInteger challenge { get; set; }
-        public BigInteger response { get; set; }
+        public string name { get; set; }
+        public string pad { get; set; }
+        public string data { get; set; }
+        public string challenge { get; set; }
+        public string response { get; set; }
         public int constant { get; set; }
         public string usage { get; set; }
     }
 
     public class DisjunctiveChaumPedersenProof
     {
-        public BigInteger proof_zero_pad { get; set; }
-        public BigInteger proof_zero_data { get; set; }
-        public BigInteger proof_one_pad { get; set; }
-        public BigInteger proof_one_data { get; set; }
-        public BigInteger proof_zero_challenge { get; set; }
-        public BigInteger proof_one_challenge { get; set; }
-        public BigInteger challenge { get; set; }
-        public BigInteger proof_zero_response { get; set; }
-        public BigInteger proof_one_response { get; set; }
+        public string name { get; set; }
+        public string proof_zero_pad { get; set; }
+        public string proof_zero_data { get; set; }
+        public string proof_one_pad { get; set; }
+        public string proof_one_data { get; set; }
+        public string proof_zero_challenge { get; set; }
+        public string proof_one_challenge { get; set; }
+        public string challenge { get; set; }
+        public string proof_zero_response { get; set; }
+        public string proof_one_response { get; set; }
         public string usage { get; set; }
     }
 
     public class CiphertextBallotContest
     {
-        public BigInteger description_hash { get; set; }
+        public string object_id { get; set; }
+        public string description_hash { get; set; }
         public CiphertextBallotSelection[] ballot_selections { get; set; }
-        public BigInteger crypto_hash { get; set; }
-        public BigInteger? nonce { get; set; }
+        public string crypto_hash { get; set; }
+        public string nonce { get; set; }
         public ConstantChaumPedersenProof? proof { get; set; }
     }
 
     public class CiphertextBallot
     {
+        public string object_id { get; set; }
         public string ballot_style { get; set; }
-        public BigInteger description_hash { get; set; }
-        public BigInteger previous_tracking_hash { get; set; }
+        public string description_hash { get; set; }
+        public string previous_tracking_hash { get; set; }
         public CiphertextBallotContest[] contests { get; set; }
-        public BigInteger? tracking_hash { get; set; }
+        public string tracking_hash { get; set; }
         public int timestamp { get; set; }
-        public BigInteger crypto_hash { get; set; }
-        public BigInteger? nonce { get; set; }
+        public string crypto_hash { get; set; }
+        public string nonce { get; set; }
     }
 
     public class AcceptBallotRequest
@@ -228,50 +292,54 @@ namespace ElectionGuard
         UNKNOWN = 999
     }
 
-    public class CiphertextAcceptedBallot
+    public class CiphertextAcceptedBallot : CiphertextBallot
     {
-        public BallotBoxState state { get; set; }
+        // Of type BallotBoxState
+        public string state { get; set; }
     }
 
     public class ChaumPedersenProof
     {
-        public BigInteger pad { get; set; }
-        public BigInteger data { get; set; }
-        public BigInteger challenge { get; set; }
-        public BigInteger response { get; set; }
+        public string pad { get; set; }
+        public string data { get; set; }
+        public string challenge { get; set; }
+        public string response { get; set; }
         public string usage { get; set; }
     }
 
     public class CiphertextCompensatedDecryptionSelection
     {
+        public string object_id { get; set; }
         public string guardian_id { get; set; }
         public string missing_guardian_id { get; set; }
-        public BigInteger description_hash { get; set; }
-        public BigInteger share { get; set; }
-        public BigInteger recovery_key { get; set; }
+        public string description_hash { get; set; }
+        public string share { get; set; }
+        public string recovery_key { get; set; }
         public ChaumPedersenProof proof { get; set; }
     }
 
     public class CiphertextDecryptionSelection
     {
+        public string object_id { get; set; }
         public string guardian_id { get; set; }
-        public BigInteger description_hash { get; set; }
-        public BigInteger share { get; set; }
+        public string description_hash { get; set; }
+        public string share { get; set; }
         public ChaumPedersenProof proof { get; set; }
         public Dictionary<string, CiphertextCompensatedDecryptionSelection> recovered_parts { get; set; }
     }
 
     public class CiphertextDecryptionContest
     {
+        public string object_id { get; set; }
         public string guardian_id { get; set; }
-        public BigInteger description_hash { get; set; }
+        public string description_hash { get; set; }
         public Dictionary<string, CiphertextDecryptionSelection> selections { get; set; }
     }
 
     public class BallotDecryptionShare
     {
         public string guardian_id { get; set; }
-        public BigInteger public_key { get; set; }
+        public string public_key { get; set; }
         public string ballot_id { get; set; }
         public Dictionary<string, CiphertextDecryptionContest> contests { get; set; }
     }
@@ -285,20 +353,22 @@ namespace ElectionGuard
 
     public class ElGamalCiphertext
     {
-        public BigInteger pad { get; set; }
-        public BigInteger data { get; set; }
+        public string pad { get; set; }
+        public string data { get; set; }
     }
 
     public class PlaintextTallySelection
     {
+        public string object_id { get; set; }
         public int tally { get; set; }
-        public BigInteger value { get; set; }
+        public string value { get; set; }
         public ElGamalCiphertext message { get; set; }
         public CiphertextDecryptionSelection[] shares { get; set; }
     }
 
     public class PlaintextTallyContest
     {
+        public string object_id { get; set; }
         public Dictionary<string, PlaintextTallySelection> selections { get; set; }
     }
 
@@ -311,22 +381,25 @@ namespace ElectionGuard
 
     public class CiphertextTallySelection
     {
-        public BigInteger description_hash { get; set; }
+        public string object_id { get; set; }
+        public string description_hash { get; set; }
         public ElGamalCiphertext ciphertext { get; set; }
     }
 
     public class CiphertextTallyContest
     {
-        public BigInteger description_hash { get; set; }
+        public string object_id { get; set; }
+        public string description_hash { get; set; }
         public Dictionary<string, CiphertextTallySelection> tally_selections { get; set; }
     }
 
     public class PublishedCiphertextTally
     {
+        public string object_id { get; set; }
         public Dictionary<string, CiphertextTallyContest> cast { get; set; }
     }
 
-    public class AppendTallyRequest
+    public class AppendTallyRequest : StartTallyRequest
     {
         public PublishedCiphertextTally encrypted_tally { get; set; }
     }
@@ -334,7 +407,7 @@ namespace ElectionGuard
     public class TallyDecryptionShare
     {
         public string guardian_id { get; set; }
-        public BigInteger public_key { get; set; }
+        public string public_key { get; set; }
         public Dictionary<string, CiphertextDecryptionContest> contests { get; set; }
         public Dictionary<string, BallotDecryptionShare> spoiled_ballots { get; set; }
     }
@@ -358,11 +431,25 @@ namespace ElectionGuard
         public int length { get; set; }
     }
 
-    public class PlaintextBallot
+    public class PlainTextBallotSelection
     {
+        public string object_id { get; set; }
         public string vote { get; set; }
         public bool is_placeholder_selection { get; set; }
         public ExtendedData extended_data { get; set; }
+    }
+
+    public class PlainTextBallotContest
+    {
+        public string object_id { get; set; }
+        public PlainTextBallotSelection[] ballot_selections { get; set; }
+    }
+
+    public class PlaintextBallot
+    {
+        public string object_id { get; set; }
+        public string ballot_style { get; set; }
+        public PlainTextBallotContest[] contests { get; set; }
     }
 
     public class EncryptBallotsRequest
@@ -375,7 +462,7 @@ namespace ElectionGuard
     }
     public class EncryptBallotsResponse
     {
-        public PlaintextBallot[] encrypted_ballots { get; set; }
+        public CiphertextBallot[] encrypted_ballots { get; set; }
         public string next_seed_hash { get; set; }
     }
 

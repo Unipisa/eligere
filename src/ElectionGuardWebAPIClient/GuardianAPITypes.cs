@@ -11,14 +11,15 @@ namespace ElectionGuard
 
     public class ElectionPolynomial
     {
-        public BigInteger[] coefficients { get; set; }
-        public BigInteger[] coefficient_commitments { get; set; }
+        public string[] coefficients { get; set; }
+        public string[] coefficient_commitments { get; set; }
         public SchnorrProof[] coefficient_proofs { get; set; }
     }
 
     public class ElectionKeyPair
     {
-        public ElGamalKeyPair key_pair { get; set; }
+        public string public_key { get; set; }
+        public string secret_key { get; set; }
         public SchnorrProof proof { get; set; }
         public ElectionPolynomial polynomial { get; set; }
     }

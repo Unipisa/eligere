@@ -1,0 +1,19 @@
+﻿@{
+    ViewData["Title"] = "Eligere startup checklist";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Eligere startup cehcklist</h1>
+
+    <p>In order to properly startup the system check the following steps:</p>
+
+
+    <div class="row offset-2 col-8 text-left">
+            <div class="form-group">
+                <label for="setup">Passphrase</label>
+                <input type="password" name="masterpassword" class="form-control w-100" id="masterpasswordid" placeholder="Password">
+            </div>
+    </div>
+
+    <a target="_blank" asp-controller="Home" asp-action="SetupCheckList">Setup checklist</a>
+</div>

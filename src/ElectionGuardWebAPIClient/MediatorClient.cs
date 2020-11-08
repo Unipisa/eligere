@@ -44,7 +44,7 @@ namespace ElectionGuard
 
         public async Task<ElectionJointKey> ElectionCombine(CombineElectionKeysRequest ctxt)
         {
-            return await PostRequest<ElectionJointKey, CombineElectionKeysRequest>("/api/v1/election/combine", ctxt);
+            return await PostRequest<ElectionJointKey, CombineElectionKeysRequest>("/api/v1/key/election/combine", ctxt);
         }
 
         public async Task<CiphertextAcceptedBallot> BallotCast(AcceptBallotRequest ctxt)
@@ -57,9 +57,9 @@ namespace ElectionGuard
             return await PostRequest<CiphertextAcceptedBallot, AcceptBallotRequest>("/api/v1/ballot/spoil", ctxt);
         }
 
-        public async Task<Dictionary<string, PlaintextTallyContest>> BallotDecrypt(DecryptBallotsRequest ctxt)
+        public async Task<Dictionary<string, Dictionary<string, PlaintextTallyContest>>> BallotDecrypt(DecryptBallotsRequest ctxt)
         {
-            return await PostRequest<Dictionary<string, PlaintextTallyContest>, DecryptBallotsRequest>("/api/v1/ballot/decrypt", ctxt);
+            return await PostRequest<Dictionary<string, Dictionary<string, PlaintextTallyContest>>, DecryptBallotsRequest>("/api/v1/ballot/decrypt", ctxt);
         }
 
         public async Task<PublishedCiphertextTally> Tally(StartTallyRequest ctxt)

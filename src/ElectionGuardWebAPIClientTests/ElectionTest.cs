@@ -3,422 +3,19 @@ using ElectionGuard;
 using System.Text.Json;
 using System.Numerics;
 using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace ElectionGuardWebAPIClientTests
 {
     [TestClass]
     public class ElectionTest
     {
-        private const string description = @"
-{
-    ""geopolitical_units"": [
-        {
-            ""object_id"": ""jefferson-county"",
-            ""name"": ""Jefferson County"",
-            ""type"": ""county"",
-            ""contact_information"": {
-                ""address_line"": [
-                    ""1234 Samuel Adams Way"",
-                    ""Jefferson, Hamilton 999999""
-                ],
-                ""name"": ""Jefferson County Clerk"",
-                ""email"": [
-                    {
-                        ""annotation"": ""inquiries"",
-                        ""value"": ""inquiries@jefferson.hamilton.state.gov""
-                    }
-                ],
-                ""phone"": [
-                    {
-                        ""annotation"": ""domestic"",
-                        ""value"": ""123-456-7890""
-                    }
-                ]
-            }
-        },
-        {
-            ""object_id"": ""harrison-township"",
-            ""name"": ""Harrison Township"",
-            ""type"": ""township"",
-            ""contact_information"": {
-                ""address_line"": [
-                    ""1234 Thorton Drive"",
-                    ""Harrison, Hamilton 999999""
-                ],
-                ""name"": ""Harrison Town Hall"",
-                ""email"": [
-                    {
-                        ""annotation"": ""inquiries"",
-                        ""value"": ""inquiries@harrison.hamilton.state.gov""
-                    }
-                ],
-                ""phone"": [
-                    {
-                        ""annotation"": ""domestic"",
-                        ""value"": ""123-456-7890""
-                    }
-                ]
-            }
-        },
-        {
-            ""object_id"": ""harrison-township-precinct-east"",
-            ""name"": ""Harrison Township Precinct"",
-            ""type"": ""township"",
-            ""contact_information"": {
-                ""address_line"": [
-                    ""1234 Thorton Drive"",
-                    ""Harrison, Hamilton 999999""
-                ],
-                ""name"": ""Harrison Town Hall"",
-                ""email"": [
-                    {
-                        ""annotation"": ""inquiries"",
-                        ""value"": ""inquiries@harrison.hamilton.state.gov""
-                    }
-                ],
-                ""phone"": [
-                    {
-                        ""annotation"": ""domestic"",
-                        ""value"": ""123-456-7890""
-                    }
-                ]
-            }
-        },
-        {
-            ""object_id"": ""rutledge-elementary"",
-            ""name"": ""Rutledge Elementary School district"",
-            ""type"": ""school"",
-            ""contact_information"": {
-                ""address_line"": [
-                    ""1234 Wolcott Parkway"",
-                    ""Harrison, Hamilton 999999""
-                ],
-                ""name"": ""Rutledge Elementary School"",
-                ""email"": [
-                    {
-                        ""annotation"": ""inquiries"",
-                        ""value"": ""inquiries@harrison.hamilton.state.gov""
-                    }
-                ],
-                ""phone"": [
-                    {
-                        ""annotation"": ""domestic"",
-                        ""value"": ""123-456-7890""
-                    }
-                ]
-            }
-        }
-    ],
-    ""parties"": [
-        {
-            ""object_id"": ""whig"",
-            ""abbreviation"": ""WHI"",
-            ""color"": ""AAAAAA"",
-            ""logo_uri"": ""http://some/path/to/whig.svg"",
-            ""name"": {
-                ""text"": [
-                    {
-                        ""value"": ""Whig Party"",
-                        ""language"": ""en""
-                    }
-                ]
-            }
-        },
-        {
-            ""object_id"": ""federalist"",
-            ""abbreviation"": ""FED"",
-            ""color"": ""CCCCCC"",
-            ""logo_uri"": ""http://some/path/to/federalist.svg"",
-            ""name"": {
-                ""text"": [
-                    {
-                        ""value"": ""Federalist Party"",
-                        ""language"": ""en""
-                    }
-                ]
-            }
-        },
-        {
-            ""object_id"": ""democratic-republican"",
-            ""abbreviation"": ""DEMREP"",
-            ""color"": ""EEEEEE"",
-            ""logo_uri"": ""http://some/path/to/democratic-repulbican.svg"",
-            ""name"": {
-                ""text"": [
-                    {
-                        ""value"": ""Democratic Republican Party"",
-                        ""language"": ""en""
-                    }
-                ]
-            }
-        }
-    ],
-    ""candidates"": [
-        {
-            ""object_id"": ""benjamin-franklin"",
-            ""ballot_name"": {
-                ""text"": [
-                    {
-                        ""value"": ""Benjamin Franklin"",
-                        ""language"": ""en""
-                    }
-                ]
-            },
-            ""party_id"": ""whig""
-        },
-        {
-            ""object_id"": ""john-adams"",
-            ""ballot_name"": {
-                ""text"": [
-                    {
-                        ""value"": ""John Adams"",
-                        ""language"": ""en""
-                    }
-                ]
-            },
-            ""party_id"": ""federalist""
-        },
-        {
-            ""object_id"": ""john-hancock"",
-            ""ballot_name"": {
-                ""text"": [
-                    {
-                        ""value"": ""John Hancock"",
-                        ""language"": ""en""
-                    }
-                ]
-            },
-            ""party_id"": ""democratic-republican""
-        },
-        {
-            ""object_id"": ""write-in"",
-            ""ballot_name"": {
-                ""text"": [
-                    {
-                        ""value"": ""Write In Candidate"",
-                        ""language"": ""en""
-                    },
-                    {
-                        ""value"": ""Escribir en la candidata"",
-                        ""language"": ""es""
-                    }
-                ]
-            },
-            ""is_write_in"": true
-        },
-        {
-            ""object_id"": ""referendum-pineapple-affirmative"",
-            ""ballot_name"": {
-                ""text"": [
-                    {
-                        ""value"": ""Pineapple should be banned on pizza"",
-                        ""language"": ""en""
-                    }
-                ]
-            }
-        },
-        {
-            ""object_id"": ""referendum-pineapple-negative"",
-            ""ballot_name"": {
-                ""text"": [
-                    {
-                        ""value"": ""Pineapple should not be banned on pizza"",
-                        ""language"": ""en""
-                    }
-                ]
-            }
-        }
-    ],
-    ""contests"": [
-        {
-            ""@type"": ""CandidateContest"",
-            ""object_id"": ""justice-supreme-court"",
-            ""sequence_order"": 0,
-            ""ballot_selections"": [
-                {
-                    ""object_id"": ""john-adams-selection"",
-                    ""sequence_order"": 0,
-                    ""candidate_id"": ""john-adams""
-                },
-                {
-                    ""object_id"": ""benjamin-franklin-selection"",
-                    ""sequence_order"": 1,
-                    ""candidate_id"": ""benjamin-franklin""
-                },
-                {
-                    ""object_id"": ""john-hancock-selection"",
-                    ""sequence_order"": 2,
-                    ""candidate_id"": ""john-hancock""
-                },
-                {
-                    ""object_id"": ""write-in-selection"",
-                    ""sequence_order"": 3,
-                    ""candidate_id"": ""write-in""
-                }
-            ],
-            ""ballot_title"": {
-                ""text"": [
-                    {
-                        ""value"": ""Justice of the Supreme Court"",
-                        ""language"": ""en""
-                    },
-                    {
-                        ""value"": ""Juez de la corte suprema"",
-                        ""language"": ""es""
-                    }
-                ]
-            },
-            ""ballot_subtitle"": {
-                ""text"": [
-                    {
-                        ""value"": ""Please choose up to two candidates"",
-                        ""language"": ""en""
-                    },
-                    {
-                        ""value"": ""Uno"",
-                        ""language"": ""es""
-                    }
-                ]
-            },
-            ""vote_variation"": ""n_of_m"",
-            ""electoral_district_id"": ""jefferson-county"",
-            ""name"": ""Justice of the Supreme Court"",
-            ""primary_party_ids"": [
-                ""whig"",
-                ""federalist""
-            ],
-            ""number_elected"": 2,
-            ""votes_allowed"": 2
-        },
-        {
-            ""@type"": ""ReferendumContest"",
-            ""object_id"": ""referendum-pineapple"",
-            ""sequence_order"": 1,
-            ""ballot_selections"": [
-                {
-                    ""object_id"": ""referendum-pineapple-affirmative-selection"",
-                    ""sequence_order"": 0,
-                    ""candidate_id"": ""referendum-pineapple-affirmative""
-                },
-                {
-                    ""object_id"": ""referendum-pineapple-negative-selection"",
-                    ""sequence_order"": 1,
-                    ""candidate_id"": ""referendum-pineapple-negative""
-                }
-            ],
-            ""ballot_title"": {
-                ""text"": [
-                    {
-                        ""value"": ""Should pineapple be banned on pizza?"",
-                        ""language"": ""en""
-                    },
-                    {
-                        ""value"": ""¿Debería prohibirse la piña en la pizza?"",
-                        ""language"": ""es""
-                    }
-                ]
-            },
-            ""ballot_subtitle"": {
-                ""text"": [
-                    {
-                        ""value"": ""The township considers this issue to be very important"",
-                        ""language"": ""en""
-                    },
-                    {
-                        ""value"": ""El municipio considera que esta cuestión es muy importante"",
-                        ""language"": ""es""
-                    }
-                ]
-            },
-            ""vote_variation"": ""one_of_m"",
-            ""electoral_district_id"": ""harrison-township"",
-            ""name"": ""The Pineapple Question"",
-            ""number_elected"": 1,
-            ""votes_allowed"": 1
-        }
-    ],
-    ""ballot_styles"": [
-        {
-            ""object_id"": ""jefferson-county-ballot-style"",
-            ""geopolitical_unit_ids"": [
-                ""jefferson-county""
-            ]
-        },
-        {
-            ""object_id"": ""harrison-township-ballot-style"",
-            ""geopolitical_unit_ids"": [
-                ""jefferson-county"",
-                ""harrison-township""
-            ]
-        },
-        {
-            ""object_id"": ""harrison-township-precinct-east-ballot-style"",
-            ""geopolitical_unit_ids"": [
-                ""jefferson-county"",
-                ""harrison-township"",
-                ""harrison-township-precinct-east"",
-                ""rutledge-elementary""
-            ]
-        },
-        {
-            ""object_id"": ""rutledge-elementary-ballot-style"",
-            ""geopolitical_unit_ids"": [
-                ""jefferson-county"",
-                ""harrison-township"",
-                ""rutledge-elementary""
-            ]
-        }
-    ],
-    ""name"": {
-        ""text"": [
-            {
-                ""value"": ""Jefferson County Spring Primary"",
-                ""language"": ""en""
-            },
-            {
-                ""value"": ""Primaria de primavera del condado de Jefferson"",
-                ""language"": ""es""
-            }
-        ]
-    },
-    ""contact_information"": {
-        ""address_line"": [
-            ""1234 Paul Revere Run"",
-            ""Jefferson, Hamilton 999999""
-        ],
-        ""name"": ""Hamilton State Election Commission"",
-        ""email"": [
-            {
-                ""annotation"": ""press"",
-                ""value"": ""inquiries@hamilton.state.gov""
-            },
-            {
-                ""annotation"": ""federal"",
-                ""value"": ""commissioner@hamilton.state.gov""
-            }
-        ],
-        ""phone"": [
-            {
-                ""annotation"": ""domestic"",
-                ""value"": ""123-456-7890""
-            },
-            {
-                ""annotation"": ""international"",
-                ""value"": ""+1-123-456-7890""
-            }
-        ]
-    },
-    ""start_date"": ""2020-03-01T08:00:00-05:00"",
-    ""end_date"": ""2020-03-01T20:00:00-05:00"",
-    ""election_scope_id"": ""jefferson-county-primary"",
-    ""type"": ""primary""
-}";
-
         [TestMethod]
         public void ElectionContextTest()
         {
             var client = new MediatorClient("http://localhost:8000");
-            var e = JsonSerializer.Deserialize<ElectionDescription>(description);
+            var e = JsonSerializer.Deserialize<ElectionDescription>(TestData.description);
             var ec = new ElectionContextRequest();
             ec.description = e;
             ec.elgamal_public_key = "123455";
@@ -434,7 +31,7 @@ namespace ElectionGuardWebAPIClientTests
         {
             var guardianApi = new GuardianClient("http://localhost:8001");
             var mediatorApi = new MediatorClient("http://localhost:8000");
-            var edesc = JsonSerializer.Deserialize<ElectionDescription>(description);
+            var edesc = JsonSerializer.Deserialize<ElectionDescription>(TestData.description);
             var guardians = new string[] { "A B", "C D", "E F", "G H", "I J" };
             var glist = new List<Guardian>();
             for (var i = 0; i < guardians.Length; i++)
@@ -443,8 +40,88 @@ namespace ElectionGuardWebAPIClientTests
                 g.Wait();
                 glist.Add(g.Result);
             }
-            var gpkeys = glist.ConvertAll(g => new ElectionPublicKey() { key = g.auxiliary_key_pair.public_key, proof g.auxiliary_key_pair.public_key });
-            mediatorApi.ElectionCombine(new CombineElectionKeysRequest() { election_public_keys = gpkeys });
+            var pkeys = glist.ConvertAll(g => g.election_key_pair.public_key).ToArray();
+            var elgpk = mediatorApi.ElectionCombine(new CombineElectionKeysRequest() { election_public_keys = pkeys });
+            elgpk.Wait();
+            var r = elgpk.Result;
+            var ctxtr = mediatorApi.ElectionContext(new ElectionContextRequest() { description = edesc, elgamal_public_key = elgpk.Result.joint_key, number_of_guardians = 5, quorum = 3 });
+            ctxtr.Wait();
+            var ctxt = ctxtr.Result;
+
+            var ballots = new PlaintextBallot[4];
+            for (int i = 0; i< ballots.Length; i++)
+            {
+                ballots[i] = JsonSerializer.Deserialize<PlaintextBallot>(TestData.ballotData);
+                ballots[i].object_id = $"ballot-{i}";
+            }
+
+            var nonce = "110191403412906482859082647039385908787148325839889522238592336039604240167009";
+            var seed_hash = "110191403412906482859082647039385908787148325839889522238592336039604240167009";
+
+            var segments = new[] { ballots[0..2], ballots[2..4]  };
+
+            var encballots = new List<CiphertextBallot>();
+
+            foreach (var s in segments)
+            {
+                var encr = mediatorApi.BallotEncrypt(new EncryptBallotsRequest() { ballots = s, context = ctxt, description = edesc, nonce = nonce, seed_hash = seed_hash });
+                encr.Wait();
+                var enc = encr.Result;
+                encballots.AddRange(enc.encrypted_ballots);
+                seed_hash = enc.next_seed_hash;
+            }
+
+            var spoiledballots = new List<CiphertextAcceptedBallot>();
+            var castedballots = new List<CiphertextAcceptedBallot>();
+
+            for (var i = 0; i < encballots.Count; i++)
+            {
+                if (i % 2 == 1)
+                {
+                    var spoilr = mediatorApi.BallotSpoil(new AcceptBallotRequest() { ballot = encballots[i], context = ctxt, description = edesc });
+                    spoilr.Wait();
+                    spoiledballots.Add(spoilr.Result);
+                }
+                else
+                {
+                    var castr = mediatorApi.BallotCast(new AcceptBallotRequest() { ballot = encballots[i], context = ctxt, description = edesc });
+                    castr.Wait();
+                    castedballots.Add(castr.Result);
+                }
+            }
+
+
+            var starttallyr = mediatorApi.Tally(new StartTallyRequest() { ballots = castedballots.Take(1).ToArray(), context = ctxt, description = edesc });
+            starttallyr.Wait();
+            var current_tally = starttallyr.Result;
+            var appendtallyr = mediatorApi.TallyAppend(new AppendTallyRequest() { ballots = castedballots.Skip(1).Take(1).ToArray(), context = ctxt, description = edesc, encrypted_tally = current_tally });
+            appendtallyr.Wait();
+            current_tally = appendtallyr.Result;
+
+            var tallyShares = new Dictionary<string, TallyDecryptionShare>();
+            foreach (var g in glist)
+            {
+                var decsr = guardianApi.TallyDecryptShare(new DecryptTallyShareRequest() { context = ctxt, description = edesc, encrypted_tally = current_tally, guardian = g });
+                decsr.Wait();
+                var share = decsr.Result;
+                tallyShares.Add(g.id, share);
+            }
+
+            var dectr = mediatorApi.TallyDecrypt(new DecryptTallyRequest() { context = ctxt, description = edesc, encrypted_tally = current_tally, shares = tallyShares });
+            dectr.Wait();
+            var plainTally = dectr.Result;
+
+            var ballotShares = new Dictionary<string, BallotDecryptionShare[]>();
+            foreach (var g in glist)
+            {
+                var decbr = guardianApi.BallotDecryptShares(new DecryptBallotSharesRequest() { context = ctxt, encrypted_ballots = spoiledballots.ToArray(), guardian = g });
+                decbr.Wait();
+                var share = decbr.Result;
+                ballotShares.Add(g.id, share.shares);
+            }
+            var decbar = mediatorApi.BallotDecrypt(new DecryptBallotsRequest() { context = ctxt, encrypted_ballots = spoiledballots.ToArray(), shares = ballotShares });
+            decbar.Wait();
+            var plainBallots = decbar.Result;
         }
     }
 }
