@@ -10,18 +10,14 @@ namespace ElectionGuardWebAPIClientTests
         public void PingMediator()
         {
             var client = new MediatorClient("http://localhost:8000");
-            var resp = client.Ping();
-            resp.Wait();
-            Assert.AreEqual("pong", resp.Result);
+            Assert.AreEqual("pong", client.Ping());
         }
 
         [TestMethod]
         public void PingGuardian()
         {
             var client = new GuardianClient("http://localhost:8001");
-            var resp = client.Ping();
-            resp.Wait();
-            Assert.AreEqual("pong", resp.Result);
+            Assert.AreEqual("pong", client.Ping());
         }
     }
 }

@@ -16,14 +16,7 @@ namespace ElectionGuardWebAPIClientTests
         {
             var client = new MediatorClient("http://localhost:8000");
             var e = JsonSerializer.Deserialize<ElectionDescription>(TestData.description);
-            var ec = new ElectionContextRequest();
-            ec.description = e;
-            ec.elgamal_public_key = "123455";
-            ec.number_of_guardians = 5;
-            ec.quorum = 3;
-            var pc = client.ElectionContext(ec);
-            pc.Wait();
-            Assert.AreEqual(new BigInteger(123455), pc.Result.elgamal_public_key);
+            Assert.AreEqual("123455", client.ElectionContext(e, "123455", 5, 3).elgamal_public_key);
         }
 
         [TestMethod]
@@ -36,17 +29,11 @@ namespace ElectionGuardWebAPIClientTests
             var glist = new List<Guardian>();
             for (var i = 0; i < guardians.Length; i++)
             {
-                var g = guardianApi.Guardian(new GuardianRequest() { id = guardians[i], sequence_order = i, number_of_guardians = 5, quorum = 3 });
-                g.Wait();
-                glist.Add(g.Result);
+                glist.Add(guardianApi.Guardian(null, null, guardians[i], 5, 3, i));
             }
             var pkeys = glist.ConvertAll(g => g.election_key_pair.public_key).ToArray();
-            var elgpk = mediatorApi.ElectionCombine(new CombineElectionKeysRequest() { election_public_keys = pkeys });
-            elgpk.Wait();
-            var r = elgpk.Result;
-            var ctxtr = mediatorApi.ElectionContext(new ElectionContextRequest() { description = edesc, elgamal_public_key = elgpk.Result.joint_key, number_of_guardians = 5, quorum = 3 });
-            ctxtr.Wait();
-            var ctxt = ctxtr.Result;
+            var r = mediatorApi.ElectionCombine(pkeys);
+            var ctxt = mediatorApi.ElectionContext(edesc, r.joint_key, 5, 3);
 
             var ballots = new PlaintextBallot[4];
             for (int i = 0; i< ballots.Length; i++)
@@ -64,9 +51,7 @@ namespace ElectionGuardWebAPIClientTests
 
             foreach (var s in segments)
             {
-                var encr = mediatorApi.BallotEncrypt(new EncryptBallotsRequest() { ballots = s, context = ctxt, description = edesc, nonce = nonce, seed_hash = seed_hash });
-                encr.Wait();
-                var enc = encr.Result;
+                var enc = mediatorApi.BallotEncrypt(s, ctxt, edesc, nonce, seed_hash);
                 encballots.AddRange(enc.encrypted_ballots);
                 seed_hash = enc.next_seed_hash;
             }
@@ -78,50 +63,33 @@ namespace ElectionGuardWebAPIClientTests
             {
                 if (i % 2 == 1)
                 {
-                    var spoilr = mediatorApi.BallotSpoil(new AcceptBallotRequest() { ballot = encballots[i], context = ctxt, description = edesc });
-                    spoilr.Wait();
-                    spoiledballots.Add(spoilr.Result);
+                    spoiledballots.Add(mediatorApi.BallotSpoil(encballots[i], ctxt, edesc));
                 }
                 else
                 {
-                    var castr = mediatorApi.BallotCast(new AcceptBallotRequest() { ballot = encballots[i], context = ctxt, description = edesc });
-                    castr.Wait();
-                    castedballots.Add(castr.Result);
+                    castedballots.Add(mediatorApi.BallotCast(encballots[i], ctxt, edesc));
                 }
             }
 
 
-            var starttallyr = mediatorApi.Tally(new StartTallyRequest() { ballots = castedballots.Take(1).ToArray(), context = ctxt, description = edesc });
-            starttallyr.Wait();
-            var current_tally = starttallyr.Result;
-            var appendtallyr = mediatorApi.TallyAppend(new AppendTallyRequest() { ballots = castedballots.Skip(1).Take(1).ToArray(), context = ctxt, description = edesc, encrypted_tally = current_tally });
-            appendtallyr.Wait();
-            current_tally = appendtallyr.Result;
+            var current_tally = mediatorApi.Tally(castedballots.Take(1).ToArray(), ctxt, edesc);
+            current_tally = mediatorApi.TallyAppend(castedballots.Skip(1).Take(1).ToArray(), ctxt, edesc, current_tally);
 
             var tallyShares = new Dictionary<string, TallyDecryptionShare>();
             foreach (var g in glist)
             {
-                var decsr = guardianApi.TallyDecryptShare(new DecryptTallyShareRequest() { context = ctxt, description = edesc, encrypted_tally = current_tally, guardian = g });
-                decsr.Wait();
-                var share = decsr.Result;
-                tallyShares.Add(g.id, share);
+                tallyShares.Add(g.id, guardianApi.TallyDecryptShare(ctxt, edesc, current_tally, g));
             }
 
-            var dectr = mediatorApi.TallyDecrypt(new DecryptTallyRequest() { context = ctxt, description = edesc, encrypted_tally = current_tally, shares = tallyShares });
-            dectr.Wait();
-            var plainTally = dectr.Result;
+            var plainTally = mediatorApi.TallyDecrypt(ctxt, edesc, current_tally, tallyShares);
 
             var ballotShares = new Dictionary<string, BallotDecryptionShare[]>();
             foreach (var g in glist)
             {
-                var decbr = guardianApi.BallotDecryptShares(new DecryptBallotSharesRequest() { context = ctxt, encrypted_ballots = spoiledballots.ToArray(), guardian = g });
-                decbr.Wait();
-                var share = decbr.Result;
+                var share = guardianApi.BallotDecryptShares(ctxt, spoiledballots.ToArray(), g);
                 ballotShares.Add(g.id, share.shares);
             }
-            var decbar = mediatorApi.BallotDecrypt(new DecryptBallotsRequest() { context = ctxt, encrypted_ballots = spoiledballots.ToArray(), shares = ballotShares });
-            decbar.Wait();
-            var plainBallots = decbar.Result;
+            var plainBallots = mediatorApi.BallotDecrypt(ctxt, spoiledballots.ToArray(), ballotShares);
         }
     }
 }
