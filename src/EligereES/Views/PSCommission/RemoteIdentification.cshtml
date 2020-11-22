@@ -1,5 +1,6 @@
-﻿@using EligereES.Models.DB
-@model (Person, Dictionary<Guid, Election>, int, Dictionary<PollingStationCommission, List<PollingStationCommissioner>>)
+﻿@using System.Linq 
+@using EligereES.Models.DB
+@model (Person, Dictionary<Guid, Election>, int, Dictionary<PollingStationCommission, List<RemoteIdentificationCommissioner>>)
 
 @{
     var (p, e, ae, l) = Model;
@@ -45,7 +46,7 @@
 
     function setAvailabilityState(state) {
         $.ajax({
-            url: '@(Url.Content("~"))/api/v1.0/PSCommission/StaffAvailability/?available=' + encodeURIComponent(state),
+            url: '@(Url.Content("~"))/api/v1.0/PSCommission/RemoteIdAvailability/?available=' + encodeURIComponent(state),
             method: 'PUT'
         }).done((v) => {
             $('#availableSwitch').prop("checked", v);
@@ -56,26 +57,26 @@
     @p.FirstName @p.LastName
 </div>
 <div class="text-center" style="margin-bottom: 60px;">
-    <h1 class="display-4">Commissione di seggio</h1>
+    <h1 class="display-4">Identificazione elettori</h1>
 </div>
 
 <div class="container">
     @if (ae > 0)
     {
-    <div class="row">
-        <div class="input-group col-1 offset-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" name="availability" id="availableSwitch" @(available ? "checked=\"\"" : "")  onchange="setAvailabilityState(this.checked)">
-                <label class="custom-control-label" for="availableSwitch">Disponibile</label>
+        <div class="row">
+            <div class="input-group col-1 offset-10">
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" name="availability" id="availableSwitch" @(available ? "checked=\"\"" : "") onchange="setAvailabilityState(this.checked)">
+                    <label class="custom-control-label" for="availableSwitch">Disponibile</label>
+                </div>
+            </div>
+            <div class="input-group mb-3 w-50 col-6 offset-3">
+                <input type="text" class="form-control" placeholder="Cerca CF elettore..." id="cfvoter" aria-label="Ricerca dell'elettore" aria-describedby="basic-addon2" onkeyup="completeVoter(this.value, 'completionlist', 'cfvoter', null)">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" onclick="GoRecognize()">Riconosci</button>
+                </div>
             </div>
         </div>
-        <div class="input-group mb-3 w-50 col-6 offset-3">
-            <input type="text" class="form-control" placeholder="Cerca CF elettore..." id="cfvoter" aria-label="Ricerca dell'elettore" aria-describedby="basic-addon2" onkeyup="completeVoter(this.value, 'completionlist', 'cfvoter', null)">
-            <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="button" onclick="GoRecognize()">Riconosci</button>
-            </div>
-        </div>
-    </div>
         <div id="completionlist" class="position-relative col-6 offset-3"></div>
 
         <!--Accordion wrapper-->
@@ -98,17 +99,12 @@
                 <div id="collapseOne1" class="collapse" role="tabpanel" aria-labelledby="headingOne1"
                      data-parent="#accordionEx">
                     <ul>
-                        @foreach (var psc in l.Keys.OrderBy(v => e[v.ElectionFk].PollStartDate).ThenBy(v => e[v.ElectionFk].Name))
+                        @foreach (var elk in e.Values.OrderBy(v => v.PollStartDate).ThenBy(v => v.Name))
                         {
-                            @if (e[psc.ElectionFk].Active)
+                            @if (elk.Active)
                             {
                                 <li>
-                                    @psc.Location 
-                                    <br/>
-                                    @if (psc.DigitalLocation != null)
-                                    {<a href="@psc.DigitalLocation" target="_blank"><em>@e[psc.ElectionFk].Name</em></a>}
-                                else
-                                {<span><em>@e[psc.ElectionFk].Name</em></span>}
+                                  @elk.Name
                                 </li>
                             }
                         }
@@ -142,12 +138,10 @@
                 <div id="collapseOne1" class="collapse show" role="tabpanel" aria-labelledby="headingOne1"
                      data-parent="#accordionEx">
                     <ul>
-                        @foreach (var psc in l.Keys.OrderBy(v => e[v.ElectionFk].PollStartDate).ThenBy(v => e[v.ElectionFk].Name))
+                        @foreach (var elk in e.Values.OrderBy(v => v.PollStartDate).ThenBy(v => v.Name))
                         {
                         <li>
-                            @psc.Location
-                            <br/>
-                            <em>@e[psc.ElectionFk].Name</em> [@e[psc.ElectionFk].PollStartDate - @e[psc.ElectionFk].PollEndDate]
+                            @(elk.Name) [@(elk.PollStartDate) - @(elk.PollEndDate)
                         </li>
                         }
                     </ul>

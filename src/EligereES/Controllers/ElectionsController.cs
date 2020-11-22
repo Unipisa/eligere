@@ -29,7 +29,7 @@ namespace EligereES.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var eSDB = _context.Election.Include(e => e.ElectionTypeFkNavigation).Include(e => e.PollingStationCommission).Include(e => e.Voter).Include(e => e.EligibleCandidate);
+            var eSDB = _context.Election.Include(e => e.ElectionTypeFkNavigation).Include(e => e.PollingStationCommission).Include(e => e.Voter).Include(e => e.BallotName);
             return View(await eSDB.ToListAsync());
         }
 
@@ -138,7 +138,7 @@ namespace EligereES.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddPSCommission(PollingStationCommissionUI comm, Guid presidentFK)
+        public async Task<IActionResult> AddPSCommission(PollingStationCommissionUI comm, Guid? presidentFK)
         {
             var c = new PollingStationCommission();
             c.Id = Guid.NewGuid();
@@ -147,14 +147,16 @@ namespace EligereES.Controllers
 
             await _context.SaveChangesAsync();
 
-            var memb = new PollingStationCommissioner();
-            memb.Id = Guid.NewGuid();
-            memb.PersonFk = presidentFK;
-            memb.PollingStationCommissionFk = c.Id;
+            if (presidentFK.HasValue) { 
+                var memb = new PollingStationCommissioner();
+                memb.Id = Guid.NewGuid();
+                memb.PersonFk = presidentFK.Value;
+                memb.PollingStationCommissionFk = c.Id;
 
-            c.PresidentFk = memb.Id;
-            _context.PollingStationCommissioner.Add(memb);
-            await _context.SaveChangesAsync();
+                c.PresidentFk = memb.Id;
+                _context.PollingStationCommissioner.Add(memb);
+                await _context.SaveChangesAsync();
+            }
             return RedirectToAction("EditPollingStations", new { id = comm.ElectionFk });
         }
 
@@ -313,7 +315,10 @@ namespace EligereES.Controllers
                 searchString = currentFilter;
             }
 
-            var people = from p in _context.Person join c in _context.EligibleCandidate on p.Id equals c.PersonFk where c.ElectionFk == id select p;
+            var people = from p in _context.Person 
+                         join c in _context.EligibleCandidate on p.Id equals c.PersonFk 
+                         join bn in _context.BallotName on c.BallotNameFk equals bn.Id 
+                         where bn.ElectionFk == id select p;
             if (!String.IsNullOrEmpty(searchString))
             {
                 people = people.Where(p => p.LastName.Contains(searchString) || p.FirstName.Contains(searchString) || p.PublicId.Contains(searchString));
@@ -351,7 +356,10 @@ namespace EligereES.Controllers
                     var companyId = csv.GetField<string>(2);
                     var publicId = csv.GetField<string>(3);
 
-                    var q = from p in _context.Person join c in _context.EligibleCandidate on p.Id equals c.PersonFk where c.ElectionFk == id select p;
+                    var q = from p in _context.Person 
+                            join c in _context.EligibleCandidate on p.Id equals c.PersonFk 
+                            join bn in _context.BallotName on c.BallotNameFk equals bn.Id
+                            where bn.ElectionFk == id select p;
                     // For the moment is a weak check before insert
                     if (await q.CountAsync(p => p.PublicId == publicId) > 0)
                     {
@@ -374,12 +382,19 @@ namespace EligereES.Controllers
                         }
                         else
                         {
+                            var ballotname = new BallotName()
+                            {
+                                Id = Guid.NewGuid(),
+                                BallotNameLabel = $"{p.LastName} {p.FirstName}",
+                                ElectionFk = id
+                            };
                             var toadd = new EligibleCandidate()
                             {
                                 Id = Guid.NewGuid(),
-                                ElectionFk = id,
+                                BallotNameFk = ballotname.Id,
                                 PersonFk = p.Id
                             };
+                            _context.BallotName.Add(ballotname);
                             _context.EligibleCandidate.Add(toadd);
                             result.Add((p, null, null));
                             // Add secure log entry here!
@@ -395,12 +410,14 @@ namespace EligereES.Controllers
         public async Task<IActionResult> RemoveCandidate(Guid electionid, Guid personid)
         {
             var cand = await (from c in _context.EligibleCandidate
-                       where c.ElectionFk == electionid && c.PersonFk == personid
-                       select c).FirstOrDefaultAsync();
+                              join bn in _context.BallotName on c.BallotNameFk equals bn.Id
+                              where bn.ElectionFk == electionid && c.PersonFk == personid
+                              select new { Candidate = c, Ballot = bn }).FirstOrDefaultAsync();
 
             if (cand == null) throw new Exception("Candidate not found");
 
-            _context.EligibleCandidate.Remove(cand);
+            _context.EligibleCandidate.Remove(cand.Candidate);
+            _context.BallotName.Remove(cand.Ballot);
             await _context.SaveChangesAsync();
             return RedirectToAction("Candidates", new { id = electionid });
         }
@@ -417,6 +434,141 @@ namespace EligereES.Controllers
             _context.Voter.Remove(v);
             await _context.SaveChangesAsync();
             return RedirectToAction("Voters", new { id = electionid });
+        }
+
+        [HttpGet("ClonePSCommissions")]
+        public async Task<IActionResult> ClonePSCommissions(Guid id)
+        {
+            var el = (await GetUpcomingElections()).Where(e => e.Id != id).OrderBy(e => e.Name);
+            var del = await _context.Election.FindAsync(id);
+            var list = new SelectList(el, "Id", "Name");
+            ViewData["dst"] = del;
+            return View(list);
+        }
+
+        [HttpPost("ClonePSCommissions")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClonePSCommissions(Guid src, Guid dst)
+        {
+            var srce = await _context.Election.FindAsync(src);
+            var dste = await _context.Election.FindAsync(dst);
+
+            var updatedgid = false;
+
+            var presidents = new Dictionary<PollingStationCommission, PollingStationCommissioner>();
+
+            if (srce.PollStartDate >= DateTime.Today)
+            {
+                if (srce.PollingStationGroupId.HasValue)
+                {
+                    dste.PollingStationGroupId = srce.PollingStationGroupId;
+                }
+                else
+                {
+                    var newgid = Guid.NewGuid();
+                    srce.PollingStationGroupId = newgid;
+                    dste.PollingStationGroupId = newgid;
+                    updatedgid = true;
+                }
+            }
+
+            var commissions = await (from c in _context.PollingStationCommission where c.ElectionFk == src select c).ToListAsync();
+
+            foreach (var com in commissions)
+            {
+                if (updatedgid) 
+                    com.PollingStationGroupId = srce.PollingStationGroupId;
+
+                var ncom = new PollingStationCommission()
+                {
+                    Id = Guid.NewGuid(),
+                    Location = com.Location,
+                    DigitalLocation = com.DigitalLocation,
+                    Description = com.Description,
+                    ElectionFk = dste.Id,
+                    PollingStationGroupId = com.PollingStationGroupId
+                };
+
+                _context.PollingStationCommission.Add(ncom);
+
+                var members = await (from m in _context.PollingStationCommissioner where m.PollingStationCommissionFk == com.Id select m).ToListAsync();
+
+                foreach (var mem in members)
+                {
+                    var nmem = new PollingStationCommissioner()
+                    {
+                        Id = Guid.NewGuid(),
+                        PersonFk = mem.PersonFk,
+                        AvailableForRemoteRecognition = mem.AvailableForRemoteRecognition,
+                        PollingStationCommissionFk = ncom.Id,
+                        VirtualRoom = mem.VirtualRoom
+                    };
+                    if (com.PresidentFk.HasValue && com.PresidentFk == mem.Id)
+                        presidents.Add(ncom, nmem);
+                    _context.PollingStationCommissioner.Add(nmem);
+                }
+
+                var remids = await (from m in _context.RemoteIdentificationCommissioner where m.PollingStationCommissionFk == com.Id select m).ToListAsync();
+
+                foreach (var remid in remids)
+                {
+                    var nremid = new RemoteIdentificationCommissioner()
+                    {
+                        Id = Guid.NewGuid(),
+                        PersonFk = remid.PersonFk,
+                        AvailableForRemoteRecognition = remid.AvailableForRemoteRecognition,
+                        PollingStationCommissionFk = ncom.Id,
+                        VirtualRoom = remid.VirtualRoom
+                    };
+                    _context.RemoteIdentificationCommissioner.Add(nremid);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Needed to avoid circular dependencies
+            foreach (var c in presidents.Keys)
+            {
+                c.PresidentFk = presidents[c].Id;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("EditPollingStations", new { id = dste.Id });
+        }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer)]
+        [HttpGet("Counters")]
+        public async Task<IActionResult> Counters()
+        {
+            var electionsq = from e in _context.Election
+                             where (e.Active)
+                             join v in _context.Voter on e.Id equals v.ElectionFk
+                             where v.Vote.HasValue
+                             select new { ElectionID = e.Id, ElectionName = e.Name, Vote = v.Vote };
+
+            var counters = new Dictionary<Guid, int>();
+            foreach (var v in await electionsq.ToListAsync())
+            {
+                if (!counters.ContainsKey(v.ElectionID))
+                    counters.Add(v.ElectionID, 0);
+                counters[v.ElectionID] = counters[v.ElectionID] + 1;
+            }
+
+            var names = (await _context.Election.Where(e => e.Active).ToListAsync());
+            var elnames = new Dictionary<Guid, string>();
+            foreach (var e in names) { elnames.Add(e.Id, e.Name); }
+
+            return View((counters, elnames));
+        }
+
+        private async Task<List<Election>> GetUpcomingElections()
+        {
+            var q = from e in _context.Election
+                    where e.PollStartDate >= DateTime.Today
+                    select e;
+
+            return await q.ToListAsync();
         }
 
         private bool ElectionExists(Guid id)

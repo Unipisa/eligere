@@ -15,18 +15,21 @@ namespace EligereES.Models.DB
         {
         }
 
+        public virtual DbSet<BallotName> BallotName { get; set; }
         public virtual DbSet<Election> Election { get; set; }
         public virtual DbSet<ElectionRole> ElectionRole { get; set; }
         public virtual DbSet<ElectionStaff> ElectionStaff { get; set; }
         public virtual DbSet<ElectionType> ElectionType { get; set; }
         public virtual DbSet<EligibleCandidate> EligibleCandidate { get; set; }
         public virtual DbSet<Log> Log { get; set; }
+        public virtual DbSet<Party> Party { get; set; }
         public virtual DbSet<Person> Person { get; set; }
         public virtual DbSet<PollingStationCommission> PollingStationCommission { get; set; }
         public virtual DbSet<PollingStationCommissioner> PollingStationCommissioner { get; set; }
         public virtual DbSet<PollingStationSystem> PollingStationSystem { get; set; }
         public virtual DbSet<Recognition> Recognition { get; set; }
         public virtual DbSet<RelPollingStationSystemPollingStationCommission> RelPollingStationSystemPollingStationCommission { get; set; }
+        public virtual DbSet<RemoteIdentificationCommissioner> RemoteIdentificationCommissioner { get; set; }
         public virtual DbSet<TempCell> TempCell { get; set; }
         public virtual DbSet<UserLogin> UserLogin { get; set; }
         public virtual DbSet<Voter> Voter { get; set; }
@@ -43,13 +46,33 @@ namespace EligereES.Models.DB
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Election>(entity =>
+            modelBuilder.Entity<BallotName>(entity =>
             {
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
-                entity.Property(e => e.Active)
+                entity.Property(e => e.BallotNameLabel)
                     .IsRequired()
-                    .HasDefaultValueSql("((1))");
+                    .HasMaxLength(512);
+
+                entity.Property(e => e.ElectionFk).HasColumnName("Election_FK");
+
+                entity.Property(e => e.PartyFk).HasColumnName("Party_FK");
+
+                entity.HasOne(d => d.ElectionFkNavigation)
+                    .WithMany(p => p.BallotName)
+                    .HasForeignKey(d => d.ElectionFk)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_BallotName_ToElection");
+
+                entity.HasOne(d => d.PartyFkNavigation)
+                    .WithMany(p => p.BallotName)
+                    .HasForeignKey(d => d.PartyFk)
+                    .HasConstraintName("FK_BallotName_ToParty");
+            });
+
+            modelBuilder.Entity<Election>(entity =>
+            {
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Configuration).IsRequired();
 
@@ -123,15 +146,15 @@ namespace EligereES.Models.DB
             {
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
-                entity.Property(e => e.ElectionFk).HasColumnName("Election_FK");
+                entity.Property(e => e.BallotNameFk).HasColumnName("BallotName_FK");
 
                 entity.Property(e => e.PersonFk).HasColumnName("Person_FK");
 
-                entity.HasOne(d => d.ElectionFkNavigation)
+                entity.HasOne(d => d.BallotNameFkNavigation)
                     .WithMany(p => p.EligibleCandidate)
-                    .HasForeignKey(d => d.ElectionFk)
+                    .HasForeignKey(d => d.BallotNameFk)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_EligibleCandidate_ToElection");
+                    .HasConstraintName("FK_EligibleCandidate_ToBallotName");
 
                 entity.HasOne(d => d.PersonFkNavigation)
                     .WithMany(p => p.EligibleCandidate)
@@ -161,6 +184,15 @@ namespace EligereES.Models.DB
                     .HasForeignKey(d => d.PersonFk)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Log_ToPerson");
+            });
+
+            modelBuilder.Entity<Party>(entity =>
+            {
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(512);
             });
 
             modelBuilder.Entity<Person>(entity =>
@@ -242,6 +274,10 @@ namespace EligereES.Models.DB
 
                 entity.Property(e => e.Otp).HasColumnName("OTP");
 
+                entity.Property(e => e.RemoteIdentification)
+                    .IsRequired()
+                    .HasDefaultValueSql("((1))");
+
                 entity.Property(e => e.State).HasComment("0:Login;1:Recognized;2:Activated(byOTP)");
 
                 entity.Property(e => e.UserId).IsRequired();
@@ -268,6 +304,29 @@ namespace EligereES.Models.DB
                     .HasForeignKey(d => d.PollingStationSystemFk)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_RelPollingStationSystemPollingStationCommission_ToPollingStationSystem");
+            });
+
+            modelBuilder.Entity<RemoteIdentificationCommissioner>(entity =>
+            {
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.PersonFk).HasColumnName("Person_FK");
+
+                entity.Property(e => e.PollingStationCommissionFk).HasColumnName("PollingStationCommission_FK");
+
+                entity.Property(e => e.VirtualRoom).IsRequired();
+
+                entity.HasOne(d => d.PersonFkNavigation)
+                    .WithMany(p => p.RemoteIdentificationCommissioner)
+                    .HasForeignKey(d => d.PersonFk)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_RemoteIdentificationCommissioner_ToPerson");
+
+                entity.HasOne(d => d.PollingStationCommissionFkNavigation)
+                    .WithMany(p => p.RemoteIdentificationCommissioner)
+                    .HasForeignKey(d => d.PollingStationCommissionFk)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_RemoteIdentificationCommissioner_ToPollingStationCommission");
             });
 
             modelBuilder.Entity<TempCell>(entity =>
@@ -312,6 +371,9 @@ namespace EligereES.Models.DB
 
             modelBuilder.Entity<Voter>(entity =>
             {
+                entity.HasIndex(e => e.Id)
+                    .HasName("IX_Voter");
+
                 entity.Property(e => e.Id).ValueGeneratedNever();
 
                 entity.Property(e => e.ElectionFk).HasColumnName("Election_FK");
@@ -349,10 +411,6 @@ namespace EligereES.Models.DB
 
             modelBuilder.Entity<VotingTicket>(entity =>
             {
-                entity.HasIndex(e => e.Hash)
-                    .HasName("AK_VotingTicket_Hash")
-                    .IsUnique();
-
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Content).IsRequired();

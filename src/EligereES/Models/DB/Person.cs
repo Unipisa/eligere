@@ -11,6 +11,7 @@ namespace EligereES.Models.DB
             EligibleCandidate = new HashSet<EligibleCandidate>();
             Log = new HashSet<Log>();
             PollingStationCommissioner = new HashSet<PollingStationCommissioner>();
+            RemoteIdentificationCommissioner = new HashSet<RemoteIdentificationCommissioner>();
             UserLogin = new HashSet<UserLogin>();
             Voter = new HashSet<Voter>();
         }
@@ -27,6 +28,7 @@ namespace EligereES.Models.DB
         public virtual ICollection<EligibleCandidate> EligibleCandidate { get; set; }
         public virtual ICollection<Log> Log { get; set; }
         public virtual ICollection<PollingStationCommissioner> PollingStationCommissioner { get; set; }
+        public virtual ICollection<RemoteIdentificationCommissioner> RemoteIdentificationCommissioner { get; set; }
         public virtual ICollection<UserLogin> UserLogin { get; set; }
         public virtual ICollection<Voter> Voter { get; set; }
     }

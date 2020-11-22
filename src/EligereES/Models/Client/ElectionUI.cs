@@ -44,7 +44,7 @@ namespace EligereES.Models.Client
 
         public DateTime PollStartDate { get; set; }
         public DateTime PollEndDate { get; set; }
-        public bool? Active { get; set; }
+        public bool Active { get; set; }
         public DateTime? ElectorateListClosingDate { get; set; }
         public Guid? ElectionTypeFk { get; set; }
 

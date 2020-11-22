@@ -1,0 +1,106 @@
+﻿@using EligereES.Models.DB
+@model (Person, List<Election>)
+
+@{
+    var (p, e) = Model;
+    var check = e.Where(el => el.Active).Any();
+}
+
+<div class="text-right">
+    @p.FirstName @p.LastName
+</div>
+<div class="text-center" style="margin-bottom: 60px;">
+    <h1 class="display-4">Controllo elezioni</h1>
+</div>
+
+<div class="container">
+    <form method="post" asp-action="ElectionControl" id="state">
+        <div class="row" style="margin-bottom: 60px;">
+            <div class="input-group col-4 offset-4">
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" name="state" id="customSwitch1" @(check ? "checked=\"\"" : "") onchange="document.getElementById('state').submit()">
+                    <label class="custom-control-label" for="customSwitch1">Stato apertura seggi</label>
+                </div>
+            </div>
+        </div>
+    </form>
+    @if (check)
+    {
+        <!--Accordion wrapper-->
+        <div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
+
+            <!-- Accordion card -->
+            <div class="card">
+
+                <!-- Card header -->
+                <div class="card-header" role="tab" id="headingOne1">
+                    <a data-toggle="collapse" data-parent="#accordionEx" href="#collapseOne1" aria-expanded="true"
+                       aria-controls="collapseOne1">
+                        <h5 class="mb-0">
+                            Elezioni<i class="fas fa-angle-down rotate-icon"></i>
+                        </h5>
+                    </a>
+                </div>
+
+                <!-- Card body -->
+                <div id="collapseOne1" class="collapse show" role="tabpanel" aria-labelledby="headingOne1"
+                     data-parent="#accordionEx">
+                    <ul>
+                        @foreach (var el in e.OrderBy(e => e.PollStartDate).ThenBy(e => e.Name))
+                        {
+                            <li>
+                                @el.Name
+                                @if (el.Active)
+                                {
+                                    <span><b>Attiva</b></span>
+                                }
+                                else
+                                {
+                                    <span>Non attiva (@el.PollStartDate - @el.PollEndDate)</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <!-- Accordion wrapper -->
+    }
+    else
+    {
+        <!--Accordion wrapper-->
+        <div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
+
+            <!-- Accordion card -->
+            <div class="card">
+
+                <!-- Card header -->
+                <div class="card-header" role="tab" id="headingOne1">
+                    <a data-toggle="collapse" data-parent="#accordionEx" href="#collapseOne1" aria-expanded="true"
+                       aria-controls="collapseOne1">
+                        <h5 class="mb-0">
+                            Elezioni<i class="fas fa-angle-down rotate-icon"></i>
+                        </h5>
+                    </a>
+                </div>
+
+                <!-- Card body -->
+                <div id="collapseOne1" class="collapse show" role="tabpanel" aria-labelledby="headingOne1"
+                     data-parent="#accordionEx">
+                    <ul>
+                        @foreach (var el in e.OrderBy(e => e.PollStartDate).ThenBy(e => e.Name))
+                        {
+                            <li>
+                                @el.Name (@el.PollStartDate - @el.PollEndDate)
+                            </li>
+                        }
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        <!-- Accordion wrapper -->
+    }
+</div>
+

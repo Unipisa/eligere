@@ -1,0 +1,26 @@
+﻿@using EligereES.Models.DB
+
+@model SelectList
+
+@{
+    ViewData["Title"] = "Clone polling station commission";
+    var dst = ViewData["dst"] as Election;
+    var elements = Model;
+}
+
+<h1>Clone polling station commissions</h1>
+<h4>Election: @dst.Name</h4>
+
+Select an election to be used as a source, elections will be grouped in the same group as the source.
+
+<form asp-action="ClonePSCommissions">
+    <input type="hidden" name="dst" value="@dst.Id"/>
+    <div class="form-group">
+        <label class="control-label">Select election</label>
+        <select class="form-control" name="src" asp-items="elements"></select>
+    </div>
+    <div class="form-group">
+        <input type="submit" value="Clone" class="btn btn-primary" />
+    </div>
+</form>
+

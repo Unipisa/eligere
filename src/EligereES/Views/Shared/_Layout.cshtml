@@ -37,6 +37,12 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="PSCommission" asp-action="Index">Seggio</a>
                             </li>
                         }
+                        @if (this.User.IsInRole(EligereRoles.RemoteIdentificationOfficer) || this.User.IsInRole(EligereRoles.Admin))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="PSCommission" asp-action="RemoteIdentification">Riconoscimento</a>
+                            </li>
+                        }
                         @*<li class="nav-item">
             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </li>*@

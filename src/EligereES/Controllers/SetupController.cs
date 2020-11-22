@@ -97,6 +97,10 @@ namespace EligereES.Controllers
             return RedirectToAction("Index");
         }
 
-
+        [AuthorizeRoles(EligereRoles.Admin)]
+        public IActionResult UpgradeDB()
+        {
+            return Ok();
+        }
     }
 }

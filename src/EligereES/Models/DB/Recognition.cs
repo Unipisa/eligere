@@ -19,6 +19,7 @@ namespace EligereES.Models.DB
         public string AccountProvider { get; set; }
         public string UserId { get; set; }
         public int State { get; set; }
+        public bool? RemoteIdentification { get; set; }
 
         public virtual ICollection<Voter> Voter { get; set; }
     }

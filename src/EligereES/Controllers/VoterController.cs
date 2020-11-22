@@ -25,6 +25,7 @@ namespace EligereES.Controllers
     [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin, EligereRoles.Voter)]
     public class VoterController : Controller
     {
+        private static Random rnd = new Random();
         private ESDB _context;
         private string contentRootPath;
         private IDataProtectionProvider dataprotection;
@@ -54,21 +55,24 @@ namespace EligereES.Controllers
             var psqdata = (await psq.ToListAsync()).GroupBy(v => v.ElectionFk);
 
             var d = from v in qd
-                    join s in psqdata on v.Election.Id equals s.Key
-                    select new  { Voter = v.Voter, Election = v.Election, Past = v.Past, HasVoted = v.HasVoted, Commission = s.ToList() };
+                    join s in psqdata on v.Election.Id equals s.Key into comm
+                    from sc in comm.DefaultIfEmpty()
+                    select new { Voter = v.Voter, Election = v.Election, Past = v.Past, HasVoted = v.HasVoted, Commission = sc?.ToList() ?? new List<PollingStationCommission>() };
 
             var data = d.ToList().ConvertAll(v => (v.Voter, v.Election, v.Commission, v.Past, v.HasVoted));
 
+            var activeel = data.Where(d => !d.Past).ToList();
+
             // integrity check for multiple elections and commissions
-            if (data.Count > 0)
+            if (activeel.Count > 1)
             {
                 // integrity check for multiple elections and commissions
-                var eg = data[0].Election.PollingStationGroupId;
-                for (var i = 1; i < data.Count; i++)
-                    if (data[i].Election.PollingStationGroupId != eg) 
-                        throw new Exception("Internal error: multiple election groups for voter " + data[i].Voter.PersonFk);
+                var eg = activeel[0].Election.PollingStationGroupId;
+                for (var i = 1; i < activeel.Count; i++)
+                    if (activeel[i].Election.PollingStationGroupId != eg) 
+                        throw new Exception("Internal error: multiple election groups for voter " + activeel[i].Voter.PersonFk);
 
-                foreach (var vd in data)
+                foreach (var vd in activeel)
                 {
                     foreach (var pc in vd.Commission)
                     {
@@ -99,6 +103,45 @@ namespace EligereES.Controllers
             var person = await _context.Person.FirstAsync(p => p.PublicId == id);
 
             return View("Index", (ReadElectionConf(), person, await GetElections(person)));
+        }
+
+        [HttpGet("IdentificationLink")]
+        public async Task<IActionResult> IdentificationLink()
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+
+            var person = await pq.FirstAsync();
+
+            var comm = new List<Guid>();
+
+            foreach (var (voter, election, commissions, past, voted) in await GetElections(person))
+            {
+                if (election.Active && !voted.HasValue)
+                {
+                    foreach (var c in commissions)
+                    {
+                        comm.Add(c.Id);
+                    }
+                }
+            }
+
+            var ids = await (from psc in _context.PollingStationCommissioner
+                              where comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
+                              select psc.VirtualRoom).Distinct().ToListAsync();
+            var rids = await (from psc in _context.RemoteIdentificationCommissioner
+                              where comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
+                              select psc.VirtualRoom).Distinct().ToListAsync();
+
+            ids.AddRange(rids);
+
+            return Redirect(ids[rnd.Next(ids.Count)]);
         }
 
         public async Task<IActionResult> Index()

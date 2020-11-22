@@ -37,12 +37,14 @@
     </div>
 }
 
-<p>Bevenuto/a @if (new PersonAttributes(voter).IsProfessor())
-{<span><i>Prof.</i></span>} <i>@voter.FirstName @voter.LastName</i></p>
+<p>
+    Bevenuto/a @if (new PersonAttributes(voter).IsProfessor())
+    {<span><i>Prof.</i></span>} <i>@voter.FirstName @voter.LastName</i>
+</p>
 
 @if (availableVotes.Where(v => !v.Item4).Count() > 0)
 {
-    @if (availableVotes.Where(v => !v.Item5.HasValue && (v.Item2.Active ?? false)).Count() > 0)
+    @if (availableVotes.Where(v => !v.Item5.HasValue && v.Item2.Active && !v.Item4).Count() > 0)
     {
         <script type="text/javascript">
     function vote() {
@@ -72,7 +74,7 @@
                         </button>
                     </div>
                     <div class="modal-body text-center">
-                        <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a><br /> per l'identificazione e la generazione dell'OTP</em></p>
+                        <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@(Url.Content("~"))/Voter/IdentificationLink" style="text-decoration: underline" target="_blank">per procedere al riconoscimento</a><br /> per l'identificazione e la generazione dell'OTP</em></p>
                         <hr />
                         <div class="input-group mb-3 w-75 offset-2">
                             <input type="text" class="form-control" placeholder="Codice accesso" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
@@ -81,7 +83,7 @@
                             </div>
                         </div>
                         <p>Inserire il codice OTP ricevuto via SMS.</p>
-                        <p><em>In caso di mancata ricezione dell'SMS contattare 050-2212653</em></p>
+                        <p><em>In caso di mancata ricezione dell'SMS contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
                     </div>
                     <div class="modal-footer">
                         &nbsp;
@@ -107,8 +109,10 @@
             @foreach (var (v, e, com, p, hasVoted) in availableVotes.Where(a => { var (v, e, c, p, d) = a; return !p; }))
             {
                 <tr>
-                    <td>@e.Name@if (hasVoted.HasValue)
-                    {<p>Votato il @hasVoted.Value</p>}</td>
+                    <td>
+                        @e.Name@if (hasVoted.HasValue)
+                        {<p>Votato il @hasVoted.Value</p>}
+                    </td>
                     <td>@e.PollStartDate</td>
                     <td>@e.PollEndDate</td>
                     <td>
@@ -126,4 +130,34 @@
             }
         </tbody>
     </table>
+    @if (availableVotes.Where(a => { var (v, e, c, p, d) = a; return p; }).Any())
+    {
+
+        <h3>Elezioni passate</h3>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Elezione</th>
+                    <th scope="col">Apertura seggio</th>
+                    <th scope="col">Chiusura seggio</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (v, e, com, p, hasVoted) in availableVotes.Where(a => { var (v, e, c, p, d) = a; return p; }))
+                {
+                    <tr>
+                        <td>
+                            @e.Name@if (hasVoted.HasValue)
+                            {<p>Votato il @hasVoted.Value</p>}
+                        else
+                        { <p>Non ha votato</p>}
+                        </td>
+                        <td>@e.PollStartDate</td>
+                        <td>@e.PollEndDate</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
 }

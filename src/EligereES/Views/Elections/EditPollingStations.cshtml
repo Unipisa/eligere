@@ -113,7 +113,8 @@
 @if (Model.Count == 0)
 {
     <p>There are no polling stations configured for election <em>@ViewData["ElectionName"]</em></p>
-    <p>Add a <a href="javascript:$('#newcommissionform').modal('show')">new polling station commission</a> to start</p>
+    <p>Add a <a href="javascript:$('#newcommissionform').modal('show')">new polling station commission</a> to start
+    or <a asp-controller="Elections" asp-action="ClonePSCommissions" asp-route-id="@ViewData["ElectionId"]">clone</a> one from another election</p>
 }
 else
 {

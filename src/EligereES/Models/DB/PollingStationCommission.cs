@@ -9,6 +9,7 @@ namespace EligereES.Models.DB
         {
             PollingStationCommissioner = new HashSet<PollingStationCommissioner>();
             RelPollingStationSystemPollingStationCommission = new HashSet<RelPollingStationSystemPollingStationCommission>();
+            RemoteIdentificationCommissioner = new HashSet<RemoteIdentificationCommissioner>();
         }
 
         public Guid Id { get; set; }
@@ -23,5 +24,6 @@ namespace EligereES.Models.DB
         public virtual PollingStationCommissioner PresidentFkNavigation { get; set; }
         public virtual ICollection<PollingStationCommissioner> PollingStationCommissioner { get; set; }
         public virtual ICollection<RelPollingStationSystemPollingStationCommission> RelPollingStationSystemPollingStationCommission { get; set; }
+        public virtual ICollection<RemoteIdentificationCommissioner> RemoteIdentificationCommissioner { get; set; }
     }
 }

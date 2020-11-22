@@ -1,0 +1,69 @@
+﻿@using EligereES.Models.DB
+
+@model (Person, Dictionary<Guid, Election>, int, List<Voter>)
+
+@{ var (voter, elections, ae, allowedVotes) = Model; }  
+
+<div class="container">
+    <h1 class="display-4" style="font-size: 1.5rem;">Elettore @Model.Item1.FirstName @Model.Item1.LastName (@Model.Item1.PublicId )</h1>
+
+    @*Assumption: OTP and expiration for all allowed votes are the same in case of election day*@
+    @if (allowedVotes.Count == 0)
+    {
+        <p>Elettore non abilitato al voto</p>
+    }
+    else if (allowedVotes[0].RecognitionFk != null && (!allowedVotes[0].RecognitionFkNavigation.Validity.HasValue || allowedVotes[0].RecognitionFkNavigation.Validity.Value > DateTime.Now))
+    {
+        <h1 class="text-center display-4">@allowedVotes[0].RecognitionFkNavigation.Otp</h1>
+        <p>La sessione scadr&agrave; alle @allowedVotes[0].RecognitionFkNavigation.Validity.Value</p>
+    }
+    else
+    {
+        <form method="post" asp-controller="PSCommission" asp-action="Identify">
+            <div class="row offset-1" style="margin-top: 64px;">
+                <fieldset>
+                    <div class="form-group row">
+                        <label for="mobile" class="col-form-label">Numero di cellulare</label>
+                        <div class="col-10">
+                            <input type="text" class="form-control" name="mobile" id="mobile" value="@(voter.GetPersonAttributes().Mobile != null ? voter.GetPersonAttributes().Mobile : "+39")">
+                        </div>
+                    </div>
+                    @if (User.IsInRole(EligereRoles.PollingStationStaff))
+                    {
+                        <div class="form-group row">
+                            <label for="remote" class="col-form-label">Riconoscimento a distanza</label>
+                            <div class="col-2">
+                                <input type="checkbox" class="form-control" name="remote" id="remote" checked="checked">
+                            </div>
+                        </div>
+
+                    }
+                    <div class="form-group row">
+                        <label for="rectype" class="col-form-label">Tipo di riconoscimento</label>
+                        <select id="rectype" name="rectype" class="custom-select">
+                            <option value="KnownPerson" selected="">Riconoscimento di persona</option>
+                            <option value="ID">Carta di identit&agrave;</option>
+                            <option value="Passport">Passaporto</option>
+                            <option value="DrivingLicense">Patente</option>
+                        </select>
+                    </div>
+                    <div class="form-group row">
+                        <label for="idnum" class="col-form-label">Numero documento</label>
+                        <div class="col-10">
+                            <input type="text" name="idnum" class="form-control" id="idnum" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="idexp" class="col-form-label">Scadenza documento</label>
+                        <div class="col-10">
+                            <input type="date" class="form-control" name="idexp" id="idexp" value="">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <button type="submit" class="btn btn-primary">Riconosci</button>
+                    </div>
+                </fieldset>
+            </div>
+        </form>
+    }
+</div>

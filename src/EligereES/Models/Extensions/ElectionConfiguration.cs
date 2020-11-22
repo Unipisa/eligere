@@ -44,6 +44,10 @@ namespace EligereES.Models.Extensions
 
         public bool WeightedVoters { get; set; }
 
+        public int NumPreferences { get; set; }
+
+        public bool HasCandidates { get; set; }
+
         public int EligibleSeats { get; set; }
     }
 }

@@ -16,7 +16,6 @@ using Microsoft.Extensions.Configuration;
 namespace EligereES.Controllers
 {
     [Route("PSCommission")]
-    [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff)]
     public class PSCommissionController : Controller
     {
         private ESDB _context;
@@ -45,7 +44,7 @@ namespace EligereES.Controllers
                 if (!psd.ContainsKey(p.Commission)) psd.Add(p.Commission, new List<PollingStationCommissioner>());
                 psd[p.Commission].Add(p.Member);
                 if (!e.Contains(p.Election)) e.Add(p.Election);
-                if (p.Election.Active ?? false)
+                if (p.Election.Active)
                 {
                     if (!ae.Contains(p.Election)) ae.Add(p.Election);
                 }
@@ -67,10 +66,51 @@ namespace EligereES.Controllers
                 }
             }
 
+            return (person, elections, ae.Count, psd);
+        }
+
+        private async Task<(Person, Dictionary<Guid, Election>, int, Dictionary<PollingStationCommission, List<RemoteIdentificationCommissioner>>)> GetElectionDataForRemoteIdentificationOfficer(Person person)
+        {
+            var psc = from c in _context.PollingStationCommission
+                      join cc in _context.RemoteIdentificationCommissioner on c.Id equals cc.PollingStationCommissionFk
+                      join el in _context.Election on c.ElectionFk equals el.Id
+                      where cc.PersonFk == person.Id
+                      select new { Election = el, Commission = c, Member = cc };
+
+            var psd = new Dictionary<PollingStationCommission, List<RemoteIdentificationCommissioner>>();
+            var e = new List<Election>();
+            var ae = new List<Election>();
+            foreach (var p in await psc.ToListAsync())
+            {
+                if (!psd.ContainsKey(p.Commission)) psd.Add(p.Commission, new List<RemoteIdentificationCommissioner>());
+                psd[p.Commission].Add(p.Member);
+                if (!e.Contains(p.Election)) e.Add(p.Election);
+                if (p.Election.Active)
+                {
+                    if (!ae.Contains(p.Election)) ae.Add(p.Election);
+                }
+            }
+
+            var elections = e.ToDictionary(e => e.Id);
+            
+            if (psd.Count > 1)
+            {
+                var pg = psd.Keys.GroupBy(psc => psc.PollingStationGroupId);
+                if (pg.Count() > 1)
+                    throw new Exception("Internal error: contact support - (Too many PollingStationGroupId for commissioner)");
+                if (pg.First().Key == null)
+                    throw new Exception("Internal error: contact support - (Many elections with empty PollingStationGroupId for commissioner)");
+                foreach (var ps in psd.Keys)
+                {
+                    if (ps.PollingStationGroupId != elections[ps.ElectionFk].PollingStationGroupId)
+                        throw new Exception("Internal error: contact support - (The election PollingStationGroupId does not match the commission one)");
+                }
+            }
 
             return (person, elections, ae.Count, psd);
         }
 
+        [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff)]
         public async Task<IActionResult> Index()
         {
             var pq = from p in _context.Person
@@ -82,12 +122,48 @@ namespace EligereES.Controllers
                 throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
             
             var person = await pq.FirstAsync();
+            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var today = DateTime.Today;
+            var available = await (from pc in _context.PollingStationCommissioner
+                                   join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id
+                                   join e in _context.Election on c.ElectionFk equals e.Id
+                                   where e.PollStartDate <= now && e.PollEndDate > today && pc.PersonFk == person.Id && pc.AvailableForRemoteRecognition
+                                   select pc).AnyAsync();
+
+            ViewData["available"] = available;
 
             return View( await GetElectionData(person) );
         }
+        
+        [HttpGet("RemoteIdentification")]
+        [AuthorizeRoles(EligereRoles.RemoteIdentificationOfficer)]
+        public async Task<IActionResult> RemoteIdentification()
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
 
-        [HttpGet("Recognize/{id}")]
-        public async Task<IActionResult> Recognize(string id)
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var today = DateTime.Today;
+            var available = await (from pc in _context.RemoteIdentificationCommissioner
+                                   join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id
+                                   join e in _context.Election on c.ElectionFk equals e.Id
+                                   where e.PollStartDate <= now && e.PollEndDate > today && pc.PersonFk == person.Id && pc.AvailableForRemoteRecognition
+                                   select pc).AnyAsync();
+
+            ViewData["available"] = available;
+
+            return View(await GetElectionDataForRemoteIdentificationOfficer(person));
+        }
+
+        [HttpGet("Identify/{id}")]
+        [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff, EligereRoles.RemoteIdentificationOfficer)]
+        public async Task<IActionResult> Identify(string id)
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
@@ -102,9 +178,23 @@ namespace EligereES.Controllers
             var voter = await _context.Person.FirstOrDefaultAsync(p => p.PublicId == id);
             if (voter == null) return NotFound("PublicId not found");
 
-            var (per, elections, ae, psd) = await GetElectionData(person);
-
-            var electionKeys = elections.Keys.ToList();
+            List<Guid> electionKeys = null;
+            Dictionary<Guid, Election> elections = null;
+            int ae = 0;
+            if (this.User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
+            {
+                var (per, relections, rae, psd) = await GetElectionDataForRemoteIdentificationOfficer(person);
+                electionKeys = relections.Keys.ToList();
+                elections = relections;
+                ae = rae;
+            }
+            else
+            {
+                var (per, celections, cae, psd) = await GetElectionData(person);
+                electionKeys = celections.Keys.ToList();
+                elections = celections;
+                ae = cae;
+            }
 
             var availableVotes = await (from v in _context.Voter
                                  where electionKeys.Contains(v.ElectionFk) && v.PersonFk == voter.Id
@@ -129,9 +219,10 @@ namespace EligereES.Controllers
             return ret.ToString();
         }
 
-        [HttpPost("Recognize/{id}")]
+        [HttpPost("Identify/{id}")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Recognize(string id, string mobile, string rectype, string idnum, DateTime? idexp)
+        [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff, EligereRoles.RemoteIdentificationOfficer)]
+        public async Task<IActionResult> Identify(string id, string mobile, string remote, string rectype, string idnum, DateTime? idexp)
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
@@ -146,9 +237,23 @@ namespace EligereES.Controllers
             var voter = await _context.Person.FirstOrDefaultAsync(p => p.PublicId == id);
             if (voter == null) return NotFound("PublicId not found");
 
-            var (per, elections, ae, psd) = await GetElectionData(person);
-
-            var electionKeys = elections.Keys.ToList();
+            List<Guid> electionKeys = null;
+            Dictionary<Guid, Election> elections = null;
+            int ae = 0;
+            if (this.User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
+            {
+                var (per, relections, rae, psd) = await GetElectionDataForRemoteIdentificationOfficer(person);
+                electionKeys = relections.Keys.ToList();
+                elections = relections;
+                ae = rae;
+            }
+            else
+            {
+                var (per, celections, cae, psd) = await GetElectionData(person);
+                electionKeys = celections.Keys.ToList();
+                elections = celections;
+                ae = cae;
+            }
 
             var availableVotes = await (from v in _context.Voter
                                         where electionKeys.Contains(v.ElectionFk) && v.PersonFk == voter.Id
@@ -184,6 +289,13 @@ namespace EligereES.Controllers
                 recognition.Otp = otp;
                 recognition.State = 0;
                 recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                if (User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
+                {
+                    recognition.RemoteIdentification = true;
+                } else
+                {
+                    recognition.RemoteIdentification = remote == "on";
+                }
 
                 if (rectype != "KnownPerson")
                 {
@@ -202,7 +314,7 @@ namespace EligereES.Controllers
                 var resp = req.GetResponse();
             }
 
-            return RedirectToAction("Recognize", new { id = id });
+            return RedirectToAction("Identify", new { id = id });
         }
 
         [AuthorizeRoles(EligereRoles.PollingStationStaff)]
@@ -210,7 +322,7 @@ namespace EligereES.Controllers
         public async Task<IActionResult> Counters()
         {
             var electionsq = from e in _context.Election
-                            where (e.Active ?? false)
+                            where (e.Active)
                             join v in _context.Voter on e.Id equals v.ElectionFk
                             where v.Vote.HasValue
                             select new { ElectionID = e.Id, ElectionName = e.Name,  Vote = v.Vote };
@@ -223,11 +335,100 @@ namespace EligereES.Controllers
                 counters[v.ElectionID] = counters[v.ElectionID] + 1;
             }
 
-            var names = (await _context.Election.Where(e => (e.Active ?? false)).ToListAsync());
+            var names = (await _context.Election.Where(e => e.Active).ToListAsync());
             var elnames = new Dictionary<Guid, string>();
             foreach (var e in names) { elnames.Add(e.Id, e.Name); }
 
             return View((counters, elnames));
+        }
+
+        [AuthorizeRoles(EligereRoles.PollingStationPresident)]
+        [HttpGet("ElectionControl")]
+        public async Task<IActionResult> ElectionControl()
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+
+            var commissions = from c in _context.PollingStationCommission
+                              join pc in _context.PollingStationCommissioner on c.Id equals pc.PollingStationCommissionFk
+                              where c.PresidentFk == pc.Id && pc.PersonFk == person.Id
+                              select c.ElectionFk;
+
+            // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
+            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var today = DateTime.Today;
+            var elections = from e in _context.Election
+                            where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
+                            select e;
+
+            var elist = await elections.ToListAsync();
+            if (elist.Count > 1 && elist.GroupBy(v => v.PollingStationGroupId).Count() > 1)
+                throw new Exception("Invalid PollingStationGroupId count");
+
+            if (elist.Count >1)
+            {
+                var gid = elist[0].PollingStationGroupId;
+                elist = await (from e in _context.Election where e.PollingStationGroupId == gid select e).ToListAsync();
+            }
+               
+
+            return View((person, elist));
+        }
+
+        [AuthorizeRoles(EligereRoles.PollingStationPresident)]
+        [HttpPost("ElectionControl")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ElectionControl(string state)
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+
+            var commissions = from c in _context.PollingStationCommission
+                              join pc in _context.PollingStationCommissioner on c.Id equals pc.PollingStationCommissionFk
+                              where c.PresidentFk == pc.Id && pc.PersonFk == person.Id
+                              select c.ElectionFk;
+
+            // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
+            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var today = DateTime.Today;
+            var elections = from e in _context.Election
+                            where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
+                            select e;
+
+            var elist = await elections.ToListAsync();
+            if (elist.Count > 1 && elist.GroupBy(v => v.PollingStationGroupId).Count() > 1)
+                throw new Exception("Invalid PollingStationGroupId count");
+
+            if (elist.Count > 1)
+            {
+                var gid = elist[0].PollingStationGroupId;
+                elist = await (from e in _context.Election where e.PollingStationGroupId == gid select e).ToListAsync();
+            }
+
+            var active = state == "on";
+
+            foreach (var e in elist)
+            {
+                if (e.PollStartDate <= now && e.PollEndDate > today)
+                    e.Active = active;
+            }
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("ElectionControl");
         }
     }
 }

@@ -7,9 +7,9 @@ namespace EligereES.Models.DB
     {
         public Guid Id { get; set; }
         public Guid PersonFk { get; set; }
-        public Guid ElectionFk { get; set; }
+        public Guid BallotNameFk { get; set; }
 
-        public virtual Election ElectionFkNavigation { get; set; }
+        public virtual BallotName BallotNameFkNavigation { get; set; }
         public virtual Person PersonFkNavigation { get; set; }
     }
 }

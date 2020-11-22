@@ -7,8 +7,8 @@ namespace EligereES.Models.DB
     {
         public Election()
         {
+            BallotName = new HashSet<BallotName>();
             ElectionStaff = new HashSet<ElectionStaff>();
-            EligibleCandidate = new HashSet<EligibleCandidate>();
             PollingStationCommission = new HashSet<PollingStationCommission>();
             Voter = new HashSet<Voter>();
         }
@@ -19,14 +19,14 @@ namespace EligereES.Models.DB
         public string Configuration { get; set; }
         public DateTime PollStartDate { get; set; }
         public DateTime PollEndDate { get; set; }
-        public bool? Active { get; set; }
+        public bool Active { get; set; }
         public DateTime? ElectorateListClosingDate { get; set; }
         public Guid? ElectionTypeFk { get; set; }
         public Guid? PollingStationGroupId { get; set; }
 
         public virtual ElectionType ElectionTypeFkNavigation { get; set; }
+        public virtual ICollection<BallotName> BallotName { get; set; }
         public virtual ICollection<ElectionStaff> ElectionStaff { get; set; }
-        public virtual ICollection<EligibleCandidate> EligibleCandidate { get; set; }
         public virtual ICollection<PollingStationCommission> PollingStationCommission { get; set; }
         public virtual ICollection<Voter> Voter { get; set; }
     }

@@ -4,81 +4,124 @@
     ViewData["Title"] = "Elections";
 }
 
-<h1>Index</h1>
+<style>
+    .smallerfont {
+        font-size: 0.8em;
+    }
+</style>
+
+<h1>Gestione delle elezioni</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+    <a asp-action="Create">Nuova elezione</a>
 </p>
+
+<h3>Elezioni future</h3>
+
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Name)
+                Descrizione
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Description)
+                Date
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.PollStartDate)
+                Chiusura liste
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.PollEndDate)
+                Commissioni
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.ElectorateListClosingDate)
+                Elettorato attivo
             </th>
             <th>
-                Polling station commissions
-            </th>
-            <th>
-                Electorate
-            </th>
-            <th>
-                Candidates
+                Elettorato passivo
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
+        @foreach (var item in Model.Where(e => e.PollEndDate > DateTime.Today).OrderBy(e => e.PollStartDate).ThenBy(e => e.Name))
+        {
 
+            <tr>
+                <td>
+                    <h6>@Html.DisplayFor(modelItem => item.Name)</h6>
+                    <p>@Html.DisplayFor(modelItem => item.Description)</p>
+                </td>
+                <td>
+                    <dl class="smallerfont">
+                        <dt>Inizio</dt><dd>@Html.DisplayFor(modelItem => item.PollStartDate)</dd>
+                        <dt>Fine</dt><dd>@Html.DisplayFor(modelItem => item.PollEndDate)</dd>
+                    </dl>                    
+                </td>
+                <td>
+                    <span class="smallerfont">@(item.ElectorateListClosingDate?.ToString("dd/MM/yyyy") ?? "")</span>
+                </td>
+                <td>
+                    <a asp-action="EditPollingStations" asp-route-id="@item.Id">
+                        @Html.DisplayFor(modelItem => item.PollingStationCommission.Count)
+                    </a>
+                </td>
+                <td>
+                    <a asp-action="Voters" asp-route-id="@item.Id">
+                        @Html.DisplayFor(modelItem => item.Voter.Count) <!-- This can be improved for performance -->
+                    </a>
+                </td>
+                <td>
+                    <a asp-action="Candidates" asp-route-id="@item.Id">
+                        @Html.DisplayFor(modelItem => item.BallotName.Count) <!-- This can be improved for performance -->
+                    </a>
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>Elezioni passate</h3>
+
+<table class="table">
+    <thead>
         <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PollStartDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.PollEndDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ElectorateListClosingDate)
-            </td>
-            <td>
-                <a asp-action="EditPollingStations" asp-route-id="@item.Id">
-                    @Html.DisplayFor(modelItem => item.PollingStationCommission.Count)
-                </a>
-            </td>
-            <td>
-                <a asp-action="Voters" asp-route-id="@item.Id">
-                    @Html.DisplayFor(modelItem => item.Voter.Count) <!-- This can be improved for performance -->
-                </a>
-            </td>
-            <td>
-                <a asp-action="Candidates" asp-route-id="@item.Id">
-                    @Html.DisplayFor(modelItem => item.EligibleCandidate.Count) <!-- This can be improved for performance -->
-                </a>
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
+            <th>
+                Descrizione
+            </th>
+            <th>
+                Date
+            </th>
+            <th></th>
         </tr>
-}
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Where(e => e.PollEndDate <= DateTime.Today).OrderByDescending(e => e.PollStartDate).ThenBy(e => e.Name))
+        {
+
+            <tr>
+                <td>
+                    <h6>@Html.DisplayFor(modelItem => item.Name)</h6>
+                    <p>@Html.DisplayFor(modelItem => item.Description)</p>
+                </td>
+                <td>
+                    <dl class="smallerfont">
+                        <dt>Inizio</dt>
+                        <dd>@Html.DisplayFor(modelItem => item.PollStartDate)</dd>
+                        <dt>Fine</dt>
+                        <dd>@Html.DisplayFor(modelItem => item.PollEndDate)</dd>
+                    </dl>
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
