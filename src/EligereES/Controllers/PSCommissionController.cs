@@ -308,9 +308,13 @@ namespace EligereES.Controllers
 
             if (mobile.Length > 5)
             {
+                if (mobile.StartsWith("\\u002B"))
+                {
+                    mobile = mobile.Replace("\\u002B", "+");
+                }
                 var m = HttpUtility.UrlEncode(mobile);
                 var endpoint = Configuration.GetValue<string>("SendSMSEndPoint");
-                var req = WebRequest.Create(endpoint + "?msg=Codice%20di%20voto%20di%20Eligere%20-%20" + otp + "&num=" + m);
+                var req = WebRequest.Create(endpoint + "?msg=" + otp + "%20Codice%20di%20voto%20di%20Eligere&num=" + m);
                 var resp = req.GetResponse();
             }
 

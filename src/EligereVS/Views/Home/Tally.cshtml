@@ -1,4 +1,4 @@
-﻿@model (Dictionary<string, Dictionary<string, int>>, Dictionary<string, ElectionDescription>)
+﻿@model (Dictionary<string, Dictionary<string, int>>, Dictionary<string, ElectionGuard.Contest>)
 
 @{ 
     ViewData["Title"] = "Risultato elezione";
@@ -11,7 +11,7 @@
 @foreach (var elid in countings.Keys)
 {
     <div class="offset-3 col-5">
-    <h3>@electioninfo[elid].ElectionName</h3>
+    <h3>@electioninfo[elid].name</h3>
     <ul class="list-group">
         @foreach (var n in countings[elid].Keys)
         {

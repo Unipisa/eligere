@@ -28,10 +28,14 @@ namespace EligereVS.Controllers
         public const string VotingForTallyClosedKey = "FirstTallyExecuted";
         public const string GuardiansKeyGenerated = "GuardiansKeyGenerated";
 
+        private static ElectionGuard.GuardianClient GuardianApi = null;
+        private static ElectionGuard.MediatorClient MediatorApi = null;
+
         private readonly ILogger<HomeController> _logger;
         private string contentRootPath;
         private RocksDb _conf;
         private RocksDb secureBallot;
+        private RocksDb egSecureBallot;
 
         private IDataProtectionProvider dataProtector;
 
@@ -42,7 +46,22 @@ namespace EligereVS.Controllers
             stores.SetContentRootPath(env.ContentRootPath);
             _conf = stores.Configuration;
             secureBallot = stores.SecureBallot;
+            egSecureBallot = stores.EGSecureBallot;
             dataProtector = provider;
+
+            var confAPI = new VotingSystemConfiguration();
+            lock (_conf)
+            {
+                var v = _conf.Get(APIConfigurationKey);
+                if (v != null)
+                {
+                    confAPI = VotingSystemConfiguration.FromJson(v);
+                }
+            }
+            if (confAPI.GuardianAPI != null && confAPI.MediatorAPI != null) {
+                GuardianApi = new ElectionGuard.GuardianClient(confAPI.GuardianAPI);
+                MediatorApi = new ElectionGuard.MediatorClient(confAPI.MediatorAPI);
+            }
         }
 
         public IActionResult Index()
@@ -107,20 +126,58 @@ namespace EligereVS.Controllers
             return slices;
         }
 
+        public string[] ElectionGuardGenGuardians(int numGuardians, int quorum)
+        {
+            // ElectionGuard generation
+            ElectionGuard.ElectionDescription eldesc;
+            lock (_conf)
+            {
+                if (_conf.Get(ESElectionConfigurationKey) == null)
+                    throw new Exception("ESConfiguration missing");
+                eldesc = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(_conf.Get(ESElectionConfigurationKey));
+            }
+
+            var guardianIds = new string[numGuardians];
+            for (var i = 0; i < guardianIds.Length; i++) guardianIds[i] = $"Guardian-{i}";
+            var guardians = new List<ElectionGuard.Guardian>();
+            for (var i = 0; i < numGuardians; i++)
+                guardians.Add(GuardianApi.Guardian(null, null, guardianIds[i], numGuardians, quorum, i));
+
+            var guardianPubKeys = guardians.ConvertAll(g => g.election_key_pair.public_key).ToArray();
+            var electionJointKey = MediatorApi.ElectionCombine(guardianPubKeys);
+            var electionContext = MediatorApi.ElectionContext(eldesc, electionJointKey.joint_key, numGuardians, quorum);
+
+            // Persists only the public part
+            lock(egSecureBallot)
+            {
+                egSecureBallot.Put("GuardianPubKeys", JsonSerializer.Serialize(guardianPubKeys));
+                egSecureBallot.Put("ElectionJointKey", JsonSerializer.Serialize(electionJointKey));
+                egSecureBallot.Put("ElectionContext", JsonSerializer.Serialize(electionContext));
+                egSecureBallot.Put("Nonce", "110191403412906482859082647039385408757148325819889522238592336039604240167009");
+                egSecureBallot.Put("SeedHash", "110191403412906482859082647039385908787142225838889522238592336039604240167009");
+            }
+
+            return guardians.ConvertAll(g => JsonSerializer.Serialize(g)).ToArray();
+        }
+
         public IActionResult GuardianKeyGen()
         {
             if (!HttpContext.Session.Keys.Contains(IsAuthenticated))
                 return RedirectToAction("Signin");
-            //var guardianApi = new GuardianClient("http://localhost:8001");
-            //var mediatorApi = new MediatorClient("http://localhost:8000");
+
+            //var guardiansKeys = ElectionGuardGenGuardians(5, 3);
+
             var keys = GenKeys();
             var fnames = new List<string>();
 
             for (var i = 0; i < keys.Count; i++)
             {
                 var fn = Path.Combine(contentRootPath, $"wwwroot/temp/key-{i}.txt");
+                //var gfn = Path.Combine(contentRootPath, $"wwwroot/temp/gkey-{i}.txt");
                 System.IO.File.WriteAllText(fn, keys[i]);
-                fnames.Add(Url.Content("~") + $"temp/key-{i}.txt");
+                //System.IO.File.WriteAllText(gfn, guardiansKeys[i]);
+                fnames.Add(Url.Content("~") + $"../temp/key-{i}.txt");
+                //fnames.Add(Url.Content("~") + $"../temp/gkey-{i}.txt");
             }
 
             return View(fnames);
@@ -133,7 +190,9 @@ namespace EligereVS.Controllers
             for (var i = 0; i < 5; i++)
             {
                 var fn = Path.Combine(contentRootPath, $"wwwroot/temp/key-{i}.txt");
+                //var gfn = Path.Combine(contentRootPath, $"wwwroot/temp/gkey-{i}.txt");
                 System.IO.File.Delete(fn);
+                //System.IO.File.Delete(gfn);
             }
             return RedirectToAction("Index");
         }
@@ -163,12 +222,12 @@ namespace EligereVS.Controllers
             if (!JoinKeys(kk))
                 return RedirectToAction("Tally", new { msg = "Fail to obtain master key" });
 
-            List<ElectionDescription> eldesc;
+            ElectionGuard.ElectionDescription eldesc;
             lock (_conf)
             {
                 if (_conf.Get(ESElectionConfigurationKey) == null)
                         throw new Exception("ESConfiguration missing");
-                eldesc = JsonSerializer.Deserialize<List<ElectionDescription>>(_conf.Get(ESElectionConfigurationKey));
+                eldesc = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(_conf.Get(ESElectionConfigurationKey));
             }
 
             var protector = dataProtector.CreateProtector("SecureBallot");
@@ -206,7 +265,7 @@ namespace EligereVS.Controllers
                     result[ballot.Key].Add(c.Key, c.Count());
                 }
             }
-            var elections = eldesc.ToDictionary(g => g.ElectionId);
+            var elections = eldesc.contests.ToDictionary(g => g.object_id);
 
             return View((result, elections));
         }
@@ -237,11 +296,13 @@ namespace EligereVS.Controllers
             var pdata = (new StreamReader(resp.GetResponseStream())).ReadToEnd();
             var dp = dataProtector.CreateProtector("EligereMetadataExchange");
             var data = dp.Unprotect(pdata);
-            var eldesc = JsonSerializer.Deserialize<List<ElectionDescription>>(data);
+            var fn = Path.Combine(contentRootPath, $"wwwroot/temp/log.txt");
+            System.IO.File.WriteAllText(fn, data);
+            var eldesc = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(data);
 
             lock(_conf)
             {
-                _conf.Put(ESElectionConfigurationKey, JsonSerializer.Serialize<List<ElectionDescription>>(eldesc));
+                _conf.Put(ESElectionConfigurationKey, JsonSerializer.Serialize<ElectionGuard.ElectionDescription>(eldesc));
             }
 
             return View("ShowESElectionConfiguration", eldesc);
@@ -257,7 +318,7 @@ namespace EligereVS.Controllers
             {
                 if (_conf.Get(ESElectionConfigurationKey) == null)
                     throw new Exception("ESConfiguration missing");
-                var eldesc = JsonSerializer.Deserialize<List<ElectionDescription>>(_conf.Get(ESElectionConfigurationKey)); 
+                var eldesc = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(_conf.Get(ESElectionConfigurationKey)); 
 
                 return View(eldesc);
             }

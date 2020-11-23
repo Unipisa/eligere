@@ -7,7 +7,7 @@ namespace EligereVS.Models
 {
     public class VoteInformation
     {
-        public List<ElectionDescription> ElectionDescription { get; set; }
+        public ElectionGuard.ElectionDescription ElectionDescription { get; set; }
         public List<VoteTicket> AvailableTickets { get; set; }
         public List<VoteTicket> UsedTickets { get; set; }
     }

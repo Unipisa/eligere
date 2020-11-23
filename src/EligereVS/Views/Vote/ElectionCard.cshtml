@@ -52,7 +52,7 @@
                 <input type="hidden" name="tickets" value="@tickets" />
                 <input type="hidden" name="election" id="election" />
                 <div class="custom-control custom-radio">
-                    <input type="radio" id="schedaBianca" name="ballotType" value="emptyBallot" class="custom-control-input">
+                    <input type="radio" id="schedaBianca" name="ballotType" value="emptyBallot" class="custom-control-input" style="margin-top: 16px;">
                     <label class="custom-control-label" for="schedaBianca">Scheda bianca</label>
                 </div>
                 <div class="custom-control custom-radio">
@@ -61,9 +61,10 @@
                 </div>
                 <div class="custom-control custom-radio">
                     <input type="radio" id="vote" name="ballotType" value="castedBallot" class="custom-control-input">
-                    <label class="custom-control-label" for="vote">Preferenza</label>
-                    <input type="text" class="form-control" placeholder="Candidato" name="candidate" id="candidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear()" onkeyup="completeCandidate(this.value, 'completionlist', 'candidate', null)">
-                    <div id="completionlist" class="position-relative"></div>
+                    <label class="custom-control-label" for="vote" id="numpref">Preferenza</label>
+                    <input type="hidden" id="preferences" name="preferences" />
+                    <div id="candidateSelection" class="custom-control" style="margin-top: 32px;">
+                    </div>
                 </div>
 
             </div>
@@ -74,12 +75,87 @@
 </div>
 <script type="text/javascript">
     var cardData = @{ WriteLiteral(JsonSerializer.Serialize<VoteInformation>(info)); };
+    var candidates = {};
 
     function findElection(id) {
-        for (var i = 0; i < cardData.ElectionDescription.length; i++)
-            if (cardData.ElectionDescription[i].ElectionId == id)
-                return cardData.ElectionDescription[i];
+        for (var i = 0; i < cardData.ElectionDescription.contests.length; i++)
+            if (cardData.ElectionDescription.contests[i].object_id == id)
+                return cardData.ElectionDescription.contests[i];
         return null;
+    }
+
+    function checkNumVotes(num) {
+        return ($('#candidateSelection >> input:checked').length <= num);        
+    }
+
+    function generateCandidateList(election) {
+        var hasCandidates = election.extensions.HasCandidates != "False";
+        var numvotes = election.votes_allowed;
+        var selections = election.ballot_selections;
+        var numsel = selections.length;
+        var container = document.getElementById('candidateSelection');
+
+        if (hasCandidates) {
+            if (numvotes == 1) {
+                container.clean = function () {
+                    $('#candidateSelection >> input').prop('checked', false);
+                }
+                container.readCandidates = function () {
+                    var selected = [];
+                    $.each($('#candidateSelection >> input:checked'), function () { selected.push($(this).val()) });
+                    if (selected.length == 0) return null;
+                    return selected;
+                }
+                var cont = '';
+                for (var i = 0; i < numsel; i++) {
+                    var ballotname = candidates[selections[i].candidate_id].ballot_name.text[0].value;
+                    cont +=
+                        '<div class="custom-control custom-radio">' +
+                        '<input type="radio" id="candidate' + i + '" name="candidate" value="' + ballotname + '" class="custom-control-input" />' +
+                        '<label for= "candidate' + i + '" class= "custom-control-label" > ' + ballotname + '</label >' +
+                        '</div>';
+                }
+                $('#candidateSelection').html(cont);
+            } else {
+                container.clean = function () {
+                    $('#candidateSelection >> input').prop('checked', false);
+                }
+                container.readCandidates = function () {
+                    var selected = [];
+                    $.each($('#candidateSelection >> input:checked'), function () { selected.push($(this).val()) });
+                    if (selected.length == 0) return null;
+                    return selected;
+                }
+                var cont = '';
+                for (var i = 0; i < numsel; i++) {
+                    var ballotname = candidates[selections[i].candidate_id].ballot_name.text[0].value;
+                    cont +=
+                        '<div class="custom-control custom-radio">' +
+                        '<input type="checkbox" id="candidate' + i + '" name="candidate' + i + '" value="' + ballotname + '" class="custom-control-input" onchange="if (!checkNumVotes('+numvotes+')) { $(this).prop(\'checked\', false); }" />' +
+                        '<label for="candidate' + i +  '" class="custom-control-label" >' + ballotname + '</label>' +
+                        '</div>';
+                }
+                $('#candidateSelection').html(cont);
+            }
+        } else {
+            container.clean = function () {
+                $('#candidateSelection > input').val('');
+            }
+            container.readCandidates = function () {
+                var selected = [];
+                $.each($('#candidateSelection > input'), function () { if ($(this).val().trim().length > 0) selected.push($(this).val()) });
+                if (selected == 0) return null;
+
+                return selected;
+            }
+            var cont = '';
+            for (var i = 0; i < numvotes; i++) {
+                cont += '<input type="text" class="form-control" placeholder="Candidato" name="candidate'+i+'" id="candidate'+i+'" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate'+i+'\')" onkeyup="completeCandidate(this.value, \'completionlist'+i+'\', \'candidate'+i+'\', null)">';
+                cont += '<div id="completionlist'+i+'" class="position-relative"></div>';
+            }
+
+            $('#candidateSelection').html(cont);
+        }
     }
 
     window.addEventListener('load', () => {
@@ -90,23 +166,33 @@
             }
         }
 
-        $('#candidate').hide();
+        for (var i = 0; i < cardData.ElectionDescription.candidates.length; i++) {
+            candidates[cardData.ElectionDescription.candidates[i].object_id] = cardData.ElectionDescription.candidates[i];
+        }
+
+        $('#candidateSelection').hide();
         $('#schedaBianca').change(radioVoteChanged)
         $('#schedaNulla').change(radioVoteChanged)
         $('#vote').change(radioVoteChanged)
         UseTicket();
     });
 
-    function enableAndClear() {
-        $('#candidate').val('');
+    function enableAndClear(tgt) {
+        $('#' + tgt).val('');
+    }
+
+    function clearContainer() {
+        var container = document.getElementById('candidateSelection');
+        if (container.clean)
+            container.clean();
     }
 
     function radioVoteChanged() {
         if ($('#vote').is(':checked')) {
-            $('#candidate').show();
+            $('#candidateSelection').show();
         } else {
-            $('#candidate').hide();
-            $('#candidate').val('');
+            $('#candidateSelection').hide();
+            clearContainer();
         }
     }
 
@@ -117,13 +203,15 @@
         }
         var ticket = cardData.AvailableTickets[0];
         var election = findElection(ticket.ElectionId);
-        $('#electionName').html(election.ElectionName);
+        $('#numpref').html(election.votes_allowed == 1 ? 'Preferenza' : election.votes_allowed + ' preferenze');
+        $('#electionName').html(election.name);
         $('#schedaBianca').prop('checked', false);
         $('#schedaNulla').prop('checked', false);
         $('#vote').prop('checked', false);
         $('#election').val(ticket.ElectionId);
-        $('#candidate').val('');
-        $('#candidate').hide();
+        generateCandidateList(election);
+        $('#candidateSelection').hide();
+        clearContainer();
     }
 
     var completionid = null;
@@ -142,14 +230,14 @@
         completionid = setTimeout(() => {
             completionid = null;
             var election = findElection($('#election').val())
-            var v = election.Candidates.filter(c => c.FullName.toUpperCase().indexOf(val.toUpperCase()) > -1);
+            var v = election.ballot_selections.filter(c => candidates[c.candidate_id].ballot_name.text[0].value.toUpperCase().indexOf(val.toUpperCase()) > -1);
             $('#' + tgt).html('');
             if (val.length == 0) return;
             var content = '<table class="table table-hover"><tbody>';
             for (i = 0; i < Math.min(v.length, 5); i++) {
                 var qphid = phid ? "'" + phid + "'" : "null";
-                var completion = v[i].FullName;
-                content += '<tr><td style="cursor: default" onclick="selectPerson(\'' + tgt + '\', \'' + ptxt + '\', ' + qphid + ', \'' + v[i].id + '\', \'' + stuffQuote(completion) + '\')">' + v[i].FullName + '</td></tr>';
+                var completion = candidates[v[i].candidate_id].ballot_name.text[0].value;
+                content += '<tr><td style="cursor: default" onclick="selectPerson(\'' + tgt + '\', \'' + ptxt + '\', ' + qphid + ', \'' + v[i].id + '\', \'' + stuffQuote(completion) + '\')">' + completion + '</td></tr>';
             }
             content += '</tbody></table>';
             if (v.length > 0)
@@ -160,13 +248,19 @@
     function askVote() {
         var election = findElection($('#election').val())
         // Check candidato valido
-        var txt = 'Elezione: <em>' + election.ElectionName + '</em><br/>';
+        var txt = 'Elezione: <em>' + election.name + '</em><br/>';
         if ($('#schedaBianca').is(':checked')) {
             txt += '<b>Scheda bianca</b>';
         } else if ($('#schedaNulla').is(':checked')) {
             txt += '<b>Scheda annullata</b>';
         } else if ($('#vote').is(':checked')) {
-            txt += $('#candidate').val();
+            var container = document.getElementById('candidateSelection');
+            var ret = container.readCandidates();
+            if (ret == null) {
+                alert('Non si è effettuata alcuna selezione nella scheda!');
+                return;
+            }            
+            txt += ret.join('<br/>');
         } else {
             alert('Non si è effettuata alcuna selezione nella scheda!');
             return;
@@ -176,6 +270,10 @@
         $('#askVoteDialog').modal('show');
     }
     function castVote() {
+        var container = document.getElementById('candidateSelection');
+        if ($('#vote').is(':checked')) {
+            $('#preferences').val(JSON.stringify(container.readCandidates()));
+        }
         $.ajax({
             type: 'post',
             url: '@(Url.Content("~"))/Vote/CastBallot',

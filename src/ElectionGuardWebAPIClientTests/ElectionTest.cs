@@ -24,7 +24,7 @@ namespace ElectionGuardWebAPIClientTests
         {
             var guardianApi = new GuardianClient("http://localhost:8001");
             var mediatorApi = new MediatorClient("http://localhost:8000");
-            var edesc = JsonSerializer.Deserialize<ElectionDescription>(TestData.description);
+            var edesc = JsonSerializer.Deserialize<ElectionDescription>(TestData.description2);
             var guardians = new string[] { "A B", "C D", "E F", "G H", "I J" };
             var glist = new List<Guardian>();
             for (var i = 0; i < guardians.Length; i++)

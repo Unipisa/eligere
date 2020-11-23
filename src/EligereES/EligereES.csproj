@@ -27,4 +27,8 @@
     <Folder Include="..\..\..\..\Dev%2540Unipi\eligere\src\EligereES\wwwroot\img\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ElectionGuardWebAPIClient\ElectionGuardWebAPIClient.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -12,12 +12,14 @@ namespace EligereVS
         internal const string ConfigurationLocation = "Data/Configuration";
         internal const string TicketsLocation = "Data/Tickets";
         internal const string SecureBallotLocation = "Data/SecureBallot";
+        internal const string ElectionGuardSecureBallotLocation = "Data/ElectionGuardSecureBallot";
 
         private string contentRootPath;
 
         private RocksDb configuration = null;
         private RocksDb tickets = null;
         private RocksDb secureBallot = null;
+        private RocksDb egSecureBallot = null;
 
         public void SetContentRootPath(string path)
         {
@@ -59,6 +61,18 @@ namespace EligereVS
                     secureBallot = InitDb(Path.Combine(contentRootPath, SecureBallotLocation));
                 }
                 return secureBallot;
+            }
+        }
+
+        public RocksDb EGSecureBallot
+        {
+            get
+            {
+                if (egSecureBallot == null)
+                {
+                    egSecureBallot = InitDb(Path.Combine(contentRootPath, ElectionGuardSecureBallotLocation));
+                }
+                return egSecureBallot;
             }
         }
     }

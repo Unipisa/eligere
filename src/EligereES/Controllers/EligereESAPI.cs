@@ -285,40 +285,101 @@ namespace EligereES.Controllers
 
             var time4open = DateTime.Now + TimeSpan.FromMinutes(15); // Early comers (should be a parameter!)
             var time4close = DateTime.Now - TimeSpan.FromMinutes(15); //Late comers (should be a parameter!)
-            var elections = from e in _context.Election
+            var electionsq = from e in _context.Election
                             where e.Active && (e.PollStartDate <= time4open) && (e.PollEndDate >= time4close)
                             select e;
-            var candidates = from ec in _context.EligibleCandidate
-                             join bn in _context.BallotName on ec.BallotNameFk equals bn.Id
-                             join e in elections on bn.ElectionFk equals e.Id
-                             join p in _context.Person on ec.PersonFk equals p.Id
-                             select new { Election = e, PublicId = p.PublicId, FirstName = p.FirstName, LastName = p.LastName };
 
-            var data = (await candidates.ToListAsync()).GroupBy(v => v.Election);
-            var ret = new List<ElectionDescription>();
-            foreach (var g in data)
+            var elections = await electionsq.ToListAsync();
+            var electionids = elections.ConvertAll(e => e.Id);
+
+            // FixMe: this should be changed when multiple VS systems will be introduced
+            if (elections.Count > 1 && elections.GroupBy(e => e.PollingStationGroupId).Count() > 1)
+                throw new Exception("Multiple elections with different PollingStationGroupIds");
+
+            var groupid = elections[0].PollingStationGroupId == null ? Guid.NewGuid() : elections[0].PollingStationGroupId;
+
+            // Ignoring name, election_scope_id, start_date, end_date, type, geopolitical_units
+            var electionDescription = new ElectionGuard.ElectionDescription();
+
+            electionDescription.ballot_styles = 
+                new ElectionGuard.BallotStyle[] { 
+                    new ElectionGuard.BallotStyle() { 
+                        object_id = groupid.ToString() 
+                    } 
+                };
+
+            var partiesq = from p in _context.Party
+                           join b in _context.BallotName on p.Id equals b.PartyFk
+                           where electionids.Contains(b.ElectionFk)
+                           select p;
+
+            var parties = await partiesq.ToListAsync();
+
+            if (parties.Count > 0)
             {
-                var candlist = new List<ElectionCandidate>();
-                foreach (var c in g.OrderBy(ge => ge.LastName))
-                {
-                    candlist.Add(new ElectionCandidate()
-                    {
-                        PublicId = c.PublicId,
-                        FullName = $"{c.FirstName} {c.LastName}",
-                        FirstName = c.FirstName,
-                        LastName = c.LastName
-                    });
-                }
-                ret.Add(new ElectionDescription()
-                {
-                    ElectionId = g.Key.Id.ToString(),
-                    ElectionName = g.Key.Name,
-                    PollStartDate = g.Key.PollStartDate,
-                    PollEndDate = g.Key.PollEndDate,
-                    Candidates = candlist
+                var partydescs = parties.ConvertAll(p => new ElectionGuard.PartyDescription() { 
+                    object_id = p.Id.ToString(),
+                    name = new ElectionGuard.ListOfLocalizedText() { 
+                        text = new ElectionGuard.LocalizedText[] {
+                            new ElectionGuard.LocalizedText() { language = "it", value = p.Name }
+                        }
+                    }
                 });
+                electionDescription.parties = partydescs.ToArray();
             }
-            var sret = JsonSerializer.Serialize<List<ElectionDescription>>(ret);
+
+
+            var ballotnamesq = from b in _context.BallotName
+                           where electionids.Contains(b.ElectionFk)
+                           select b;
+
+            var ballotnames = await ballotnamesq.ToListAsync();
+
+            electionDescription.candidates = 
+                ballotnames.ConvertAll(b => new ElectionGuard.Candidate() {
+                    object_id = b.Id.ToString(),
+                    ballot_name = new ElectionGuard.BallotName() { 
+                        party_id = b.PartyFk.ToString(), 
+                        text = new ElectionGuard.LocalizedText[] {
+                            new ElectionGuard.LocalizedText() { language = "it", value = b.BallotNameLabel }
+                        }
+                    }
+                }).ToArray();
+
+            var contests = new List<ElectionGuard.Contest>();
+            var i = 0;
+            foreach (var e in elections)
+            {
+                var contest = new ElectionGuard.Contest();
+                contest.object_id = e.Id.ToString();
+                contest.name = e.Name;
+                contest.sequence_order = i++;
+                var config = ElectionConfiguration.FromJson(e.Configuration);
+                contest.votes_allowed = config.NumPreferences;
+                contest.number_elected = config.EligibleSeats;
+                contest.electoral_district_id = "https://eligere.unipi.it"; // To be added to configuration
+                contest.extensions = new Dictionary<string, string>();
+                contest.extensions["HasCandidates"] = config.HasCandidates.ToString();
+                contest.extensions["PollStartDate"] = e.PollStartDate.ToString(CultureInfo.GetCultureInfo("it-it"));
+                contest.extensions["PollEndDate"] = e.PollEndDate.ToString(CultureInfo.GetCultureInfo("it-it"));
+                var ob = ballotnames.Where(b => b.ElectionFk == e.Id && b.SequenceOrder.HasValue).OrderBy(b => b.SequenceOrder).ToList();
+                var ub = ballotnames.Where(b => b.ElectionFk == e.Id && !b.SequenceOrder.HasValue).OrderBy(b => b.BallotNameLabel).ToList();
+                ob.AddRange(ub);
+                var ballotselections = new List<ElectionGuard.BallotSelection>();
+                var j = 0;
+                foreach (var b in ob)
+                {
+                    var bs = new ElectionGuard.BallotSelection();
+                    bs.object_id = b.Id.ToString(); // Should be ok
+                    bs.candidate_id = b.Id.ToString();
+                    bs.sequence_order = j++;
+                    ballotselections.Add(bs);
+                }
+                contest.ballot_selections = ballotselections.ToArray();
+                contests.Add(contest);
+            }
+            electionDescription.contests = contests.ToArray();
+            var sret = JsonSerializer.Serialize<ElectionGuard.ElectionDescription>(electionDescription);
             var dp = dataProtector.CreateProtector("EligereMetadataExchange");
             return dp.Protect(sret);
         }

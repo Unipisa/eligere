@@ -105,12 +105,15 @@ namespace ElectionGuard
         public string[] primary_party_ids { get; set; }
         public int number_elected { get; set; }
         public int votes_allowed { get; set; }
+
+        // Added to include additional annotations (non needed by ElectionGuard)
+        public Dictionary<string, string> extensions { get; set; }
     }
 
     public class ElectionDescription
     {
-        public DateTime start_date { get; set; }
-        public DateTime end_date { get; set; }
+        public DateTime? start_date { get; set; }
+        public DateTime? end_date { get; set; }
         public string type { get; set; } // Check
         public string election_scope_id { get; set; } // Check
         public PartyDescription[] parties { get; set; }

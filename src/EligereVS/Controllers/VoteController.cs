@@ -51,18 +51,20 @@ namespace EligereVS.Controllers
             {
                 d = configuration.Get(HomeController.ESElectionConfigurationKey);
             }
-            var electionDescription = JsonSerializer.Deserialize<List<ElectionDescription>>(d).ToDictionary(v => v.ElectionId);
-            var elections2Send = new List<ElectionDescription>();
+
+            var electionDescription = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(d);
+            var electionmap = electionDescription.contests.ToDictionary(v => v.object_id);
+            var elections2Send = new List<string>();
             var usedTickets = new List<VoteTicket>();
             var availableTickets = new List<VoteTicket>();
 
             // Check used tickets
             foreach (var ticket in ticketList)
             {
-                if (!electionDescription.ContainsKey(ticket.ElectionId))
+                if (!electionmap.ContainsKey(ticket.ElectionId))
                     throw new Exception("Invalid state in ElectionCard generation (ticket referring to non-existing election)");
 
-                elections2Send.Add(electionDescription[ticket.ElectionId]);
+                elections2Send.Add(ticket.ElectionId);
                 if (ticketsDb.Get(ticket.HashId) != null)
                 {
                     usedTickets.Add(ticket);
@@ -71,9 +73,10 @@ namespace EligereVS.Controllers
                     availableTickets.Add(ticket);
                 }
             }
+            electionDescription.contests = electionDescription.contests.Where(c => elections2Send.Contains(c.object_id)).ToArray();
             var cardData = new VoteInformation()
             {
-                ElectionDescription = elections2Send,
+                ElectionDescription = electionDescription,
                 AvailableTickets = availableTickets,
                 UsedTickets = usedTickets
             };
@@ -100,7 +103,7 @@ namespace EligereVS.Controllers
         }
 
         [HttpPost]
-        public IActionResult CastBallot(string tickets, string election, string ballotType, string candidate)
+        public IActionResult CastBallot(string tickets, string election, string ballotType, string preferences)
         {
             var encTickets = Convert.FromBase64String(tickets);
             var protector = dataprotection.CreateProtector("EVSKeyExchange");
@@ -130,7 +133,8 @@ namespace EligereVS.Controllers
                 }
             }
 
-            var electionDescription = JsonSerializer.Deserialize<List<ElectionDescription>>(d).ToDictionary(v => v.ElectionId);
+            var electionDescription = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(d);
+            var contests = electionDescription.contests.ToDictionary(v => v.object_id);
 
             if (ticketList.Where(t => t.ElectionId == election).Count() > 1)
             {
@@ -161,9 +165,10 @@ namespace EligereVS.Controllers
                     });
             }
 
-            if (electionDescription.ContainsKey(election))
+            if (contests.ContainsKey(election))
             {
-                var el = electionDescription[election];
+                var el = contests[election];
+                var candidates = electionDescription.candidates.ToDictionary(v => v.object_id);
                 switch (ballotType)
                 {
                     case "emptyBallot":
@@ -173,16 +178,32 @@ namespace EligereVS.Controllers
                         CastVote(ticket, "$spoil$");
                         break;
                     default:
-                        var cand = el.Candidates.Where(c => c.FullName == candidate).FirstOrDefault(); // Fixme should pass publicid
-                        if (cand == null)
+                        var prefs = JsonSerializer.Deserialize<string[]>(preferences);
+                        if (prefs.Length > el.votes_allowed)
                         {
                             return Json(new CastBallotResult()
                             {
                                 Status = 403,
-                                Message = "Invalid candidate"
+                                Message = $"Too many votes expressed ({prefs.Length}) with respect to the maximum ({el.votes_allowed})"
                             });
+
                         }
-                        CastVote(ticket, candidate);
+                        foreach (var pref in prefs)
+                        {
+                            var cand = el.ballot_selections.Where(c => candidates[c.candidate_id].ballot_name.text[0].value == pref).FirstOrDefault();
+                            if (cand == null)
+                            {
+                                return Json(new CastBallotResult()
+                                {
+                                    Status = 403,
+                                    Message = "Invalid candidate"
+                                });
+                            }
+                        }
+                        foreach (var pref in prefs)
+                        {
+                            CastVote(ticket, pref);
+                        }
                         break;
                 }
 

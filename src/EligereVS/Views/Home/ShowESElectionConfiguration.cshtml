@@ -1,18 +1,22 @@
-﻿@model List<ElectionDescription>
+﻿@model ElectionGuard.ElectionDescription
+
+@{
+    var candidates = Model.candidates.ToDictionary(c => c.object_id);
+}
 
 <div class="text-center">
     <h1 class="display-4">Loaded configuration from Eligere ES</h1>
 
-    @foreach (var e in Model)
+    @foreach (var e in Model.contests)
     {
         <div class="offset-2 col-8">
             <hr />
-            <h3>@e.ElectionName [@e.PollStartDate - @e.PollEndDate]</h3>
+            <h3>@e.name [@e.extensions["PollStartDate"] - @e.extensions["PollEndDate"]]</h3>
             <p>Candidates</p>
             <ul class="list-group">
-                @foreach (var c in e.Candidates)
+                @foreach (var c in e.ballot_selections)
                 {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">@c.FullName (@c.PublicId)</li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">@c.sequence_order) @candidates[c.object_id].ballot_name.text[0].value </li>
                 }
             </ul>
          </div>
