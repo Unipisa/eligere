@@ -1,0 +1,32 @@
+﻿@model EligereES.Controllers.UserLoginRequestResult
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<div class="text-center">
+    <h1 class="display-4">Eligere</h1>
+    <div class="col-6 offset-3">
+        <hr />
+        @switch (Model)
+        {
+            case EligereES.Controllers.UserLoginRequestResult.Ok:
+                <h4>La richiesta &egrave; stata registrata nel sistema</h4>
+                <p>&Egrave; possibile chiudere la scheda</p>
+                break;
+            case EligereES.Controllers.UserLoginRequestResult.AssociationAlreadyRequested:
+                <h4>&egrave; gi&agrave; presente una richiesta per il login @User.Identity.Name</h4>
+                <p>&Egrave; possibile chiudere la scheda</p>
+                break;
+            case EligereES.Controllers.UserLoginRequestResult.MissingPerson:
+                <h4>Il Codice fiscale indicato non &egrave; presente in anagrafica</h4>
+                <p>&Egrave; possibile chiudere la scheda</p>
+                break;
+            case EligereES.Controllers.UserLoginRequestResult.LoginAlreadyAssociated:
+                <h4>&egrave; gi&agrave; presente un'associazione per il login @User.Identity.Name</h4>
+                <p>&Egrave; possibile chiudere la scheda</p>
+                break;
+        }
+    </div>
+</div>
