@@ -27,10 +27,34 @@ namespace EligereES.Controllers
             _context = context;
         }
 
+        private async Task<Dictionary<K,V>> ToDict<G,K, V>(IQueryable<G> q, Func<G,K> keysel, Func<G,V> valsel)
+        {
+            var ret = new Dictionary<K, V>();
+            foreach (var g in (await q.ToListAsync()))
+            {
+                ret[keysel(g)] = valsel(g);
+            }
+            return ret;
+        }
+
         public async Task<IActionResult> Index()
         {
-            var eSDB = _context.Election.Include(e => e.ElectionTypeFkNavigation).Include(e => e.PollingStationCommission).Include(e => e.Voter).Include(e => e.BallotName);
-            return View(await eSDB.ToListAsync());
+            var commissions =
+                await ToDict(from c in _context.PollingStationCommission
+                group c by c.ElectionFk into cg
+                select new { ElectionFk = cg.Key, Count = cg.Count() }, g => g.ElectionFk, g => g.Count);
+            var voters =
+                await ToDict(from v in _context.Voter
+                group v by v.ElectionFk into vg
+                select new { ElectionFk = vg.Key, Count = vg.Count() }, g => g.ElectionFk, g => g.Count);
+            var ballots =
+                await ToDict(from b in _context.BallotName
+                group b by b.ElectionFk into bg
+                select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
+            var elections = await _context.Election.ToListAsync();
+            
+
+            return View((elections, commissions, voters, ballots));
         }
 
         public async Task<IActionResult> Details(Guid? id)
@@ -249,13 +273,13 @@ namespace EligereES.Controllers
                 csv.ReadHeader();
                 while (await csv.ReadAsync())
                 {
-                    var firstName = csv.GetField<string>(0);
-                    var lastName = csv.GetField<string>(1);
-                    var companyId = csv.GetField<string>(2);
-                    var publicId = csv.GetField<string>(3);
-                    var birthPlace = csv.GetField<string>(4);
+                    var firstName = csv.GetField<string>(0).Trim(' ', '\t');
+                    var lastName = csv.GetField<string>(1).Trim(' ', '\t');
+                    var companyId = csv.GetField<string>(2).Trim(' ', '\t');
+                    var publicId = csv.GetField<string>(3).Trim(' ', '\t').ToUpperInvariant();
+                    var birthPlace = csv.GetField<string>(4).Trim(' ', '\t');
                     var birthDate = csv.GetField<DateTime>(5);
-                    var role = csv.GetField<string>(6);
+                    var role = csv.GetField<string>(6).Trim(' ', '\t');
 
                     var q = from p in _context.Person join v in _context.Voter on p.Id equals v.PersonFk where v.ElectionFk == id select p;
                     // For the moment is a weak check before insert
@@ -544,8 +568,9 @@ namespace EligereES.Controllers
             var electionsq = from e in _context.Election
                              where (e.Active)
                              join v in _context.Voter on e.Id equals v.ElectionFk
+                             //group new { Election = e, Vote(e, v) } by v.Id into g 
                              where v.Vote.HasValue
-                             select new { ElectionID = e.Id, ElectionName = e.Name, Vote = v.Vote };
+                             select new { ElectionID = e.Id, ElectionName = e.Name, ElectionConfiguration=e.Configuration, Vote = v.Vote };
 
             var counters = new Dictionary<Guid, int>();
             foreach (var v in await electionsq.ToListAsync())

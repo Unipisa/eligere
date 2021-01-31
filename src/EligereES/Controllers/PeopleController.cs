@@ -195,7 +195,10 @@ namespace EligereES.Controllers
                 return NotFound(); // FixMe should not be not found
             }
             var result = new List<(Person person, (string firstName, string lastName, string publicId, DateTime birthDate, string birthPlace, string role)? data, string reason)>();
-            using (var csv = new CsvReader(new System.IO.StreamReader(file[0].OpenReadStream()), CultureInfo.CurrentUICulture))
+            var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentUICulture) { 
+                Delimiter = ";"
+            };
+            using (var csv = new CsvReader(new System.IO.StreamReader(file[0].OpenReadStream()), conf))
             {
                 csv.Read();
                 csv.ReadHeader();

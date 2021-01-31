@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+#nullable disable
+
 namespace EligereES.Models.DB
 {
     public partial class Election
@@ -9,6 +11,7 @@ namespace EligereES.Models.DB
         {
             BallotName = new HashSet<BallotName>();
             ElectionStaff = new HashSet<ElectionStaff>();
+            IdentificationCommissionerAffinityRel = new HashSet<IdentificationCommissionerAffinityRel>();
             PollingStationCommission = new HashSet<PollingStationCommission>();
             Voter = new HashSet<Voter>();
         }
@@ -27,6 +30,7 @@ namespace EligereES.Models.DB
         public virtual ElectionType ElectionTypeFkNavigation { get; set; }
         public virtual ICollection<BallotName> BallotName { get; set; }
         public virtual ICollection<ElectionStaff> ElectionStaff { get; set; }
+        public virtual ICollection<IdentificationCommissionerAffinityRel> IdentificationCommissionerAffinityRel { get; set; }
         public virtual ICollection<PollingStationCommission> PollingStationCommission { get; set; }
         public virtual ICollection<Voter> Voter { get; set; }
     }

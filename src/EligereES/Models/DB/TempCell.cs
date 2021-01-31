@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 
+#nullable disable
+
 namespace EligereES.Models.DB
 {
     public partial class TempCell

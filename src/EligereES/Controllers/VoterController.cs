@@ -46,7 +46,7 @@ namespace EligereES.Controllers
 
             var qd = await q.ToListAsync();
 
-            var el = qd.ConvertAll(v => v.Election.Id);
+            var el = qd.Where(v => !v.Past).ToList().ConvertAll(v => v.Election.Id);
 
             var psq = from s in _context.PollingStationCommission
                       where el.Contains(s.ElectionFk)
@@ -120,16 +120,39 @@ namespace EligereES.Controllers
             var person = await pq.FirstAsync();
 
             var comm = new List<Guid>();
+            var elections = new List<Guid>();
 
             foreach (var (voter, election, commissions, past, voted) in await GetElections(person))
             {
                 if (election.Active && !voted.HasValue)
                 {
+                    elections.Add(election.Id);
                     foreach (var c in commissions)
                     {
                         comm.Add(c.Id);
                     }
                 }
+            }
+
+            // 30 out of 100 are sent to some commissioner. 70 if there is an affine commissioner will be preferred
+            if (rnd.Next(100) > 30)
+            {
+                var affineCommissioners = await (from ar in _context.IdentificationCommissionerAffinityRel
+                                                 where elections.Contains(ar.ElectionFk)
+                                                 select ar.PersonFk).Distinct().ToListAsync();
+
+                var affineIds = await (from psc in _context.PollingStationCommissioner
+                                       where comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
+                                       select psc.VirtualRoom).Distinct().ToListAsync();
+
+                var affineRids = await (from psc in _context.RemoteIdentificationCommissioner
+                                        where comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
+                                        select psc.VirtualRoom).Distinct().ToListAsync();
+
+                affineIds.AddRange(affineRids);
+
+                if (affineIds.Count > 0)
+                    return Redirect(affineIds[rnd.Next(affineIds.Count)]);
             }
 
             var ids = await (from psc in _context.PollingStationCommissioner

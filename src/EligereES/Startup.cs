@@ -21,7 +21,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using Microsoft.IdentityModel.Logging;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.UI;
 
 namespace EligereES
 {
@@ -49,14 +51,15 @@ namespace EligereES
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization();
 
-            services.AddAuthentication(AzureADDefaults.OpenIdScheme)
-                .AddAzureAD(options => Configuration.Bind("AzureAd", options));
+            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+            //.AddAzureAD(options => Configuration.Bind("AzureAd", options));
 
             services.AddDbContext<ESDB>(o => {
                 o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
             });
 
-            services.Configure<OpenIdConnectOptions>(AzureADDefaults.OpenIdScheme, opt =>
+            services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, opt =>
             {
                 var onTokenValidated = opt.Events.OnTokenValidated;
                 opt.Events.OnTokenValidated = (
@@ -88,7 +91,9 @@ namespace EligereES
                     .Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
             });
-            services.AddRazorPages();
+            services.AddRazorPages()
+                .AddMicrosoftIdentityUI();
+            IdentityModelEventSource.ShowPII = true;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

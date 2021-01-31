@@ -1,97 +1,97 @@
-2020/11/23-08:50:51.322954 1b44 RocksDB version: 6.2.2
-2020/11/23-08:50:51.325539 1b44 Git sha rocksdb_build_git_sha:@6d113fc066c5816887eb19c84d12c0677a68af2b@
-2020/11/23-08:50:51.325627 1b44 Compile date Aug 20 2019
-2020/11/23-08:50:51.325692 1b44 DB SUMMARY
-2020/11/23-08:50:51.326143 1b44 SST files in C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration dir, Total Num: 0, files: 
-2020/11/23-08:50:51.326228 1b44 Write Ahead Log file in C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration: 
-2020/11/23-08:50:51.326296 1b44                         Options.error_if_exists: 0
-2020/11/23-08:50:51.326349 1b44                       Options.create_if_missing: 1
-2020/11/23-08:50:51.326401 1b44                         Options.paranoid_checks: 1
-2020/11/23-08:50:51.326464 1b44                                     Options.env: 00000260B329E330
-2020/11/23-08:50:51.326513 1b44                                Options.info_log: 00000260B350C070
-2020/11/23-08:50:51.326559 1b44                Options.max_file_opening_threads: 16
-2020/11/23-08:50:51.326715 1b44                              Options.statistics: 0000000000000000
-2020/11/23-08:50:51.326788 1b44                               Options.use_fsync: 0
-2020/11/23-08:50:51.326845 1b44                       Options.max_log_file_size: 0
-2020/11/23-08:50:51.326900 1b44                  Options.max_manifest_file_size: 1073741824
-2020/11/23-08:50:51.326969 1b44                   Options.log_file_time_to_roll: 0
-2020/11/23-08:50:51.327023 1b44                       Options.keep_log_file_num: 1000
-2020/11/23-08:50:51.327075 1b44                    Options.recycle_log_file_num: 0
-2020/11/23-08:50:51.327128 1b44                         Options.allow_fallocate: 1
-2020/11/23-08:50:51.327180 1b44                        Options.allow_mmap_reads: 0
-2020/11/23-08:50:51.327232 1b44                       Options.allow_mmap_writes: 0
-2020/11/23-08:50:51.327285 1b44                        Options.use_direct_reads: 0
-2020/11/23-08:50:51.327343 1b44                        Options.use_direct_io_for_flush_and_compaction: 0
-2020/11/23-08:50:51.327397 1b44          Options.create_missing_column_families: 0
-2020/11/23-08:50:51.327466 1b44                              Options.db_log_dir: 
-2020/11/23-08:50:51.327521 1b44                                 Options.wal_dir: C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration
-2020/11/23-08:50:51.327576 1b44                Options.table_cache_numshardbits: 6
-2020/11/23-08:50:51.327628 1b44                      Options.max_subcompactions: 1
-2020/11/23-08:50:51.327680 1b44                  Options.max_background_flushes: -1
-2020/11/23-08:50:51.327732 1b44                         Options.WAL_ttl_seconds: 0
-2020/11/23-08:50:51.327784 1b44                       Options.WAL_size_limit_MB: 0
-2020/11/23-08:50:51.327837 1b44             Options.manifest_preallocation_size: 4194304
-2020/11/23-08:50:51.327890 1b44                     Options.is_fd_close_on_exec: 1
-2020/11/23-08:50:51.327941 1b44                   Options.advise_random_on_open: 1
-2020/11/23-08:50:51.327993 1b44                    Options.db_write_buffer_size: 0
-2020/11/23-08:50:51.328043 1b44                    Options.write_buffer_manager: 00000260B3508A00
-2020/11/23-08:50:51.328092 1b44         Options.access_hint_on_compaction_start: 1
-2020/11/23-08:50:51.328140 1b44  Options.new_table_reader_for_compaction_inputs: 0
-2020/11/23-08:50:51.328189 1b44           Options.random_access_max_buffer_size: 1048576
-2020/11/23-08:50:51.329315 1b44                      Options.use_adaptive_mutex: 0
-2020/11/23-08:50:51.333252 1b44                            Options.rate_limiter: 0000000000000000
-2020/11/23-08:50:51.336745 1b44     Options.sst_file_manager.rate_bytes_per_sec: 0
-2020/11/23-08:50:51.336799 1b44                       Options.wal_recovery_mode: 2
-2020/11/23-08:50:51.336828 1b44                  Options.enable_thread_tracking: 0
-2020/11/23-08:50:51.336855 1b44                  Options.enable_pipelined_write: 0
-2020/11/23-08:50:51.337005 1b44         Options.allow_concurrent_memtable_write: 1
-2020/11/23-08:50:51.337188 1b44      Options.enable_write_thread_adaptive_yield: 1
-2020/11/23-08:50:51.337278 1b44             Options.write_thread_max_yield_usec: 100
-2020/11/23-08:50:51.337351 1b44            Options.write_thread_slow_yield_usec: 3
-2020/11/23-08:50:51.337379 1b44                               Options.row_cache: None
-2020/11/23-08:50:51.337402 1b44                              Options.wal_filter: None
-2020/11/23-08:50:51.337444 1b44             Options.avoid_flush_during_recovery: 0
-2020/11/23-08:50:51.337466 1b44             Options.allow_ingest_behind: 0
-2020/11/23-08:50:51.337488 1b44             Options.preserve_deletes: 0
-2020/11/23-08:50:51.337507 1b44             Options.two_write_queues: 0
-2020/11/23-08:50:51.337527 1b44             Options.manual_wal_flush: 0
-2020/11/23-08:50:51.337546 1b44             Options.atomic_flush: 0
-2020/11/23-08:50:51.337569 1b44             Options.avoid_unnecessary_blocking_io: 0
-2020/11/23-08:50:51.337591 1b44             Options.max_background_jobs: 2
-2020/11/23-08:50:51.337613 1b44             Options.max_background_compactions: -1
-2020/11/23-08:50:51.337635 1b44             Options.avoid_flush_during_shutdown: 0
-2020/11/23-08:50:51.337657 1b44           Options.writable_file_max_buffer_size: 1048576
-2020/11/23-08:50:51.337680 1b44             Options.delayed_write_rate : 16777216
-2020/11/23-08:50:51.337702 1b44             Options.max_total_wal_size: 0
-2020/11/23-08:50:51.337729 1b44             Options.delete_obsolete_files_period_micros: 21600000000
-2020/11/23-08:50:51.337752 1b44                   Options.stats_dump_period_sec: 600
-2020/11/23-08:50:51.337775 1b44                 Options.stats_persist_period_sec: 600
-2020/11/23-08:50:51.337796 1b44                 Options.stats_history_buffer_size: 1048576
-2020/11/23-08:50:51.337819 1b44                          Options.max_open_files: -1
-2020/11/23-08:50:51.337841 1b44                          Options.bytes_per_sync: 0
-2020/11/23-08:50:51.337863 1b44                      Options.wal_bytes_per_sync: 0
-2020/11/23-08:50:51.337886 1b44                   Options.strict_bytes_per_sync: 0
-2020/11/23-08:50:51.337907 1b44       Options.compaction_readahead_size: 0
-2020/11/23-08:50:51.337930 1b44 Compression algorithms supported:
-2020/11/23-08:50:51.337975 1b44 	kZSTD supported: 1
-2020/11/23-08:50:51.337999 1b44 	kSnappyCompression supported: 1
-2020/11/23-08:50:51.338021 1b44 	kBZip2Compression supported: 0
-2020/11/23-08:50:51.338042 1b44 	kZlibCompression supported: 1
-2020/11/23-08:50:51.338065 1b44 	kLZ4Compression supported: 1
-2020/11/23-08:50:51.338088 1b44 	kXpressCompression supported: 0
-2020/11/23-08:50:51.338107 1b44 	kLZ4HCCompression supported: 1
-2020/11/23-08:50:51.338125 1b44 	kZSTDNotFinalCompression supported: 1
-2020/11/23-08:50:51.338161 1b44 Fast CRC32 supported: Supported on x86
-2020/11/23-08:50:51.344165 1b44 [db\db_impl_open.cc:242] Creating manifest 1 
-2020/11/23-08:50:51.397384 1b44 [db\version_set.cc:4053] Recovering from manifest file: C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration/MANIFEST-000001
-2020/11/23-08:50:51.397872 1b44 [db\column_family.cc:482] --------------- Options for column family [default]:
-2020/11/23-08:50:51.397908 1b44               Options.comparator: leveldb.BytewiseComparator
-2020/11/23-08:50:51.397925 1b44           Options.merge_operator: None
-2020/11/23-08:50:51.397940 1b44        Options.compaction_filter: None
-2020/11/23-08:50:51.397955 1b44        Options.compaction_filter_factory: None
-2020/11/23-08:50:51.397969 1b44         Options.memtable_factory: SkipListFactory
-2020/11/23-08:50:51.397982 1b44            Options.table_factory: BlockBasedTable
-2020/11/23-08:50:51.398138 1b44            table_factory options:   flush_block_policy_factory: FlushBlockBySizePolicyFactory (00000260B15B6DF0)
+2021/01/28-09:01:18.405332 7180 RocksDB version: 6.2.2
+2021/01/28-09:01:18.407684 7180 Git sha rocksdb_build_git_sha:@6d113fc066c5816887eb19c84d12c0677a68af2b@
+2021/01/28-09:01:18.407748 7180 Compile date Aug 20 2019
+2021/01/28-09:01:18.407796 7180 DB SUMMARY
+2021/01/28-09:01:18.408226 7180 SST files in C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration dir, Total Num: 0, files: 
+2021/01/28-09:01:18.408698 7180 Write Ahead Log file in C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration: 
+2021/01/28-09:01:18.408777 7180                         Options.error_if_exists: 0
+2021/01/28-09:01:18.408819 7180                       Options.create_if_missing: 1
+2021/01/28-09:01:18.408855 7180                         Options.paranoid_checks: 1
+2021/01/28-09:01:18.408892 7180                                     Options.env: 000002804328A490
+2021/01/28-09:01:18.408931 7180                                Options.info_log: 0000028045736600
+2021/01/28-09:01:18.408969 7180                Options.max_file_opening_threads: 16
+2021/01/28-09:01:18.409010 7180                              Options.statistics: 0000000000000000
+2021/01/28-09:01:18.409060 7180                               Options.use_fsync: 0
+2021/01/28-09:01:18.409098 7180                       Options.max_log_file_size: 0
+2021/01/28-09:01:18.409135 7180                  Options.max_manifest_file_size: 1073741824
+2021/01/28-09:01:18.409202 7180                   Options.log_file_time_to_roll: 0
+2021/01/28-09:01:18.409286 7180                       Options.keep_log_file_num: 1000
+2021/01/28-09:01:18.409347 7180                    Options.recycle_log_file_num: 0
+2021/01/28-09:01:18.409387 7180                         Options.allow_fallocate: 1
+2021/01/28-09:01:18.409426 7180                        Options.allow_mmap_reads: 0
+2021/01/28-09:01:18.409461 7180                       Options.allow_mmap_writes: 0
+2021/01/28-09:01:18.409497 7180                        Options.use_direct_reads: 0
+2021/01/28-09:01:18.409532 7180                        Options.use_direct_io_for_flush_and_compaction: 0
+2021/01/28-09:01:18.409583 7180          Options.create_missing_column_families: 0
+2021/01/28-09:01:18.410267 7180                              Options.db_log_dir: 
+2021/01/28-09:01:18.410338 7180                                 Options.wal_dir: C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration
+2021/01/28-09:01:18.410393 7180                Options.table_cache_numshardbits: 6
+2021/01/28-09:01:18.412244 7180                      Options.max_subcompactions: 1
+2021/01/28-09:01:18.412291 7180                  Options.max_background_flushes: -1
+2021/01/28-09:01:18.412329 7180                         Options.WAL_ttl_seconds: 0
+2021/01/28-09:01:18.412417 7180                       Options.WAL_size_limit_MB: 0
+2021/01/28-09:01:18.412456 7180             Options.manifest_preallocation_size: 4194304
+2021/01/28-09:01:18.412503 7180                     Options.is_fd_close_on_exec: 1
+2021/01/28-09:01:18.412541 7180                   Options.advise_random_on_open: 1
+2021/01/28-09:01:18.412577 7180                    Options.db_write_buffer_size: 0
+2021/01/28-09:01:18.412613 7180                    Options.write_buffer_manager: 0000028045738F40
+2021/01/28-09:01:18.412650 7180         Options.access_hint_on_compaction_start: 1
+2021/01/28-09:01:18.412686 7180  Options.new_table_reader_for_compaction_inputs: 0
+2021/01/28-09:01:18.412722 7180           Options.random_access_max_buffer_size: 1048576
+2021/01/28-09:01:18.412767 7180                      Options.use_adaptive_mutex: 0
+2021/01/28-09:01:18.412807 7180                            Options.rate_limiter: 0000000000000000
+2021/01/28-09:01:18.413138 7180     Options.sst_file_manager.rate_bytes_per_sec: 0
+2021/01/28-09:01:18.413168 7180                       Options.wal_recovery_mode: 2
+2021/01/28-09:01:18.414092 7180                  Options.enable_thread_tracking: 0
+2021/01/28-09:01:18.414124 7180                  Options.enable_pipelined_write: 0
+2021/01/28-09:01:18.414229 7180         Options.allow_concurrent_memtable_write: 1
+2021/01/28-09:01:18.414254 7180      Options.enable_write_thread_adaptive_yield: 1
+2021/01/28-09:01:18.414272 7180             Options.write_thread_max_yield_usec: 100
+2021/01/28-09:01:18.414288 7180            Options.write_thread_slow_yield_usec: 3
+2021/01/28-09:01:18.414312 7180                               Options.row_cache: None
+2021/01/28-09:01:18.414330 7180                              Options.wal_filter: None
+2021/01/28-09:01:18.414696 7180             Options.avoid_flush_during_recovery: 0
+2021/01/28-09:01:18.414730 7180             Options.allow_ingest_behind: 0
+2021/01/28-09:01:18.414748 7180             Options.preserve_deletes: 0
+2021/01/28-09:01:18.414764 7180             Options.two_write_queues: 0
+2021/01/28-09:01:18.414781 7180             Options.manual_wal_flush: 0
+2021/01/28-09:01:18.414797 7180             Options.atomic_flush: 0
+2021/01/28-09:01:18.414815 7180             Options.avoid_unnecessary_blocking_io: 0
+2021/01/28-09:01:18.414834 7180             Options.max_background_jobs: 2
+2021/01/28-09:01:18.414852 7180             Options.max_background_compactions: -1
+2021/01/28-09:01:18.414869 7180             Options.avoid_flush_during_shutdown: 0
+2021/01/28-09:01:18.414886 7180           Options.writable_file_max_buffer_size: 1048576
+2021/01/28-09:01:18.414903 7180             Options.delayed_write_rate : 16777216
+2021/01/28-09:01:18.414919 7180             Options.max_total_wal_size: 0
+2021/01/28-09:01:18.414936 7180             Options.delete_obsolete_files_period_micros: 21600000000
+2021/01/28-09:01:18.414952 7180                   Options.stats_dump_period_sec: 600
+2021/01/28-09:01:18.414969 7180                 Options.stats_persist_period_sec: 600
+2021/01/28-09:01:18.414985 7180                 Options.stats_history_buffer_size: 1048576
+2021/01/28-09:01:18.415003 7180                          Options.max_open_files: -1
+2021/01/28-09:01:18.415020 7180                          Options.bytes_per_sync: 0
+2021/01/28-09:01:18.415036 7180                      Options.wal_bytes_per_sync: 0
+2021/01/28-09:01:18.415061 7180                   Options.strict_bytes_per_sync: 0
+2021/01/28-09:01:18.415080 7180       Options.compaction_readahead_size: 0
+2021/01/28-09:01:18.415100 7180 Compression algorithms supported:
+2021/01/28-09:01:18.415631 7180 	kZSTD supported: 1
+2021/01/28-09:01:18.415665 7180 	kSnappyCompression supported: 1
+2021/01/28-09:01:18.415682 7180 	kBZip2Compression supported: 0
+2021/01/28-09:01:18.415699 7180 	kZlibCompression supported: 1
+2021/01/28-09:01:18.415715 7180 	kLZ4Compression supported: 1
+2021/01/28-09:01:18.415731 7180 	kXpressCompression supported: 0
+2021/01/28-09:01:18.415746 7180 	kLZ4HCCompression supported: 1
+2021/01/28-09:01:18.415761 7180 	kZSTDNotFinalCompression supported: 1
+2021/01/28-09:01:18.415793 7180 Fast CRC32 supported: Supported on x86
+2021/01/28-09:01:18.421537 7180 [db\db_impl_open.cc:242] Creating manifest 1 
+2021/01/28-09:01:18.494335 7180 [db\version_set.cc:4053] Recovering from manifest file: C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration/MANIFEST-000001
+2021/01/28-09:01:18.496376 7180 [db\column_family.cc:482] --------------- Options for column family [default]:
+2021/01/28-09:01:18.496408 7180               Options.comparator: leveldb.BytewiseComparator
+2021/01/28-09:01:18.496429 7180           Options.merge_operator: None
+2021/01/28-09:01:18.496446 7180        Options.compaction_filter: None
+2021/01/28-09:01:18.496461 7180        Options.compaction_filter_factory: None
+2021/01/28-09:01:18.496479 7180         Options.memtable_factory: SkipListFactory
+2021/01/28-09:01:18.496496 7180            Options.table_factory: BlockBasedTable
+2021/01/28-09:01:18.497008 7180            table_factory options:   flush_block_policy_factory: FlushBlockBySizePolicyFactory (0000028043459FE0)
   cache_index_and_filter_blocks: 0
   cache_index_and_filter_blocks_with_high_priority: 0
   pin_l0_filter_and_index_blocks_in_cache: 0
@@ -103,7 +103,7 @@
   hash_index_allow_collision: 1
   checksum: 1
   no_block_cache: 0
-  block_cache: 00000260B1764DF0
+  block_cache: 00000280454DD3E0
   block_cache_name: LRUCache
   block_cache_options:
     capacity : 8388608
@@ -127,79 +127,79 @@
   format_version: 2
   enable_index_compression: 1
   block_align: 0
-2020/11/23-08:50:51.398240 1b44        Options.write_buffer_size: 67108864
-2020/11/23-08:50:51.398264 1b44  Options.max_write_buffer_number: 2
-2020/11/23-08:50:51.398279 1b44          Options.compression: Snappy
-2020/11/23-08:50:51.398292 1b44                  Options.bottommost_compression: Disabled
-2020/11/23-08:50:51.398308 1b44       Options.prefix_extractor: nullptr
-2020/11/23-08:50:51.398323 1b44   Options.memtable_insert_with_hint_prefix_extractor: nullptr
-2020/11/23-08:50:51.398336 1b44             Options.num_levels: 7
-2020/11/23-08:50:51.398349 1b44        Options.min_write_buffer_number_to_merge: 1
-2020/11/23-08:50:51.398363 1b44     Options.max_write_buffer_number_to_maintain: 0
-2020/11/23-08:50:51.398377 1b44            Options.bottommost_compression_opts.window_bits: -14
-2020/11/23-08:50:51.398391 1b44                  Options.bottommost_compression_opts.level: 32767
-2020/11/23-08:50:51.398405 1b44               Options.bottommost_compression_opts.strategy: 0
-2020/11/23-08:50:51.398435 1b44         Options.bottommost_compression_opts.max_dict_bytes: 0
-2020/11/23-08:50:51.398451 1b44         Options.bottommost_compression_opts.zstd_max_train_bytes: 0
-2020/11/23-08:50:51.398465 1b44                  Options.bottommost_compression_opts.enabled: false
-2020/11/23-08:50:51.398481 1b44            Options.compression_opts.window_bits: -14
-2020/11/23-08:50:51.398497 1b44                  Options.compression_opts.level: 32767
-2020/11/23-08:50:51.398514 1b44               Options.compression_opts.strategy: 0
-2020/11/23-08:50:51.398528 1b44         Options.compression_opts.max_dict_bytes: 0
-2020/11/23-08:50:51.398541 1b44         Options.compression_opts.zstd_max_train_bytes: 0
-2020/11/23-08:50:51.398558 1b44                  Options.compression_opts.enabled: false
-2020/11/23-08:50:51.398573 1b44      Options.level0_file_num_compaction_trigger: 4
-2020/11/23-08:50:51.398587 1b44          Options.level0_slowdown_writes_trigger: 20
-2020/11/23-08:50:51.398603 1b44              Options.level0_stop_writes_trigger: 36
-2020/11/23-08:50:51.398616 1b44                   Options.target_file_size_base: 67108864
-2020/11/23-08:50:51.398630 1b44             Options.target_file_size_multiplier: 1
-2020/11/23-08:50:51.398644 1b44                Options.max_bytes_for_level_base: 268435456
-2020/11/23-08:50:51.398668 1b44                      Options.snap_refresh_nanos: 500000000
-2020/11/23-08:50:51.398684 1b44 Options.level_compaction_dynamic_level_bytes: 0
-2020/11/23-08:50:51.398707 1b44          Options.max_bytes_for_level_multiplier: 10.000000
-2020/11/23-08:50:51.398735 1b44 Options.max_bytes_for_level_multiplier_addtl[0]: 1
-2020/11/23-08:50:51.398751 1b44 Options.max_bytes_for_level_multiplier_addtl[1]: 1
-2020/11/23-08:50:51.398763 1b44 Options.max_bytes_for_level_multiplier_addtl[2]: 1
-2020/11/23-08:50:51.398776 1b44 Options.max_bytes_for_level_multiplier_addtl[3]: 1
-2020/11/23-08:50:51.398789 1b44 Options.max_bytes_for_level_multiplier_addtl[4]: 1
-2020/11/23-08:50:51.398803 1b44 Options.max_bytes_for_level_multiplier_addtl[5]: 1
-2020/11/23-08:50:51.398816 1b44 Options.max_bytes_for_level_multiplier_addtl[6]: 1
-2020/11/23-08:50:51.398829 1b44       Options.max_sequential_skip_in_iterations: 8
-2020/11/23-08:50:51.398849 1b44                    Options.max_compaction_bytes: 1677721600
-2020/11/23-08:50:51.398866 1b44                        Options.arena_block_size: 8388608
-2020/11/23-08:50:51.398881 1b44   Options.soft_pending_compaction_bytes_limit: 68719476736
-2020/11/23-08:50:51.398895 1b44   Options.hard_pending_compaction_bytes_limit: 274877906944
-2020/11/23-08:50:51.398909 1b44       Options.rate_limit_delay_max_milliseconds: 100
-2020/11/23-08:50:51.398922 1b44                Options.disable_auto_compactions: 0
-2020/11/23-08:50:51.398939 1b44                        Options.compaction_style: kCompactionStyleLevel
-2020/11/23-08:50:51.398954 1b44                          Options.compaction_pri: kMinOverlappingRatio
-2020/11/23-08:50:51.398968 1b44 Options.compaction_options_universal.size_ratio: 1
-2020/11/23-08:50:51.398981 1b44 Options.compaction_options_universal.min_merge_width: 2
-2020/11/23-08:50:51.398994 1b44 Options.compaction_options_universal.max_merge_width: 4294967295
-2020/11/23-08:50:51.399008 1b44 Options.compaction_options_universal.max_size_amplification_percent: 200
-2020/11/23-08:50:51.399022 1b44 Options.compaction_options_universal.compression_size_percent: -1
-2020/11/23-08:50:51.399038 1b44 Options.compaction_options_universal.stop_style: kCompactionStopStyleTotalSize
-2020/11/23-08:50:51.399051 1b44 Options.compaction_options_fifo.max_table_files_size: 1073741824
-2020/11/23-08:50:51.399065 1b44 Options.compaction_options_fifo.allow_compaction: 0
-2020/11/23-08:50:51.399080 1b44                   Options.table_properties_collectors: 
-2020/11/23-08:50:51.399102 1b44                   Options.inplace_update_support: 0
-2020/11/23-08:50:51.399144 1b44                 Options.inplace_update_num_locks: 10000
-2020/11/23-08:50:51.399164 1b44               Options.memtable_prefix_bloom_size_ratio: 0.000000
-2020/11/23-08:50:51.399181 1b44               Options.memtable_whole_key_filtering: 0
-2020/11/23-08:50:51.399196 1b44   Options.memtable_huge_page_size: 0
-2020/11/23-08:50:51.399212 1b44                           Options.bloom_locality: 0
-2020/11/23-08:50:51.399227 1b44                    Options.max_successive_merges: 0
-2020/11/23-08:50:51.399244 1b44                Options.optimize_filters_for_hits: 0
-2020/11/23-08:50:51.399259 1b44                Options.paranoid_file_checks: 0
-2020/11/23-08:50:51.399276 1b44                Options.force_consistency_checks: 0
-2020/11/23-08:50:51.399291 1b44                Options.report_bg_io_stats: 0
-2020/11/23-08:50:51.399307 1b44                               Options.ttl: 0
-2020/11/23-08:50:51.399322 1b44          Options.periodic_compaction_seconds: 0
-2020/11/23-08:50:51.406530 1b44 [db\version_set.cc:4267] Recovered from manifest file:C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration/MANIFEST-000001 succeeded,manifest_file_number is 1, next_file_number is 3, last_sequence is 0, log_number is 0,prev_log_number is 0,max_column_family is 0,min_log_number_to_keep is 0
-2020/11/23-08:50:51.406571 1b44 [db\version_set.cc:4276] Column family [default] (ID 0), log number is 0
-2020/11/23-08:50:51.423178 1b44 DB pointer 00000260B16086D0
-2020/11/23-08:50:51.424354 690c [db\db_impl.cc:779] ------- DUMPING STATS -------
-2020/11/23-08:50:51.424388 690c [db\db_impl.cc:780] 
+2021/01/28-09:01:18.497108 7180        Options.write_buffer_size: 67108864
+2021/01/28-09:01:18.497129 7180  Options.max_write_buffer_number: 2
+2021/01/28-09:01:18.497144 7180          Options.compression: Snappy
+2021/01/28-09:01:18.497158 7180                  Options.bottommost_compression: Disabled
+2021/01/28-09:01:18.497172 7180       Options.prefix_extractor: nullptr
+2021/01/28-09:01:18.497197 7180   Options.memtable_insert_with_hint_prefix_extractor: nullptr
+2021/01/28-09:01:18.497218 7180             Options.num_levels: 7
+2021/01/28-09:01:18.497229 7180        Options.min_write_buffer_number_to_merge: 1
+2021/01/28-09:01:18.497238 7180     Options.max_write_buffer_number_to_maintain: 0
+2021/01/28-09:01:18.497248 7180            Options.bottommost_compression_opts.window_bits: -14
+2021/01/28-09:01:18.497258 7180                  Options.bottommost_compression_opts.level: 32767
+2021/01/28-09:01:18.497268 7180               Options.bottommost_compression_opts.strategy: 0
+2021/01/28-09:01:18.497278 7180         Options.bottommost_compression_opts.max_dict_bytes: 0
+2021/01/28-09:01:18.497288 7180         Options.bottommost_compression_opts.zstd_max_train_bytes: 0
+2021/01/28-09:01:18.497298 7180                  Options.bottommost_compression_opts.enabled: false
+2021/01/28-09:01:18.497308 7180            Options.compression_opts.window_bits: -14
+2021/01/28-09:01:18.497318 7180                  Options.compression_opts.level: 32767
+2021/01/28-09:01:18.497327 7180               Options.compression_opts.strategy: 0
+2021/01/28-09:01:18.497337 7180         Options.compression_opts.max_dict_bytes: 0
+2021/01/28-09:01:18.497347 7180         Options.compression_opts.zstd_max_train_bytes: 0
+2021/01/28-09:01:18.497356 7180                  Options.compression_opts.enabled: false
+2021/01/28-09:01:18.497366 7180      Options.level0_file_num_compaction_trigger: 4
+2021/01/28-09:01:18.497375 7180          Options.level0_slowdown_writes_trigger: 20
+2021/01/28-09:01:18.497385 7180              Options.level0_stop_writes_trigger: 36
+2021/01/28-09:01:18.497395 7180                   Options.target_file_size_base: 67108864
+2021/01/28-09:01:18.497405 7180             Options.target_file_size_multiplier: 1
+2021/01/28-09:01:18.497414 7180                Options.max_bytes_for_level_base: 268435456
+2021/01/28-09:01:18.497430 7180                      Options.snap_refresh_nanos: 500000000
+2021/01/28-09:01:18.497441 7180 Options.level_compaction_dynamic_level_bytes: 0
+2021/01/28-09:01:18.497450 7180          Options.max_bytes_for_level_multiplier: 10.000000
+2021/01/28-09:01:18.497466 7180 Options.max_bytes_for_level_multiplier_addtl[0]: 1
+2021/01/28-09:01:18.497476 7180 Options.max_bytes_for_level_multiplier_addtl[1]: 1
+2021/01/28-09:01:18.497486 7180 Options.max_bytes_for_level_multiplier_addtl[2]: 1
+2021/01/28-09:01:18.497496 7180 Options.max_bytes_for_level_multiplier_addtl[3]: 1
+2021/01/28-09:01:18.497506 7180 Options.max_bytes_for_level_multiplier_addtl[4]: 1
+2021/01/28-09:01:18.497516 7180 Options.max_bytes_for_level_multiplier_addtl[5]: 1
+2021/01/28-09:01:18.497526 7180 Options.max_bytes_for_level_multiplier_addtl[6]: 1
+2021/01/28-09:01:18.497536 7180       Options.max_sequential_skip_in_iterations: 8
+2021/01/28-09:01:18.497549 7180                    Options.max_compaction_bytes: 1677721600
+2021/01/28-09:01:18.497562 7180                        Options.arena_block_size: 8388608
+2021/01/28-09:01:18.497572 7180   Options.soft_pending_compaction_bytes_limit: 68719476736
+2021/01/28-09:01:18.497582 7180   Options.hard_pending_compaction_bytes_limit: 274877906944
+2021/01/28-09:01:18.497592 7180       Options.rate_limit_delay_max_milliseconds: 100
+2021/01/28-09:01:18.497602 7180                Options.disable_auto_compactions: 0
+2021/01/28-09:01:18.497614 7180                        Options.compaction_style: kCompactionStyleLevel
+2021/01/28-09:01:18.497625 7180                          Options.compaction_pri: kMinOverlappingRatio
+2021/01/28-09:01:18.497635 7180 Options.compaction_options_universal.size_ratio: 1
+2021/01/28-09:01:18.497645 7180 Options.compaction_options_universal.min_merge_width: 2
+2021/01/28-09:01:18.497655 7180 Options.compaction_options_universal.max_merge_width: 4294967295
+2021/01/28-09:01:18.497665 7180 Options.compaction_options_universal.max_size_amplification_percent: 200
+2021/01/28-09:01:18.497675 7180 Options.compaction_options_universal.compression_size_percent: -1
+2021/01/28-09:01:18.497686 7180 Options.compaction_options_universal.stop_style: kCompactionStopStyleTotalSize
+2021/01/28-09:01:18.497696 7180 Options.compaction_options_fifo.max_table_files_size: 1073741824
+2021/01/28-09:01:18.497706 7180 Options.compaction_options_fifo.allow_compaction: 0
+2021/01/28-09:01:18.497717 7180                   Options.table_properties_collectors: 
+2021/01/28-09:01:18.497727 7180                   Options.inplace_update_support: 0
+2021/01/28-09:01:18.497736 7180                 Options.inplace_update_num_locks: 10000
+2021/01/28-09:01:18.497746 7180               Options.memtable_prefix_bloom_size_ratio: 0.000000
+2021/01/28-09:01:18.497757 7180               Options.memtable_whole_key_filtering: 0
+2021/01/28-09:01:18.497767 7180   Options.memtable_huge_page_size: 0
+2021/01/28-09:01:18.497777 7180                           Options.bloom_locality: 0
+2021/01/28-09:01:18.497786 7180                    Options.max_successive_merges: 0
+2021/01/28-09:01:18.497796 7180                Options.optimize_filters_for_hits: 0
+2021/01/28-09:01:18.497806 7180                Options.paranoid_file_checks: 0
+2021/01/28-09:01:18.497816 7180                Options.force_consistency_checks: 0
+2021/01/28-09:01:18.497825 7180                Options.report_bg_io_stats: 0
+2021/01/28-09:01:18.497835 7180                               Options.ttl: 0
+2021/01/28-09:01:18.497844 7180          Options.periodic_compaction_seconds: 0
+2021/01/28-09:01:18.508220 7180 [db\version_set.cc:4267] Recovered from manifest file:C:\Users\ciste\OneDrive - University of Pisa\PC\Documenti\Dev@Unipi\eligere\src\EligereVS\Data/Configuration/MANIFEST-000001 succeeded,manifest_file_number is 1, next_file_number is 3, last_sequence is 0, log_number is 0,prev_log_number is 0,max_column_family is 0,min_log_number_to_keep is 0
+2021/01/28-09:01:18.508257 7180 [db\version_set.cc:4276] Column family [default] (ID 0), log number is 0
+2021/01/28-09:01:18.529336 7180 DB pointer 0000028046100650
+2021/01/28-09:01:18.530349 882c [db\db_impl.cc:779] ------- DUMPING STATS -------
+2021/01/28-09:01:18.530390 882c [db\db_impl.cc:780] 
 ** DB Stats **
 Uptime(secs): 0.0 total, 0.0 interval
 Cumulative writes: 0 writes, 0 keys, 0 commit groups, 0.0 writes per commit group, ingest: 0.00 GB, 0.00 MB/s

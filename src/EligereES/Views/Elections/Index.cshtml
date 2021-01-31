@@ -1,7 +1,11 @@
-﻿@model IEnumerable<EligereES.Models.DB.Election>
+﻿@model ValueTuple<List<EligereES.Models.DB.Election>, Dictionary<Guid, int>, Dictionary<Guid, int>, Dictionary<Guid, int>>
 
 @{
     ViewData["Title"] = "Elections";
+    var elections = Model.Item1;
+    var commissions = Model.Item2;
+    var voters = Model.Item3;
+    var ballotNames = Model.Item4;
 }
 
 <style>
@@ -43,7 +47,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Where(e => e.PollEndDate > DateTime.Today).OrderBy(e => e.PollStartDate).ThenBy(e => e.Name))
+        @foreach (var item in elections.Where(e => e.PollEndDate > DateTime.Today).OrderBy(e => e.PollStartDate).ThenBy(e => e.Name))
         {
 
             <tr>
@@ -62,17 +66,17 @@
                 </td>
                 <td>
                     <a asp-action="EditPollingStations" asp-route-id="@item.Id">
-                        @Html.DisplayFor(modelItem => item.PollingStationCommission.Count)
+                        @(commissions.ContainsKey(item.Id) ? commissions[item.Id] : 0)
                     </a>
                 </td>
                 <td>
                     <a asp-action="Voters" asp-route-id="@item.Id">
-                        @Html.DisplayFor(modelItem => item.Voter.Count) <!-- This can be improved for performance -->
+                        @(voters.ContainsKey(item.Id) ? voters[item.Id] : 0)
                     </a>
                 </td>
                 <td>
                     <a asp-action="Candidates" asp-route-id="@item.Id">
-                        @Html.DisplayFor(modelItem => item.BallotName.Count) <!-- This can be improved for performance -->
+                        @(ballotNames.ContainsKey(item.Id) ? ballotNames[item.Id] : 0)
                     </a>
                 </td>
                 <td>
@@ -100,7 +104,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Where(e => e.PollEndDate <= DateTime.Today).OrderByDescending(e => e.PollStartDate).ThenBy(e => e.Name))
+        @foreach (var item in elections.Where(e => e.PollEndDate <= DateTime.Today).OrderByDescending(e => e.PollStartDate).ThenBy(e => e.Name))
         {
 
             <tr>

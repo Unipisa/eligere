@@ -541,5 +541,93 @@ namespace EligereES.Controllers
 
             return available;
         }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet("Elections/ApproveUserLoginRequest/{id}")]
+        public async Task<bool> ApproveUserLoginRequest(Guid id)
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+
+            var r = await _context.UserLoginRequest.FindAsync(id);
+            if (r == null || r.Approval.HasValue) return false;
+            var nr = new UserLogin() { 
+                Id=Guid.NewGuid(),
+                Provider = r.Provider, 
+                UserId =r.UserId,
+                PersonFk=r.PersonFk
+            };
+            r.Approved = true;
+            r.Approval = DateTime.Now;
+            r.Approver = person.Id;
+            _context.UserLogin.Add(nr);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet("Elections/ApproveUserLoginRequests")]
+        public async Task<bool> ApproveUserLoginRequest()
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+
+            var reqs = await _context.UserLoginRequest.Where(r => !r.Approval.HasValue).ToListAsync();
+            foreach (var r in reqs)
+            {
+                if (r == null || r.Approval.HasValue) return false;
+                var nr = new UserLogin()
+                {
+                    Id = Guid.NewGuid(),
+                    Provider = r.Provider,
+                    UserId = r.UserId,
+                    PersonFk = r.PersonFk
+                };
+                r.Approved = true;
+                r.Approval = DateTime.Now;
+                r.Approver = person.Id;
+                _context.UserLogin.Add(nr);
+            }
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet("Elections/RejectUserLoginRequest/{id}")]
+        public async Task<bool> RejectUserLoginRequest(Guid id)
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+
+            var r = await _context.UserLoginRequest.FindAsync(id);
+            if (r == null || r.Approval.HasValue) return false;
+            r.Approved = false;
+            r.Approval = DateTime.Now;
+            r.Approver = person.Id;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

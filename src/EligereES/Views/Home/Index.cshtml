@@ -64,10 +64,40 @@
         </div>
     }
 
+    @if (this.User.IsInRole(EligereRoles.AuthenticatedUser) && !this.User.IsInRole(EligereRoles.AuthenticatedPerson))
+    {
+        var pendingUserRequest = (bool)ViewData["PendingUserLoginRequest"];
+        if (!pendingUserRequest)
+        {
+            <div class="col-6 offset-3">
+                <hr />
+                <h4>Registrazione</h4>
+                <p>Per poter esercitare il diritto al voto &egrave; necessario indicare il proprio codice fiscale associato all'account <i>@User.Identity.Name</i>. Il C.F. dovr&agrave; risultare tra i codici fiscali in anagrafe.</p>
+            </div>
+            <form method="post" asp-controller="Home" asp-action="RequestUserLoginAssociation">
+                <div class="input-group mb-3 w-50 col-6 offset-3">
+                    <input type="text" class="form-control" placeholder="Inserire il codice fiscale..." id="cf" name="cf" aria-label="Codice Fiscale della persona" aria-describedby="basic-addon2" autocomplete="off">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="submit">Conferma</button>
+                    </div>
+                </div>
+            </form>
+
+        }
+        else
+        {
+            <div class="col-6 offset-3">
+                <hr />
+                <h4>Registrazione</h4>
+                <p>L'associazione &egrave; gi&agrave; stata richiesta.</p>
+            </div>
+        }
+    }
+
     @if (!this.User.Identity.IsAuthenticated)
     {
         <div class="text-center">
-            <a class="nav-link text-dark" asp-area="AzureAD" asp-controller="Account" asp-action="SignIn">Accesso al sistema</a>
+            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accesso al sistema</a>
         </div>
         <div class="text-center">
             <a class="nav-link text-dark" href="https://su.unipi.it/UsareEligere" target="_blank">Istruzioni</a>

@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
+#nullable disable
+
 namespace EligereES.Models.DB
 {
     public partial class ESDB : DbContext
@@ -21,6 +23,7 @@ namespace EligereES.Models.DB
         public virtual DbSet<ElectionStaff> ElectionStaff { get; set; }
         public virtual DbSet<ElectionType> ElectionType { get; set; }
         public virtual DbSet<EligibleCandidate> EligibleCandidate { get; set; }
+        public virtual DbSet<IdentificationCommissionerAffinityRel> IdentificationCommissionerAffinityRel { get; set; }
         public virtual DbSet<Log> Log { get; set; }
         public virtual DbSet<Party> Party { get; set; }
         public virtual DbSet<Person> Person { get; set; }
@@ -31,7 +34,10 @@ namespace EligereES.Models.DB
         public virtual DbSet<RelPollingStationSystemPollingStationCommission> RelPollingStationSystemPollingStationCommission { get; set; }
         public virtual DbSet<RemoteIdentificationCommissioner> RemoteIdentificationCommissioner { get; set; }
         public virtual DbSet<TempCell> TempCell { get; set; }
+        public virtual DbSet<TempComm> TempComm { get; set; }
+        public virtual DbSet<TempEl> TempEl { get; set; }
         public virtual DbSet<UserLogin> UserLogin { get; set; }
+        public virtual DbSet<UserLoginRequest> UserLoginRequest { get; set; }
         public virtual DbSet<Voter> Voter { get; set; }
         public virtual DbSet<VotingTicket> VotingTicket { get; set; }
 
@@ -39,13 +45,15 @@ namespace EligereES.Models.DB
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
                 optionsBuilder.UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;Database=ESDB;Integrated Security=True");
             }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasAnnotation("Relational:Collation", "SQL_Latin1_General_CP1_CI_AS");
+
             modelBuilder.Entity<BallotName>(entity =>
             {
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
@@ -163,6 +171,27 @@ namespace EligereES.Models.DB
                     .HasConstraintName("FK_EligibleCandidate_ToPerson");
             });
 
+            modelBuilder.Entity<IdentificationCommissionerAffinityRel>(entity =>
+            {
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.ElectionFk).HasColumnName("Election_FK");
+
+                entity.Property(e => e.PersonFk).HasColumnName("Person_FK");
+
+                entity.HasOne(d => d.ElectionFkNavigation)
+                    .WithMany(p => p.IdentificationCommissionerAffinityRel)
+                    .HasForeignKey(d => d.ElectionFk)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_IdentificationCommissionerAffinityRel_Election");
+
+                entity.HasOne(d => d.PersonFkNavigation)
+                    .WithMany(p => p.IdentificationCommissionerAffinityRel)
+                    .HasForeignKey(d => d.PersonFk)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_IdentificationCommissionerAffinityRel_Person");
+            });
+
             modelBuilder.Entity<Log>(entity =>
             {
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
@@ -254,8 +283,8 @@ namespace EligereES.Models.DB
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
                 entity.Property(e => e.Ipaddress)
-                    .HasColumnName("IPAddress")
-                    .HasMaxLength(50);
+                    .HasMaxLength(50)
+                    .HasColumnName("IPAddress");
             });
 
             modelBuilder.Entity<Recognition>(entity =>
@@ -265,8 +294,8 @@ namespace EligereES.Models.DB
                 entity.Property(e => e.AccountProvider).IsRequired();
 
                 entity.Property(e => e.Idexpiration)
-                    .HasColumnName("IDExpiration")
-                    .HasColumnType("datetime");
+                    .HasColumnType("datetime")
+                    .HasColumnName("IDExpiration");
 
                 entity.Property(e => e.Idnum).HasColumnName("IDNum");
 
@@ -337,15 +366,49 @@ namespace EligereES.Models.DB
 
                 entity.Property(e => e.Cell)
                     .IsRequired()
-                    .HasColumnName("cell")
-                    .HasMaxLength(50);
+                    .HasMaxLength(50)
+                    .HasColumnName("cell");
 
                 entity.Property(e => e.Cellint)
                     .IsRequired()
-                    .HasColumnName("cellint")
-                    .HasMaxLength(50);
+                    .HasMaxLength(50)
+                    .HasColumnName("cellint");
 
                 entity.Property(e => e.Cognome).IsRequired();
+            });
+
+            modelBuilder.Entity<TempComm>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.Property(e => e.Dipartimento)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsFixedLength(true);
+
+                entity.Property(e => e.FirstName)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .IsFixedLength(true);
+
+                entity.Property(e => e.LastName)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.PersonFk).HasColumnName("Person_FK");
+            });
+
+            modelBuilder.Entity<TempEl>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.Property(e => e.Dipartimento)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(250);
             });
 
             modelBuilder.Entity<UserLogin>(entity =>
@@ -369,10 +432,30 @@ namespace EligereES.Models.DB
                     .HasConstraintName("FK_UserLogin_ToTable");
             });
 
+            modelBuilder.Entity<UserLoginRequest>(entity =>
+            {
+                entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
+
+                entity.Property(e => e.Approval).HasColumnType("datetime");
+
+                entity.Property(e => e.PersonFk).HasColumnName("PersonFK");
+
+                entity.Property(e => e.Provider)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.UserId).IsRequired();
+
+                entity.HasOne(d => d.PersonFkNavigation)
+                    .WithMany(p => p.UserLoginRequest)
+                    .HasForeignKey(d => d.PersonFk)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_UserLoginRequest_ToPerson");
+            });
+
             modelBuilder.Entity<Voter>(entity =>
             {
-                entity.HasIndex(e => e.Id)
-                    .HasName("IX_Voter");
+                entity.HasIndex(e => e.Id, "IX_Voter");
 
                 entity.Property(e => e.Id).ValueGeneratedNever();
 

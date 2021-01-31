@@ -33,7 +33,7 @@ namespace EligereES.Controllers
             var psc = from c in _context.PollingStationCommission
                       join cc in _context.PollingStationCommissioner on c.Id equals cc.PollingStationCommissionFk
                       join el in _context.Election on c.ElectionFk equals el.Id
-                      where cc.PersonFk == person.Id
+                      where cc.PersonFk == person.Id && el.Active
                       select new { Election = el, Commission = c, Member = cc };
 
             var psd = new Dictionary<PollingStationCommission, List<PollingStationCommissioner>>();

@@ -13,6 +13,9 @@
         $('#' + ptxt).val(dn);
         $('#' + phid).val(id);
     }
+    function Q(s) {
+        return s.replace("'", "\\'")
+    }
     function completePerson(val, tgt, ptxt, phid) {
         if (completionid) clearTimeout(completionid);
         var timeid = setTimeout(() => {
@@ -23,7 +26,7 @@
             }).done((v) => {
                 $('#' + tgt).html('');
                 for (i = 0; i < Math.min(v.length, 5); i++) {
-                    $('#' + tgt).append('<p onclick="selectPerson(\'' + tgt + '\', \'' + ptxt + '\', \'' + phid + '\', \'' + v[i].id + '\', \'' + (v[i].firstName + ' ' + v[i].lastName + ' (' + v[i].publicId + ')') + '\')">' + v[i].firstName + ' ' + v[i].lastName + ' (' + v[i].publicId + ')</p>')
+                    $('#' + tgt).append('<p onclick="selectPerson(\'' + tgt + '\', \'' + ptxt + '\', \'' + phid + '\', \'' + v[i].id + '\', \'' + (Q(v[i].firstName) + ' ' + Q(v[i].lastName) + ' (' + v[i].publicId + ')') + '\')">' + v[i].firstName + ' ' + v[i].lastName + ' (' + v[i].publicId + ')</p>')
                 }
             })
         }, 700);
