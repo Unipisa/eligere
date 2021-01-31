@@ -17,6 +17,7 @@ namespace EligereES.Models.DB
         public Guid ElectionFk { get; set; }
         public Guid? PartyFk { get; set; }
         public int? SequenceOrder { get; set; }
+        public bool? IsCandidate { get; set; }
 
         public virtual Election ElectionFkNavigation { get; set; }
         public virtual Party PartyFkNavigation { get; set; }
