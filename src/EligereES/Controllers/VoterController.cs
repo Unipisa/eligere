@@ -22,7 +22,6 @@ using Newtonsoft.Json;
 namespace EligereES.Controllers
 {
     [Route("Voter")]
-    [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin, EligereRoles.Voter)]
     public class VoterController : Controller
     {
         private static Random rnd = new Random();
@@ -105,6 +104,7 @@ namespace EligereES.Controllers
             return View("Index", (ReadElectionConf(), person, await GetElections(person)));
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin, EligereRoles.Voter)]
         [HttpGet("IdentificationLink")]
         public async Task<IActionResult> IdentificationLink()
         {
@@ -167,6 +167,7 @@ namespace EligereES.Controllers
             return Redirect(ids[rnd.Next(ids.Count)]);
         }
 
+        [AuthorizeRoles(EligereRoles.AuthenticatedPerson)]
         public async Task<IActionResult> Index()
         {
             var pq = from p in _context.Person

@@ -14,6 +14,19 @@ namespace EligereES.Models.Extensions
         ActualVoters = 2
     }
 
+    public enum CandidatesType
+    {
+        Implicit = 0,
+        OnlyExplicit = 1,
+        ImplicitAndExplicit = 2
+    }
+
+    public enum IdentificationType
+    {
+        Individual = 0,
+        Public = 1
+    }
+
     // This class is used to define configuration of a specific election (i.e. Quorum, ecc)
     // It will be serialized into a json column inside the database to ensure that DB schema will not explode over time
     public class ElectionConfiguration
@@ -47,6 +60,10 @@ namespace EligereES.Models.Extensions
         public int NumPreferences { get; set; }
 
         public bool HasCandidates { get; set; }
+
+        public CandidatesType CandidatesType { get; set; }
+
+        public IdentificationType IdentificationType { get; set; }
 
         public int EligibleSeats { get; set; }
     }

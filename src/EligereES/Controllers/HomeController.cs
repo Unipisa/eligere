@@ -32,8 +32,15 @@ namespace EligereES.Controllers
         }
 
         [AllowAnonymous]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            // FIXME: this should be improved, roles are computed upon login so if they are changed during execution should be recomputed
+            // in particular when assigned roles are revoked currently login should be forced through server restart.
+            // This check is only to ensure that enrolled voters being still acknowledged.
+            if (User.Identity.IsAuthenticated && await EligereRoles.InconsistentRoles(User, _context, "AzureAD", User.Identity.Name))
+            {
+                return RedirectToAction("SignOut", "Account", new { Area = "MicrosoftIdentity" });
+            }
             var u = User.Identity.Name;
             var pendingUserLoginRequest = false;
             if (User.IsInRole(EligereRoles.AuthenticatedUser) && !User.IsInRole(EligereRoles.AuthenticatedPerson))

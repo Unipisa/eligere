@@ -54,5 +54,15 @@ namespace EligereES.Models
 
             return roles;
         }
+
+        internal async static Task<bool> InconsistentRoles(ClaimsPrincipal user, ESDB esdb, string provider, string username)
+        {
+            var roles = await ComputeRoles(esdb, provider, username);
+            foreach (var r in roles)
+            {
+                if (!user.IsInRole(r)) return true;
+            }
+            return false;
+        }
     }
 }

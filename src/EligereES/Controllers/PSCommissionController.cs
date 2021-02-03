@@ -219,6 +219,75 @@ namespace EligereES.Controllers
             return ret.ToString();
         }
 
+        [HttpPost("Identify/Public/")]
+        [ValidateAntiForgeryToken]
+        [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident)]
+        public async Task<IActionResult> PublicIdentificationElection(string remote)
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+
+            var (per, elections, count, commissions) = await GetElectionData(person);
+
+
+
+            if (!elections.Where(e => e.Value.ElectionConfiguration.IdentificationType == Models.Extensions.IdentificationType.Public).Any())
+                return BadRequest("No election in the group is not configured to allow public identification");
+
+            var pubElections = new List<Guid>();
+
+            pubElections.AddRange(
+                elections
+                .Where(el => el.Value.ElectionConfiguration.IdentificationType == Models.Extensions.IdentificationType.Public)
+                .Select(el => el.Key).ToList()
+            );
+
+            var otp = GenerateOTP();
+
+            var voters = await _context.Voter.Where(v => pubElections.Contains(v.ElectionFk)).Include(v => v.RecognitionFkNavigation).ToListAsync();
+
+            foreach (var v in voters)
+            {
+                var recognition = v.RecognitionFkNavigation;
+                if (recognition == null)
+                {
+                    recognition = new Recognition()
+                    {
+                        Id = Guid.NewGuid(),
+                    };
+                    v.RecognitionFk = recognition.Id;
+                    _context.Recognition.Add(recognition);
+                }
+
+                recognition.Idtype = "_PublicIdentification";
+                recognition.UserId = User.Identity.Name;
+                recognition.AccountProvider = "AzureAD";
+                recognition.Otp = otp;
+                recognition.State = 0;
+                recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                if (User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
+                {
+                    recognition.RemoteIdentification = true;
+                }
+                else
+                {
+                    recognition.RemoteIdentification = remote == "on";
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return View((pubElections, otp));
+        }
+
+
         [HttpPost("Identify/{id}")]
         [ValidateAntiForgeryToken]
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff, EligereRoles.RemoteIdentificationOfficer)]

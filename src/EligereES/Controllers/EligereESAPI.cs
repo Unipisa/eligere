@@ -337,7 +337,7 @@ namespace EligereES.Controllers
 
             electionDescription.candidates = 
                 ballotnames.ConvertAll(b => new ElectionGuard.Candidate() {
-                    object_id = b.Id.ToString(),
+                    object_id = (b.IsCandidate.HasValue && b.IsCandidate.Value ? "*" : "") + b.Id.ToString(),
                     ballot_name = new ElectionGuard.BallotName() { 
                         party_id = b.PartyFk.ToString(), 
                         text = new ElectionGuard.LocalizedText[] {
@@ -360,6 +360,8 @@ namespace EligereES.Controllers
                 contest.electoral_district_id = "https://eligere.unipi.it"; // To be added to configuration
                 contest.extensions = new Dictionary<string, string>();
                 contest.extensions["HasCandidates"] = config.HasCandidates.ToString();
+                contest.extensions["CandidatesType"] = config.CandidatesType.ToString();
+                contest.extensions["IdentificationType"] = config.IdentificationType.ToString();
                 contest.extensions["PollStartDate"] = e.PollStartDate.ToString(CultureInfo.GetCultureInfo("it-it"));
                 contest.extensions["PollEndDate"] = e.PollEndDate.ToString(CultureInfo.GetCultureInfo("it-it"));
                 var ob = ballotnames.Where(b => b.ElectionFk == e.Id && b.SequenceOrder.HasValue).OrderBy(b => b.SequenceOrder).ToList();

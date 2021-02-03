@@ -53,7 +53,7 @@
         </div>
     }
 
-    @if (this.User.IsInRole(EligereRoles.Admin) || this.User.IsInRole(EligereRoles.ElectionOfficer) || this.User.IsInRole(EligereRoles.Voter))
+    @if (this.User.IsInRole(EligereRoles.AuthenticatedPerson))
     {
         <div class="col-6 offset-3">
             <hr />
