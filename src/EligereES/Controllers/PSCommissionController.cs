@@ -236,8 +236,6 @@ namespace EligereES.Controllers
 
             var (per, elections, count, commissions) = await GetElectionData(person);
 
-
-
             if (!elections.Where(e => e.Value.ElectionConfiguration.IdentificationType == Models.Extensions.IdentificationType.Public).Any())
                 return BadRequest("No election in the group is not configured to allow public identification");
 
@@ -278,13 +276,15 @@ namespace EligereES.Controllers
                 }
                 else
                 {
-                    recognition.RemoteIdentification = remote == "on";
+                    recognition.RemoteIdentification = remote == "off";
                 }
             }
 
             await _context.SaveChangesAsync();
 
-            return View((pubElections, otp));
+
+            var pubElList = elections.Where(el => pubElections.Contains(el.Key)).Select(el => el.Value).ToList();
+            return View((pubElList, otp));
         }
 
 

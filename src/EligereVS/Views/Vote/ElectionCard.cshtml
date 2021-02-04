@@ -65,6 +65,8 @@
                     <input type="hidden" id="preferences" name="preferences" />
                     <div id="candidateSelection" class="custom-control" style="margin-top: 32px;">
                     </div>
+                    <div id="additionalCandidateSelection" class="custom-control" style="margin-top: 25px;">
+                    </div>
                 </div>
 
             </div>
@@ -90,12 +92,13 @@
 
     function generateCandidateList(election) {
         var hasCandidates = election.extensions.HasCandidates != "False";
+        var candidateType = election.extensions.CandidatesType;
         var numvotes = election.votes_allowed;
         var selections = election.ballot_selections;
         var numsel = selections.length;
         var container = document.getElementById('candidateSelection');
 
-        if (hasCandidates) {
+        if (hasCandidates || candidateType == "OnlyExplicit" || candidateType == "ImplicitAndExplicit") {
             if (numvotes == 1) {
                 container.clean = function () {
                     $('#candidateSelection >> input').prop('checked', false);
@@ -107,15 +110,56 @@
                     return selected;
                 }
                 var cont = '';
+                var count = 0;
+                var visibleCandidates = {};
+                var availableCandidates = {};
                 for (var i = 0; i < numsel; i++) {
+                    var candidate = candidates[selections[i].candidate_id];
                     var ballotname = candidates[selections[i].candidate_id].ballot_name.text[0].value;
-                    cont +=
-                        '<div class="custom-control custom-radio">' +
-                        '<input type="radio" id="candidate' + i + '" name="candidate" value="' + ballotname + '" class="custom-control-input" />' +
-                        '<label for= "candidate' + i + '" class= "custom-control-label" > ' + ballotname + '</label >' +
-                        '</div>';
+                    availableCandidates[ballotname] = true;
+                    if (candidateType == "OnlyExplicit" || (candidateType == "ImplicitAndExplicit" && candidate.object_id[0] == '*')) {
+                        count++;
+                        visibleCandidates[ballotname] = true;
+                        cont +=
+                            '<div class="custom-control custom-radio">' +
+                            '<input type="radio" id="candidate' + count + '" name="candidate' + count + '" value="' + ballotname + '" class="custom-control-input" />' +
+                            '<label for= "candidate' + count + '" class= "custom-control-label" > ' + ballotname + '</label >' +
+                            '</div>';
+                    }
+                }
+                var panel = null;
+                if (candidateType == "ImplicitAndExplicit") {
+                    container.addCandidate = function () {
+                        var cand = $('#addcandidate').val();
+                        if (cand.trim() == '') {
+                            alert('Scrivere il cognome e selezionare un candidato da aggiungere');
+                            return;
+                        }
+                        if (!availableCandidates[cand]) {
+                            alert('Candidato non valido, selezionarlo dalla tendina mentre si scrive');
+                            return;
+                        }
+                        if (visibleCandidates[cand]) {
+                            alert('Il candidato è già presente');
+                            return;
+                        }
+                        visibleCandidates[cand] = true;
+                        count++;
+                        cont =
+                            '<div class="custom-control custom-radio">' +
+                            '<input type="radio" id="candidate' + count + '" name="candidate' + count + '" value="' + cand + '" class="custom-control-input" />' +
+                            '<label for= "candidate' + count + '" class= "custom-control-label" > ' + cand + '</label >' +
+                            '</div>';
+                        $('#candidateSelection').html($('#candidateSelection').html() + cont)
+                        $('#addcandidate').val('');
+                    }
+                    panel = '<div style="margin-top: 25px;" class="input-group">';
+                    panel += '<input type="text" class="form-control" placeholder="Candidato" id="addcandidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate' + i + '\')" onkeyup="completeCandidate(this.value, \'addcompletionlist\', \'addcandidate\', null)">';
+                    panel += '<div class="input-group-append"><button class="btn btn-outline-secondary" type = "button" onclick = "document.getElementById(\'candidateSelection\').addCandidate()" >+</button ></div >';
+                    panel += '</div><div id="addcompletionlist" class="position-relative"></div>';
                 }
                 $('#candidateSelection').html(cont);
+                if (panel) { $('#additionalCandidateSelection').html(panel); }
             } else {
                 container.clean = function () {
                     $('#candidateSelection >> input').prop('checked', false);
@@ -127,15 +171,56 @@
                     return selected;
                 }
                 var cont = '';
+                var count = 0;
+                var visibleCandidates = {};
+                var availableCandidates = {};
                 for (var i = 0; i < numsel; i++) {
-                    var ballotname = candidates[selections[i].candidate_id].ballot_name.text[0].value;
-                    cont +=
-                        '<div class="custom-control custom-radio">' +
-                        '<input type="checkbox" id="candidate' + i + '" name="candidate' + i + '" value="' + ballotname + '" class="custom-control-input" onchange="if (!checkNumVotes('+numvotes+')) { $(this).prop(\'checked\', false); }" />' +
-                        '<label for="candidate' + i +  '" class="custom-control-label" >' + ballotname + '</label>' +
-                        '</div>';
+                    var candidate = candidates[selections[i].candidate_id];
+                    var ballotname = candidate.ballot_name.text[0].value;
+                    availableCandidates[ballotname] = true;
+                    if (candidateType == "OnlyExplicit" || (candidateType == "ImplicitAndExplicit" && candidate.object_id[0] == '*')) {
+                        count++;
+                        visibleCandidates[ballotname] = true;
+                        cont +=
+                            '<div class="custom-control custom-radio">' +
+                            '<input type="checkbox" id="candidate' + count + '" name="candidate' + count + '" value="' + ballotname + '" class="custom-control-input" onchange="if (!checkNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
+                            '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname + '</label>' +
+                            '</div>';
+                    }
+                }
+                var panel = null;
+                if (candidateType == "ImplicitAndExplicit") {
+                    container.addCandidate = function () {
+                        var cand = $('#addcandidate').val();
+                        if (cand.trim() == '') {
+                            alert('Scrivere il cognome e selezionare un candidato da aggiungere');
+                            return;
+                        }
+                        if (!availableCandidates[cand]) {
+                            alert('Candidato non valido, selezionarlo dalla tendina mentre si scrive');
+                            return;
+                        }
+                        if (visibleCandidates[cand]) {
+                            alert('Il candidato è già presente');
+                            return;
+                        }
+                        visibleCandidates[cand] = true;
+                        count++;
+                        cont =
+                            '<div class="custom-control custom-radio">' +
+                            '<input type="checkbox" id="candidate' + count + '" name="candidate' + count + '" value="' + cand + '" class="custom-control-input added-candidate" onchange="if (!checkNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
+                            '<label for="candidate' + count + '" class="custom-control-label" >' + cand + '</label>' +
+                            '</div>';
+                        $('#candidateSelection').html($('#candidateSelection').html() + cont)
+                        $('#addcandidate').val('');
+                    }
+                    panel = '<div style="margin-top: 25px;" class="input-group">';
+                    panel += '<input type="text" class="form-control" placeholder="Candidato" id="addcandidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate' + i + '\')" onkeyup="completeCandidate(this.value, \'addcompletionlist\', \'addcandidate\', null)">';
+                    panel += '<div class="input-group-append"><button class="btn btn-outline-secondary" type = "button" onclick = "document.getElementById(\'candidateSelection\').addCandidate()" >+</button ></div >';
+                    panel += '</div><div id="addcompletionlist" class="position-relative"></div>';
                 }
                 $('#candidateSelection').html(cont);
+                if (panel) { $('#additionalCandidateSelection').html(panel); }
             }
         } else {
             container.clean = function () {
@@ -171,6 +256,7 @@
         }
 
         $('#candidateSelection').hide();
+        $('#additionalCandidateSelection').hide();
         $('#schedaBianca').change(radioVoteChanged)
         $('#schedaNulla').change(radioVoteChanged)
         $('#vote').change(radioVoteChanged)
@@ -190,8 +276,10 @@
     function radioVoteChanged() {
         if ($('#vote').is(':checked')) {
             $('#candidateSelection').show();
+            $('#additionalCandidateSelection').show();
         } else {
             $('#candidateSelection').hide();
+            $('#additionalCandidateSelection').hide();
             clearContainer();
         }
     }

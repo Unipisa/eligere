@@ -4,6 +4,7 @@
 @{
     var (p, e) = Model;
     var check = e.Where(el => el.Active).Any();
+    var publicIdentification = e.Where(el => el.ElectionConfiguration.IdentificationType == EligereES.Models.Extensions.IdentificationType.Public).Any();
 }
 
 <div class="text-right">
@@ -24,6 +25,17 @@
             </div>
         </div>
     </form>
+    @if (publicIdentification)
+    {
+        <form method="post" asp-action="PublicIdentificationElection" id="recognize">
+            <div class="row" style="margin-bottom: 60px;">
+                <div class="input-group col-4 offset-4">
+                    <input type="submit" class="btn-primary btn" value="Riconosci assemblea" />
+                </div>
+            </div>
+        </form>
+
+    }
     @if (check)
     {
         <!--Accordion wrapper-->

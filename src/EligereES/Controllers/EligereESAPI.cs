@@ -335,15 +335,22 @@ namespace EligereES.Controllers
 
             var ballotnames = await ballotnamesq.ToListAsync();
 
+            var ballotids = new Dictionary<Guid, string>();
+
             electionDescription.candidates = 
-                ballotnames.ConvertAll(b => new ElectionGuard.Candidate() {
-                    object_id = (b.IsCandidate.HasValue && b.IsCandidate.Value ? "*" : "") + b.Id.ToString(),
-                    ballot_name = new ElectionGuard.BallotName() { 
-                        party_id = b.PartyFk.ToString(), 
-                        text = new ElectionGuard.LocalizedText[] {
+                ballotnames.ConvertAll(b => {
+                    ballotids.Add(b.Id, (b.IsCandidate.HasValue && b.IsCandidate.Value ? "*" : "") + b.Id.ToString());
+                    return new ElectionGuard.Candidate()
+                    {
+                        object_id = ballotids[b.Id],
+                        ballot_name = new ElectionGuard.BallotName()
+                        {
+                            party_id = b.PartyFk.ToString(),
+                            text = new ElectionGuard.LocalizedText[] {
                             new ElectionGuard.LocalizedText() { language = "it", value = b.BallotNameLabel }
                         }
-                    }
+                        }
+                    };
                 }).ToArray();
 
             var contests = new List<ElectionGuard.Contest>();
@@ -372,8 +379,8 @@ namespace EligereES.Controllers
                 foreach (var b in ob)
                 {
                     var bs = new ElectionGuard.BallotSelection();
-                    bs.object_id = b.Id.ToString(); // Should be ok
-                    bs.candidate_id = b.Id.ToString();
+                    bs.object_id = ballotids[b.Id]; // Should be ok
+                    bs.candidate_id = ballotids[b.Id];
                     bs.sequence_order = j++;
                     ballotselections.Add(bs);
                 }

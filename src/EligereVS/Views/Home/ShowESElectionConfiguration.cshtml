@@ -16,7 +16,18 @@
             <ul class="list-group">
                 @foreach (var c in e.ballot_selections)
                 {
-                <li class="list-group-item d-flex justify-content-between align-items-center">@c.sequence_order) @candidates[c.object_id].ballot_name.text[0].value </li>
+                    @if (c.object_id[0] == '*')
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center bg-success">
+                            @c.sequence_order) @candidates[c.object_id].ballot_name.text[0].value
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            @c.sequence_order) @candidates[c.object_id].ballot_name.text[0].value
+                        </li>
+                    }
                 }
             </ul>
          </div>
