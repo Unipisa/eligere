@@ -20,6 +20,8 @@ The ballot box implemented by the Voting System will be containerized first so t
 ## What Eligere is and what it is not
 Eligere has been designed to be as clean as possible to help code inspection. We favored declarative programming patterns to ensure that semantics of operations does not depend only by the system itself. Security is not only based on encryption techniques, procedures and processes are also crucial to ensure a secure voting process. Every design decision has been conceived to favor anonimity and compartimentalization of rights and privileges.
 
+The focus of Eligere is to target the voting process (to form electoral lists and polling commissions) and safely (and anonymously) collect votes and providing counts. The specific rules of an election are out of the scope of the system in order to ensure simplicity of the system, key to the crucial tenet of being readable. 
+
 The system is focusing on the processes and relies on external open source projects for core security primitives.
 
 ## Contribute to the project
