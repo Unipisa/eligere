@@ -7,6 +7,10 @@
 <div class="container">
     <h1 class="display-4" style="font-size: 1.5rem;">Elettore @Model.Item1.FirstName @Model.Item1.LastName (@Model.Item1.PublicId )</h1>
 
+    @if (ViewData.ContainsKey("OTPResult")) { 
+      <em>Attenzione errore invio OTP: @ViewData["OTPResult"]</em>
+    } 
+
     @*Assumption: OTP and expiration for all allowed votes are the same in case of election day*@
     @if (allowedVotes.Count == 0)
     {
