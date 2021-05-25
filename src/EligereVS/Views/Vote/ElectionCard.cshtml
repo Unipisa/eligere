@@ -90,6 +90,10 @@
         return ($('#candidateSelection >> input:checked').length <= num);        
     }
 
+    function checkPartyNumVotes(num) {
+        return ($('#candidateSelection >> input:checked').length == 1) && ($('.partylist-data >> input:checked').length <= num);
+    }
+
     function generateCandidateList(election) {
         var hasCandidates = election.extensions.HasCandidates != "False";
         var candidateType = election.extensions.CandidatesType;
@@ -98,7 +102,9 @@
         var numsel = selections.length;
         var container = document.getElementById('candidateSelection');
 
-        if (hasCandidates || candidateType == "OnlyExplicit" || candidateType == "ImplicitAndExplicit") {
+        if (hasCandidates && candidateType == "Implicit") candidateType = "OnlyExplicit"; // Backward compatibility
+
+        if ((hasCandidates && candidateType != "Party") || candidateType == "OnlyExplicit" || candidateType == "ImplicitAndExplicit") {
             if (numvotes == 1) {
                 container.clean = function () {
                     $('#candidateSelection >> input').prop('checked', false);
@@ -109,6 +115,8 @@
                     if (selected.length == 0) return null;
                     return selected;
                 }
+                container.isPartyElection = function () { return false; }
+
                 var cont = '';
                 var count = 0;
                 var visibleCandidates = {};
@@ -170,6 +178,8 @@
                     if (selected.length == 0) return null;
                     return selected;
                 }
+                container.isPartyElection = function () { return false; }
+
                 var cont = '';
                 var count = 0;
                 var visibleCandidates = {};
@@ -222,6 +232,57 @@
                 $('#candidateSelection').html(cont);
                 if (panel) { $('#additionalCandidateSelection').html(panel); }
             }
+        } else if (candidateType == "Party") {
+            container.clean = function () {
+                $('#candidateSelection >> input').prop('checked', false);
+                $('.partylist-data >> input').prop('checked', false);
+            }
+            container.readCandidates = function () {
+                var selected = [];
+                $.each($('#candidateSelection >> input:checked'), function () { selected.push($(this).val()) });
+                $.each($('.partylist-data >> input:checked'), function () { selected.push($(this).val()) });
+                if (selected.length == 0) return null;
+                return selected;
+            }
+            container.isPartyElection = function () { return true; }
+
+            var cont = '';
+            var count = 0;
+            var listcount = 0;
+            var firstparty = true;
+            // Assumption: candidates are grouped by party
+            for (var i = 0; i < numsel; i++) {
+                var candidate = candidates[selections[i].candidate_id];
+                var ballotname = candidate.ballot_name.text[0].value;
+                count++;
+                if (candidate.object_id[0] != '*') {
+                    if (!firstparty) {
+                        cont += '</div></div>'
+                    } else {
+                        firstparty = false;
+                    }
+                    listcount++;
+                    cont +=
+                        '<div class="custom-control custom-radio">' +
+                        '<input type="radio" id="party' + count + '" name="party" value="' + ballotname + '" class="custom-control-input" onchange="$(\'.partylist-data >> input\').prop(\'checked\', false); $(\'#candidateSelection >> input\').prop(\'checked\', false); $(\'.partylist-data\').hide(); $(\'#partylist' + count + '\').show(); $(\'#party' + count + '\').prop(\'checked\', true); " />' +
+                        '<label for="party' + count + '" class="custom-control-label" >' + ballotname + '</label>' +
+                        '<div id="partylist' + count + '" class="partylist-data" style="display: none">';
+                } else {
+                    var inptype = 'checkbox';
+                    var inpname = 'candidate' + count;
+                    if (numvotes == 1) {
+                        inptype = 'radio';
+                        inpname = 'partycandidate' + listcount;
+                    }
+                    cont +=
+                        '<div class="custom-control custom-radio">' +
+                        '<input type="' + inptype + '" id="candidate' + count + '" name="' + inpname + '" value="' + ballotname + '" class="custom-control-input" onchange="if (!checkPartyNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
+                        '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname.substring(ballotname.lastIndexOf('-') + 2) + '</label>' +
+                        '</div>';
+                }
+            }
+            cont += '</div></div>';
+            $('#candidateSelection').html(cont);
         } else {
             container.clean = function () {
                 $('#candidateSelection > input').val('');
@@ -233,6 +294,7 @@
 
                 return selected;
             }
+            container.isPartyElection = function () { return false; }
             var cont = '';
             for (var i = 0; i < numvotes; i++) {
                 cont += '<input type="text" class="form-control" placeholder="Candidato" name="candidate'+i+'" id="candidate'+i+'" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate'+i+'\')" onkeyup="completeCandidate(this.value, \'completionlist'+i+'\', \'candidate'+i+'\', null)">';
