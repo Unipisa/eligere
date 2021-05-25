@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
 namespace EligereES.Controllers
@@ -25,15 +26,19 @@ namespace EligereES.Controllers
     public class VoterController : Controller
     {
         private static Random rnd = new Random();
+        private static List<(Guid, DateTime)> BusyRemoteCommissioners = new List<(Guid, DateTime)>();
         private ESDB _context;
         private string contentRootPath;
         private IDataProtectionProvider dataprotection;
+        private IConfiguration Configuration;
 
-        public VoterController(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider)
+
+        public VoterController(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider, IConfiguration configuration)
         {
             _context = ctxt;
             contentRootPath = env.ContentRootPath;
             dataprotection = provider;
+            Configuration = configuration;
         }
 
         private async Task<List<(Voter, Election, List<PollingStationCommission>, bool, DateTime?)>> GetElections(Person person)
@@ -121,11 +126,25 @@ namespace EligereES.Controllers
 
             var comm = new List<Guid>();
             var elections = new List<Guid>();
+            var samplingrate = 0.0;
+            IdentificationType? idtype = null;
 
             foreach (var (voter, election, commissions, past, voted) in await GetElections(person))
             {
                 if (election.Active && !voted.HasValue)
                 {
+                    if (!idtype.HasValue)
+                    {
+                        idtype = election.ElectionConfiguration.IdentificationType;
+                        if (idtype == IdentificationType.Sampling)
+                            samplingrate = election.ElectionConfiguration.SamplingRate;
+                    } else
+                    {
+                        if (idtype != election.ElectionConfiguration.IdentificationType)
+                            throw new Exception("Identification type should be the same for all elections associated with a voter");
+                        if (idtype == IdentificationType.Sampling && samplingrate != election.ElectionConfiguration.SamplingRate)
+                            throw new Exception("For sampled identification you should use the same rate");
+                    }
                     elections.Add(election.Id);
                     foreach (var c in commissions)
                     {
@@ -134,37 +153,121 @@ namespace EligereES.Controllers
                 }
             }
 
+            List<Guid> busycomm = new List<Guid>();
+
+            // FIXME: Introduce memoization of voter identification for a period of time (i.e. 30min) to avoid mischievous behavior
+            if (idtype == IdentificationType.Sampling)
+            {
+                // Remove expired busy commissioners
+                lock (BusyRemoteCommissioners)
+                {
+                    BusyRemoteCommissioners = BusyRemoteCommissioners.Where(p => p.Item2 >= DateTime.Now).ToList();
+                    busycomm = BusyRemoteCommissioners.ConvertAll(p => p.Item1);
+                }
+            }
+
             // 30 out of 100 are sent to some commissioner. 70 if there is an affine commissioner will be preferred
-            if (rnd.Next(100) > 30)
+            // Disabled for student general elections
+            if (false && rnd.Next(100) > 30)
             {
                 var affineCommissioners = await (from ar in _context.IdentificationCommissionerAffinityRel
                                                  where elections.Contains(ar.ElectionFk)
                                                  select ar.PersonFk).Distinct().ToListAsync();
 
                 var affineIds = await (from psc in _context.PollingStationCommissioner
-                                       where comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
-                                       select psc.VirtualRoom).Distinct().ToListAsync();
+                                       where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
+                                       select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
 
                 var affineRids = await (from psc in _context.RemoteIdentificationCommissioner
-                                        where comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
-                                        select psc.VirtualRoom).Distinct().ToListAsync();
+                                        where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
+                                        select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
 
                 affineIds.AddRange(affineRids);
 
                 if (affineIds.Count > 0)
-                    return Redirect(affineIds[rnd.Next(affineIds.Count)]);
+                {
+                    var selecteda = affineIds[rnd.Next(affineIds.Count)];
+                    if (idtype == IdentificationType.Sampling)
+                    {
+                        lock (BusyRemoteCommissioners)
+                        {
+                            BusyRemoteCommissioners.Add((selecteda.Id, DateTime.Now.AddMinutes(3)));
+                        }
+                    }
+                    return Redirect(selecteda.VirtualRoom);
+                }
             }
 
             var ids = await (from psc in _context.PollingStationCommissioner
-                              where comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
-                              select psc.VirtualRoom).Distinct().ToListAsync();
+                              where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
+                              select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
             var rids = await (from psc in _context.RemoteIdentificationCommissioner
-                              where comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
-                              select psc.VirtualRoom).Distinct().ToListAsync();
+                              where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
+                              select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
 
             ids.AddRange(rids);
 
-            return Redirect(ids[rnd.Next(ids.Count)]);
+            if (ids.Count > 0)
+            {
+                var selected = ids[rnd.Next(ids.Count)];
+                if (idtype == IdentificationType.Sampling)
+                {
+                    lock (BusyRemoteCommissioners)
+                    {
+                        BusyRemoteCommissioners.Add((selected.Id, DateTime.Now.AddMinutes(3)));
+                    }
+                }
+
+                // FIXME: if ids.Count == 0 then redirect to a retry page
+                return Redirect(selected.VirtualRoom);
+            } else
+            {
+                if (idtype == IdentificationType.Sampling)
+                {
+                    var otp = OTPSender.GenerateOTP();
+
+                    var votes = await _context.Voter.Where(v => elections.Contains(v.ElectionFk) && v.PersonFk == person.Id).Include(v => v.RecognitionFkNavigation).ToListAsync();
+
+                    foreach (var v in votes)
+                    {
+                        var recognition = v.RecognitionFkNavigation;
+                        if (recognition == null)
+                        {
+                            recognition = new Recognition()
+                            {
+                                Id = Guid.NewGuid(),
+                            };
+                            v.RecognitionFk = recognition.Id;
+                            _context.Recognition.Add(recognition);
+                        }
+
+                        recognition.Idtype = "_SampledIdentification";
+                        recognition.UserId = User.Identity.Name;
+                        recognition.AccountProvider = "AzureAD";
+                        recognition.Otp = otp;
+                        recognition.State = 0;
+                        recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                        recognition.RemoteIdentification = true;
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    try
+                    {
+                        OTPSender.SendMail(Configuration, otp, this.User.Identity.Name);
+                        ViewData["OTPResult"] = "Success";
+                    }
+                    catch
+                    {
+                        ViewData["OTPResult"] = "Error";
+                    }
+
+                    return View("CheckForOTP");
+                } else
+                {
+                    return View("WaitForCommissioner");
+                }
+            }
         }
 
         [AuthorizeRoles(EligereRoles.AuthenticatedPerson)]
