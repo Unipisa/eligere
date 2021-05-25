@@ -1,0 +1,42 @@
+﻿@using EligereES.Models.DB
+
+@model (List<Election>, string)
+
+@{ var (elections, otp) = Model; }  
+
+<div class="container">
+    <h1 class="text-center display-4">@otp</h1>
+
+    <div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
+
+        <!-- Accordion card -->
+        <div class="card">
+
+            <!-- Card header -->
+            <div class="card-header" role="tab" id="headingOne1">
+                <a data-toggle="collapse" data-parent="#accordionEx" href="#collapseOne1" aria-expanded="true"
+                   aria-controls="collapseOne1">
+                    <h5 class="mb-0">
+                        Elezioni<i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+
+            <!-- Card body -->
+            <div id="collapseOne1" class="collapse show" role="tabpanel" aria-labelledby="headingOne1"
+                 data-parent="#accordionEx">
+                <ul>
+                    @foreach (var el in elections.OrderBy(e => e.PollStartDate).ThenBy(e => e.Name))
+                    {
+                        <li>
+                            @el.Name
+                        </li>
+                    }
+                </ul>
+            </div>
+
+        </div>
+    </div>
+    <!-- Accordion wrapper -->
+
+</div>
