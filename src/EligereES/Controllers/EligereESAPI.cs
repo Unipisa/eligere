@@ -371,7 +371,7 @@ namespace EligereES.Controllers
                 contest.extensions["IdentificationType"] = config.IdentificationType.ToString();
                 contest.extensions["PollStartDate"] = e.PollStartDate.ToString(CultureInfo.GetCultureInfo("it-it"));
                 contest.extensions["PollEndDate"] = e.PollEndDate.ToString(CultureInfo.GetCultureInfo("it-it"));
-                var ob = ballotnames.Where(b => b.ElectionFk == e.Id && b.SequenceOrder.HasValue).OrderBy(b => b.SequenceOrder).ToList();
+                var ob = ballotnames.Where(b => b.ElectionFk == e.Id && b.SequenceOrder.HasValue).OrderBy(b => b.SequenceOrder).ThenBy(b => b.BallotNameLabel).ToList();
                 var ub = ballotnames.Where(b => b.ElectionFk == e.Id && !b.SequenceOrder.HasValue).OrderBy(b => b.BallotNameLabel).ToList();
                 ob.AddRange(ub);
                 var ballotselections = new List<ElectionGuard.BallotSelection>();
@@ -635,6 +635,13 @@ namespace EligereES.Controllers
             r.Approval = DateTime.Now;
             r.Approver = person.Id;
             await _context.SaveChangesAsync();
+            return true;
+        }
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet("Test/SendEmailOTP/{id}")]
+        public bool SendEmailOTP(string id)
+        {
+            OTPSender.SendMail(null, "123", id);
             return true;
         }
 
