@@ -163,7 +163,7 @@ namespace EligereES.Controllers
 
         [HttpGet("Identify/{id}")]
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff, EligereRoles.RemoteIdentificationOfficer)]
-        public async Task<IActionResult> Identify(string id)
+        public async Task<IActionResult> Identify(string id, string otpresult)
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
@@ -202,21 +202,13 @@ namespace EligereES.Controllers
 
             // ToDO: verificare che tutti i voti delle elezioni attive
 
+            if (otpresult != null)
+            {
+                ViewData["OTPResult"] = otpresult;
+            }
 
 
             return View((voter, elections, ae, availableVotes));
-        }
-
-        private string GenerateOTP()
-        {
-            var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var rnd = new Random();
-            var ret = new System.Text.StringBuilder();
-            for (var i = 0; i < 3; i++)
-            {
-                ret.Append(alphabet[rnd.Next(alphabet.Length)]);
-            }
-            return ret.ToString();
         }
 
         [HttpPost("Identify/Public/")]
@@ -247,7 +239,7 @@ namespace EligereES.Controllers
                 .Select(el => el.Key).ToList()
             );
 
-            var otp = GenerateOTP();
+            var otp = OTPSender.GenerateOTP();
 
             var voters = await _context.Voter.Where(v => pubElections.Contains(v.ElectionFk)).Include(v => v.RecognitionFkNavigation).ToListAsync();
 
@@ -337,7 +329,7 @@ namespace EligereES.Controllers
                 voter.SetPersonAttributes(a);
             }
 
-            var otp = GenerateOTP();
+            var otp = OTPSender.GenerateOTP();
 
             foreach (var v in availableVotes)
             {
@@ -381,13 +373,19 @@ namespace EligereES.Controllers
                 {
                     mobile = mobile.Replace("\\u002B", "+");
                 }
-                var m = HttpUtility.UrlEncode(mobile);
-                var endpoint = Configuration.GetValue<string>("SendSMSEndPoint");
-                var req = WebRequest.Create(endpoint + "?msg=" + otp + "%20Codice%20di%20voto%20di%20Eligere&num=" + m);
-                var resp = req.GetResponse();
+                OTPSender.SendSMS(Configuration, otp, mobile);
             }
 
-            return RedirectToAction("Identify", new { id = id });
+            string otpresult = null;
+            try
+            {
+                OTPSender.SendMail(Configuration, otp, this.User.Identity.Name);
+            } catch
+            {
+                otpresult = $"Error sending to {this.User.Identity.Name}";
+            }
+
+            return RedirectToAction("Identify", new { id = id, otpresult = otpresult });
         }
 
         [AuthorizeRoles(EligereRoles.PollingStationStaff)]
