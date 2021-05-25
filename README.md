@@ -1,6 +1,6 @@
 # Eligere
 
-Eligere is a software intended as a contribution to digital democracy community in the belief that voting software should be open source. The software in this repo has been already used for casting more than eight thousand votes in University elections.
+Eligere is a software intended as a contribution to digital democracy community in the belief that voting software should be open source. The software in this repo has been already used for casting more than ten thousand votes by 4.5k voters in University elections.
 
 The software has been initially inspired as a web interface to use [ElectionGuard](https://github.com/Microsoft/ElectionGuard) SDK for implementing secure ballot boxes. The project has deviated into a system to support the full election process including the formation of electoral lists.
 
@@ -9,7 +9,7 @@ The codebase still needs heavy polishing and not all the features are yet expose
 We will keep updating this repository to make this project a successful contribution to an open democratic process.
 
 ## Status of the project
-The system is based on two independent services implemented using .NET core 5.0 that interact through encrypted messages: one is called Election System (EligereES) and the other Voting System (EligereVS). The former is responsible to support the creation and management of multiple elections (as of today we supported 95 simultaneous elections), identify users, and generate voting tickets (digitally encrypted) used to access the voting system and proceed to vote as an anonymous user. The separate administration of the two system allows to enforce anonymous voting.
+The system is based on two independent services implemented using .NET core 5.0 that interact through encrypted messages: one is called Election System (EligereES) and the other Voting System (EligereVS). The former is responsible to support the creation and management of multiple elections (as of today we supported as much as 95 simultaneous elections), identify users, and generate voting tickets (digitally encrypted) used to access the voting system and proceed to vote as an anonymous user. The separate administration of the two system allows to enforce anonymous voting.
 
 Currently we used Microsoft Identity to identify users, though the system is easily extensible with other authentication schemas. Identification of remote voters is performed through calls that are provided through web links, and the system attempts to balance the recognition process across a large number of operators (as of today we identified 1600 voters in a single day).
 
