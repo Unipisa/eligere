@@ -179,7 +179,30 @@ namespace EligereVS.Controllers
                         break;
                     default:
                         var prefs = JsonSerializer.Deserialize<string[]>(preferences);
-                        if (prefs.Length > el.votes_allowed)
+                        var partyel = (el.extensions["CandidatesType"] == "Party");
+
+                        if (partyel)
+                        {
+                            var partycount = 0;
+                            foreach (var pref in prefs)
+                            {
+                                var cand = el.ballot_selections.Where(c => candidates[c.candidate_id].ballot_name.text[0].value == pref).FirstOrDefault();
+                                if (cand.object_id[0] != '*')
+                                {
+                                    partycount++;
+                                }
+                            }
+                            // Check can be improved
+                            if (partycount > 1)
+                                return Json(new CastBallotResult()
+                                {
+                                    Status = 403,
+                                    Message = "Too many parties selected (only 1 is allowed)"
+                                });
+                        }
+
+                        var extracount = partyel ? 1 : 0; // If party election one is for the party
+                        if (prefs.Length > el.votes_allowed + extracount)
                         {
                             return Json(new CastBallotResult()
                             {
