@@ -18,13 +18,15 @@ namespace EligereES.Models.Extensions
     {
         Implicit = 0,
         OnlyExplicit = 1,
-        ImplicitAndExplicit = 2
+        ImplicitAndExplicit = 2,
+        Party=3
     }
 
     public enum IdentificationType
     {
         Individual = 0,
-        Public = 1
+        Public = 1,
+        Sampling = 2
     }
 
     // This class is used to define configuration of a specific election (i.e. Quorum, ecc)
@@ -59,11 +61,18 @@ namespace EligereES.Models.Extensions
 
         public int NumPreferences { get; set; }
 
+        // Used to have joint or disjoint vote, used only with Party Candidate type
+        public int NumPartyPreferences { get; set; }
+
+        // Deprecated
         public bool HasCandidates { get; set; }
 
         public CandidatesType CandidatesType { get; set; }
 
         public IdentificationType IdentificationType { get; set; }
+
+        // 0 means as much as possible with recognizers
+        public double SamplingRate { get; set; }
 
         public int EligibleSeats { get; set; }
     }
