@@ -74,10 +74,10 @@
                 </button>
             </div>
             <div class="modal-body text-center">
+                <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@(Url.Content("~"))/Voter/IdentificationLink" style="text-decoration: underline" target="_blank">per procedere al riconoscimento</a><br /> per l'identificazione e la generazione dell'OTP, una volta che si apre la finestra di chat Teams avviare la chiamata per interloquire con il commissario.</em></p>
                 <!--
-    <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@(Url.Content("~"))/Voter/IdentificationLink" style="text-decoration: underline" target="_blank">per procedere al riconoscimento</a><br /> per l'identificazione e la generazione dell'OTP, una volta che si apre la finestra di chat Teams avviare la chiamata per interloquire con il commissario.</em></p>
-    -->
                 <p>Inserire il codice ricevuto in assemblea e premere il bottone <em>Procedi al voto</em></p>
+    -->
                 <hr />
                 <div class="input-group mb-3 w-75 offset-2">
                     <input type="text" class="form-control" placeholder="Codice accesso" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
@@ -85,12 +85,13 @@
                         <button class="btn btn-outline-secondary" type="button" onclick="vote()">Procedi al voto</button>
                     </div>
                 </div>
+                <p>Inserire il codice OTP ricevuto via Email all'indirizzo @this.User.Identity.Name.</p>
+                <p><em>In caso di mancata ricezione del messaggio di posta elettronica contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
+                @*<p>Inserire il codice OTP ricevuto via SMS.</p>
+                <p><em>In caso di mancata ricezione dell'SMS contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>*@
                 <!--
-    <p>Inserire il codice OTP ricevuto via SMS.</p>
-    <p><em>In caso di mancata ricezione dell'SMS contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
-
-    -->
                 <p><em>In caso di necessità contattare la <a href="https://call.unipi.it/giuntacrui" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
+    -->
             </div>
             <div class="modal-footer">
                 &nbsp;
