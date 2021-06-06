@@ -1,11 +1,11 @@
-﻿@model (EligereES.Models.Client.ESConfiguration, EligereES.Models.DB.Person, List<(EligereES.Models.DB.Voter, EligereES.Models.DB.Election, List<PollingStationCommission>, bool, DateTime?)>)
+﻿@model (EligereES.Models.Client.ESConfiguration, EligereES.Models.DB.Person, List<(EligereES.Models.DB.Voter, EligereES.Models.DB.Election, List<PollingStationCommission>, bool, DateTime?)>, bool)
 
 @using EligereES.Models.Extensions;
 @using EligereES.Models.DB;
 
 @{
     ViewData["Title"] = "Elettore";
-    var (conf, voter, availableVotes) = Model;
+    var (conf, voter, availableVotes, isDesktop) = Model;
 
 }
 
@@ -74,7 +74,12 @@
                 </button>
             </div>
             <div class="modal-body text-center">
-                <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@(Url.Content("~"))/Voter/IdentificationLink" style="text-decoration: underline" target="_blank">per procedere al riconoscimento</a><br /> per l'identificazione e la generazione dell'OTP, una volta che si apre la finestra di chat Teams avviare la chiamata per interloquire con il commissario.</em></p>
+                <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@(Url.Content("~"))/Voter/IdentificationLink" style="text-decoration: underline" target="_blank">per procedere al riconoscimento</a><br /> per l'identificazione e la generazione dell'OTP, 
+                    @if (isDesktop) {
+                        <b>il sistema avvier&agrave; una chiamata ad uno dei commissari disponibili</b>
+                    } else {
+                        <b>il sistema aprir&agrave; la chat Teams di un commissario e si deve avviare la chiamata per avviare il riconoscimento</b>
+                    }.</em></p>
                 <!--
                 <p>Inserire il codice ricevuto in assemblea e premere il bottone <em>Procedi al voto</em></p>
     -->
