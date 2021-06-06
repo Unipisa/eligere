@@ -1,0 +1,106 @@
+﻿@using EligereES.Models.DB
+@model (Person, List<Election>, List<(string, string, string)>, List<(string, string, string)>, List<(string, string, string)>)
+
+@{
+    var (p, e, busy, av, unav) = Model;
+    var publicIdentification = e.Where(el => el.ElectionConfiguration.IdentificationType == EligereES.Models.Extensions.IdentificationType.Public).Any();
+}
+
+<div class="text-right">
+    @p.FirstName @p.LastName
+</div>
+<div class="text-center" style="margin-bottom: 60px;">
+    <h1 class="display-4">Stato commissione</h1>
+</div>
+
+<div class="container">
+    <!--Accordion wrapper-->
+    <div class="accordion md-accordion" id="accordionEx" role="tablist" aria-multiselectable="true">
+
+        <!-- Accordion card -->
+        <div class="card">
+
+            <!-- Card header -->
+            <div class="card-header" role="tab" id="headingOne1">
+                <a data-toggle="collapse" data-parent="#accordionEx" href="#collapseOne1" aria-expanded="true"
+                   aria-controls="collapseOne1">
+                    <h5 class="mb-0">
+                        Membri disponibili (@av.Count)<i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+
+            <!-- Card body -->
+            <div id="collapseOne1" class="collapse show" role="tabpanel" aria-labelledby="headingOne1"
+                 data-parent="#accordionEx">
+                <ol>
+                    @foreach (var (firstName, lastName, virtualRoom) in av)
+                    {
+                        <li>
+                            <a href="@virtualRoom">@firstName @lastName</a>
+                        </li>
+                    }
+                </ol>
+            </div>
+
+        </div>
+
+        <!-- Accordion card -->
+        <div class="card">
+
+            <!-- Card header -->
+            <div class="card-header" role="tab" id="headingOne3">
+                <a data-toggle="collapse" data-parent="#accordionEx" href="#collapseOne3" aria-expanded="false"
+                   aria-controls="collapseOne3">
+                    <h5 class="mb-0">
+                        Membri impegnati in riconoscimento (@busy.Count)<i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+
+            <!-- Card body -->
+            <div id="collapseOne3" class="collapse" role="tabpanel" aria-labelledby="headingOne3"
+                 data-parent="#accordionEx">
+                <ol>
+                    @foreach (var (firstName, lastName, virtualRoom) in busy)
+                    {
+                        <li>
+                            <a href="@virtualRoom">@firstName @lastName</a>
+                        </li>
+                    }
+                </ol>
+            </div>
+
+        </div>
+
+        <!-- Accordion card -->
+        <div class="card">
+
+            <!-- Card header -->
+            <div class="card-header" role="tab" id="headingOne2">
+                <a data-toggle="collapse" data-parent="#accordionEx" href="#collapseOne2" aria-expanded="false"
+                   aria-controls="collapseOne2">
+                    <h5 class="mb-0">
+                        Membri non disponibili (@unav.Count) <i class="fas fa-angle-down rotate-icon"></i>
+                    </h5>
+                </a>
+            </div>
+
+            <!-- Card body -->
+            <div id="collapseOne2" class="collapse" role="tabpanel" aria-labelledby="headingOne2"
+                 data-parent="#accordionEx">
+                <ol>
+                    @foreach (var (firstName, lastName, virtualRoom) in unav)
+                    {
+                        <li>
+                            @firstName @lastName
+                        </li>
+                    }
+                </ol>
+            </div>
+
+        </div>
+    </div>
+        <!-- Accordion wrapper -->
+</div>
+
