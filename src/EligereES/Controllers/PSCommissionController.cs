@@ -20,11 +20,13 @@ namespace EligereES.Controllers
     {
         private ESDB _context;
         private IConfiguration Configuration;
+        private PersistentCommissionManager _manager;
 
-        public PSCommissionController(ESDB ctxt, IConfiguration configuration)
+        public PSCommissionController(ESDB ctxt, PersistentCommissionManager manager, IConfiguration configuration)
         {
             _context = ctxt;
             Configuration = configuration;
+            _manager = manager;
         }
 
 
@@ -298,7 +300,13 @@ namespace EligereES.Controllers
             var voter = await _context.Person.FirstOrDefaultAsync(p => p.PublicId == id);
             if (voter == null) return NotFound("PublicId not found");
 
-            List<Guid> electionKeys = null;
+            var voteruseridq = from u in _context.UserLogin
+                              where u.PersonFk == voter.Id
+                              select u.UserId;
+
+            var voteruid = await voteruseridq.FirstAsync();
+
+            List < Guid > electionKeys = null;
             Dictionary<Guid, Election> elections = null;
             int ae = 0;
             if (this.User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
@@ -379,10 +387,10 @@ namespace EligereES.Controllers
             string otpresult = null;
             try
             {
-                OTPSender.SendMail(Configuration, otp, this.User.Identity.Name);
+                OTPSender.SendMail(Configuration, otp, voteruid);
             } catch
             {
-                otpresult = $"Error sending to {this.User.Identity.Name}";
+                otpresult = $"Error sending to {voteruid}";
             }
 
             return RedirectToAction("Identify", new { id = id, otpresult = otpresult });
@@ -454,6 +462,57 @@ namespace EligereES.Controllers
         }
 
         [AuthorizeRoles(EligereRoles.PollingStationPresident)]
+        [HttpGet("CommissionStatus")]
+        public async Task<IActionResult> CommissionStatus()
+        {
+            var pq = from p in _context.Person
+                     join u in _context.UserLogin on p.Id equals u.PersonFk
+                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     select p;
+
+            if (await pq.CountAsync() != 1)
+                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+
+            var person = await pq.FirstAsync();
+
+            var commissions = from c in _context.PollingStationCommission
+                              join pc in _context.PollingStationCommissioner on c.Id equals pc.PollingStationCommissionFk
+                              where c.PresidentFk == pc.Id && pc.PersonFk == person.Id
+                              select c.ElectionFk;
+
+            // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
+            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var today = DateTime.Today;
+            var elections = from e in _context.Election
+                            where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
+                            select e;
+
+            var elist = await elections.ToListAsync();
+            if (elist.Count > 1 && elist.GroupBy(v => v.PollingStationGroupId).Count() > 1)
+                throw new Exception("Invalid PollingStationGroupId count");
+
+            if (elist.Count > 1)
+            {
+                var gid = elist[0].PollingStationGroupId;
+                elist = await (from e in _context.Election where e.Active && e.PollingStationGroupId == gid select e).ToListAsync();
+            }
+
+            var eids = elist.ConvertAll(e => e.Id);
+            var commissioners = await (from c in _context.PollingStationCommission
+                                       join pc in _context.PollingStationCommissioner on c.Id equals pc.PollingStationCommissionFk
+                                       join p in _context.Person on pc.PersonFk equals p.Id
+                                       where eids.Contains(c.ElectionFk)
+                                       select new { PersonId=p.Id, FirstName = p.FirstName, LastName = p.LastName, Available = pc.AvailableForRemoteRecognition, VirtualRoom = pc.VirtualRoom }).Distinct().ToListAsync();
+            _manager.CollectExpiredItems();
+            var busycom = _manager.GetBusyCommissioners();
+            var availableBusy = commissioners.Where(c => c.Available && busycom.Contains(c.PersonId)).OrderBy(c => c.LastName).ThenBy(c => c.FirstName).ToList().ConvertAll(c => (c.FirstName, c.LastName, c.VirtualRoom));
+            var available = commissioners.Where(c => c.Available).OrderBy(c => c.LastName).ThenBy(c => c.FirstName).ToList().ConvertAll(c => (c.FirstName, c.LastName, c.VirtualRoom));
+            var unavailable = commissioners.Where(c => !c.Available).OrderBy(c => c.LastName).ThenBy(c => c.FirstName).ToList().ConvertAll(c => (c.FirstName, c.LastName, c.VirtualRoom));
+
+            return View((person, elist, availableBusy, available, unavailable));
+        }
+
+        [AuthorizeRoles(EligereRoles.PollingStationPresident)]
         [HttpPost("ElectionControl")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ElectionControl(string state)
@@ -496,6 +555,19 @@ namespace EligereES.Controllers
             {
                 if (e.PollStartDate <= now && e.PollEndDate > today)
                     e.Active = active;
+
+                // Ensures that availability of commissioners is reset to unavailable
+                var pscl = await (
+                            from c in _context.PollingStationCommissioner
+                            join com in _context.PollingStationCommission on c.PollingStationCommissionFk equals com.Id
+                            join el in _context.Election on com.ElectionFk equals el.Id
+                            where e.Id == el.Id
+                            select c).ToListAsync();
+
+                foreach (var c in pscl)
+                {
+                    c.AvailableForRemoteRecognition = false;
+                }
             }
             await _context.SaveChangesAsync();
 
