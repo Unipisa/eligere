@@ -6,62 +6,68 @@
     <h1 class="display-4">Eligere</h1>
     @if (false && this.User.IsInRole(EligereRoles.Admin))
     {
-        <div class="col-6 offset-3">
-            <h4>Strumenti di amministrazione</h4>
-        </div>
-        <hr />
+    <div class="col-6 offset-3">
+        <h4>Strumenti di amministrazione</h4>
+    </div>
+    <hr />
     }
 
     @if (this.User.IsInRole(EligereRoles.ElectionOfficer))
     {
-        <div class="col-6 offset-3">
-            <hr />
-            <h4>Funzioni ufficio elettorale</h4>
+    <div class="col-6 offset-3">
+        <hr />
+        <h4>Funzioni ufficio elettorale</h4>
 
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="People" asp-action="Index">Gestione anagrafica</a></li>
-                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Elections" asp-action="Index">Gestione elezioni</a></li>
-                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Elections" asp-action="Counters">Affluenza</a></li>
-            </ul>
-        </div>
+        <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="People" asp-action="Index">Gestione anagrafica</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Elections" asp-action="Index">Gestione elezioni</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Elections" asp-action="Counters">Affluenza</a></li>
+        </ul>
+    </div>
     }
 
     @if (this.User.IsInRole(EligereRoles.PollingStationStaff))
     {
-        <div class="col-6 offset-3">
-            <hr />
-            <h4>Funzioni per le commissioni di seggio</h4>
-            <ul class="list-group">
-                @if (this.User.IsInRole(EligereRoles.PollingStationPresident))
+    <div class="col-6 offset-3">
+        <hr />
+        <h4>Funzioni per le commissioni di seggio</h4>
+        <ul class="list-group">
+            @if (this.User.IsInRole(EligereRoles.PollingStationPresident))
                 {
-                    <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="ElectionControl">Controllo elezione</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="ElectionControl">Controllo elezione</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="CommissionStatus">Stato commissione</a></li>
                 }
-                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="Counters">Affluenza</a></li>
-                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="Index">Identificazione</a></li>
-            </ul>
-        </div>
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="Counters">Affluenza</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="Index">Identificazione</a></li>
+        </ul>
+    </div>
     }
 
     @if (this.User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
     {
-        <div class="col-6 offset-3">
-            <hr />
-            <h4>Funzioni per riconoscimento remoto</h4>
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="RemoteIdentification">Identificazione</a></li>
-            </ul>
-        </div>
+    <div class="col-6 offset-3">
+        <hr />
+        <h4>Funzioni per riconoscimento remoto</h4>
+        <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="PSCommission" asp-action="RemoteIdentification">Identificazione</a></li>
+        </ul>
+    </div>
     }
 
     @if (this.User.IsInRole(EligereRoles.AuthenticatedPerson))
     {
-        <div class="col-6 offset-3">
-            <hr />
-            <h4>Funzioni per l'elettore</h4>
-            <ul class="list-group">
-                <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Voter" asp-action="Index">Tessera elettorale</a></li>
-            </ul>
-        </div>
+    <div class="col-6 offset-3">
+        <hr />
+        <h4>Funzioni per l'elettore</h4>
+        <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center"><a asp-controller="Voter" asp-action="Index">Tessera elettorale</a></li>
+        </ul>
+    </div>
+
+    <div class="text-center border-info" style="margin-top: 32px;">
+        <b>Seggi aperti nei giorni 25-28/5, 31/5, 1/6, 3/6 dalle 9:00 alle 17:00 e 4/6 dalle 9:00 alle 15:00</b><br/>
+        <em>N.B.: Per le elezioni studentedsche il codice OTP sar&agrave; inviato all'indirizzo di posta istituzionale @@studenti.unipi.it. Il sistema &egrave; stato validato con i Web browser moderni al fine di garantire la massima riservatezza. Se vi fossero problemi nell'uso di web browser da smartphone si raccomanda di utilizzare un altro Web browser.</em>
+    </div>
     }
 
     @if (this.User.IsInRole(EligereRoles.AuthenticatedUser) && !this.User.IsInRole(EligereRoles.AuthenticatedPerson))
@@ -69,38 +75,43 @@
         var pendingUserRequest = (bool)ViewData["PendingUserLoginRequest"];
         if (!pendingUserRequest)
         {
-            <div class="col-6 offset-3">
-                <hr />
-                <h4>Registrazione</h4>
-                <p>Per poter esercitare il diritto al voto &egrave; necessario indicare il proprio codice fiscale associato all'account <i>@User.Identity.Name</i>. Il C.F. dovr&agrave; risultare tra i codici fiscali in anagrafe.</p>
+    <div class="col-6 offset-3">
+        <hr />
+        <h4>Registrazione</h4>
+        <p>Per poter esercitare il diritto al voto &egrave; necessario indicare il proprio codice fiscale associato all'account <i>@User.Identity.Name</i>. Il C.F. dovr&agrave; risultare tra i codici fiscali in anagrafe.</p>
+    </div>
+    <form method="post" asp-controller="Home" asp-action="RequestUserLoginAssociation">
+        <div class="input-group mb-3 w-50 col-6 offset-3">
+            <input type="text" class="form-control" placeholder="Inserire il codice fiscale..." id="cf" name="cf" aria-label="Codice Fiscale della persona" aria-describedby="basic-addon2" autocomplete="off">
+            <div class="input-group-append">
+                <button class="btn btn-outline-secondary" type="submit">Conferma</button>
             </div>
-            <form method="post" asp-controller="Home" asp-action="RequestUserLoginAssociation">
-                <div class="input-group mb-3 w-50 col-6 offset-3">
-                    <input type="text" class="form-control" placeholder="Inserire il codice fiscale..." id="cf" name="cf" aria-label="Codice Fiscale della persona" aria-describedby="basic-addon2" autocomplete="off">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="submit">Conferma</button>
-                    </div>
-                </div>
-            </form>
+        </div>
+    </form>
 
         }
         else
         {
-            <div class="col-6 offset-3">
-                <hr />
-                <h4>Registrazione</h4>
-                <p>L'associazione &egrave; gi&agrave; stata richiesta.</p>
-            </div>
+    <div class="col-6 offset-3">
+        <hr />
+        <h4>Registrazione</h4>
+        <p>L'associazione &egrave; gi&agrave; stata richiesta.</p>
+    </div>
         }
     }
 
     @if (!this.User.Identity.IsAuthenticated)
     {
-        <div class="text-center">
-            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accesso al sistema</a>
-        </div>
-        <div class="text-center">
-            <a class="nav-link text-dark" href="https://su.unipi.it/UsareEligere" target="_blank">Istruzioni</a>
-        </div>
+    <div class="text-center">
+        <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accesso al sistema</a>
+    </div>
+    <div class="text-center">
+        <a class="nav-link text-dark" href="https://su.unipi.it/UsareEligere" target="_blank">Istruzioni</a>
+    </div>
+
+    <div class="text-center border-info" style="margin-top: 32px;">
+        <b>Seggi aperti nei giorni 25-28/5, 31/5, 1/6, 3/6 dalle 9:00 alle 17:00 e 4/6 dalle 9:00 alle 15:00</b><br/>
+        <em>N.B.: Per le elezioni studentedsche il codice OTP sar&agrave; inviato all'indirizzo di posta istituzionale @@studenti.unipi.it. Il sistema &egrave; stato validato con i Web browser moderni al fine di garantire la massima riservatezza. Se vi fossero problemi nell'uso di web browser da smartphone si raccomanda di utilizzare un altro Web browser.</em>
+    </div>
     }
 </div>
