@@ -277,7 +277,7 @@
                     cont +=
                         '<div class="custom-control custom-radio">' +
                         '<input type="' + inptype + '" id="candidate' + count + '" name="' + inpname + '" value="' + ballotname + '" class="custom-control-input" onchange="if (!checkPartyNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
-                        '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname.substring(ballotname.lastIndexOf('-') + 2) + '</label>' +
+                        '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname.substring(ballotname.lastIndexOf('- ') + 2) + '</label>' +
                         '</div>';
                 }
             }
