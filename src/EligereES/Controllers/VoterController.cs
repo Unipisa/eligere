@@ -25,18 +25,18 @@ namespace EligereES.Controllers
     [Route("Voter")]
     public class VoterController : Controller
     {
-        private static Random rnd = new Random();
-        private static List<(Guid, DateTime)> BusyRemoteCommissioners = new List<(Guid, DateTime)>();
         private ESDB _context;
         private string contentRootPath;
         private IDataProtectionProvider dataprotection;
         private IConfiguration Configuration;
+        private PersistentCommissionManager _manager;
 
-
-        public VoterController(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider, IConfiguration configuration)
+        public VoterController(ESDB ctxt, IWebHostEnvironment env, PersistentCommissionManager manager, IDataProtectionProvider provider, IConfiguration configuration)
         {
             _context = ctxt;
             contentRootPath = env.ContentRootPath;
+            _manager = manager;
+            _manager.Expiration = TimeSpan.FromMinutes(3); // Should be added to configuration
             dataprotection = provider;
             Configuration = configuration;
         }
@@ -109,6 +109,29 @@ namespace EligereES.Controllers
             return View("Index", (ReadElectionConf(), person, await GetElections(person)));
         }
 
+        public static bool isDesktopOS(string ua)
+        {
+            var uap = UAParser.Parser.GetDefault();
+            var info = uap.Parse(ua);
+            return info.OS.Family == "Windows" || info.OS.Family == "Linux" || info.OS.Family == "Mac OS X";
+        }
+
+        private string selectVirtualRoom(string virtualRoom)
+        {
+            var ua = Request.Headers["User-Agent"];
+
+            var desktop = virtualRoom;
+            var nodesktop = virtualRoom.Replace("l/call/", "l/chat/").Replace("&withvideo=true", "");
+
+            return  isDesktopOS(ua) ? desktop : nodesktop;
+        }
+
+        [HttpGet("Test")]
+        public string Test()
+        {
+            return selectVirtualRoom("https://teams.microsoft.com/l/call/0/0?users=a010223@unipi.it&withvideo=true");
+        }
+
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin, EligereRoles.Voter)]
         [HttpGet("IdentificationLink")]
         public async Task<IActionResult> IdentificationLink()
@@ -127,7 +150,7 @@ namespace EligereES.Controllers
             var comm = new List<Guid>();
             var elections = new List<Guid>();
             var samplingrate = 0.0;
-            IdentificationType? idtype = null;
+            IdentificationType? idtype = default;
 
             foreach (var (voter, election, commissions, past, voted) in await GetElections(person))
             {
@@ -156,70 +179,50 @@ namespace EligereES.Controllers
             List<Guid> busycomm = new List<Guid>();
 
             // FIXME: Introduce memoization of voter identification for a period of time (i.e. 30min) to avoid mischievous behavior
-            if (idtype == IdentificationType.Sampling)
-            {
-                // Remove expired busy commissioners
-                lock (BusyRemoteCommissioners)
-                {
-                    BusyRemoteCommissioners = BusyRemoteCommissioners.Where(p => p.Item2 >= DateTime.Now).ToList();
-                    busycomm = BusyRemoteCommissioners.ConvertAll(p => p.Item1);
-                }
-            }
+            _manager.CollectExpiredItems();
+            busycomm = _manager.GetBusyCommissioners();
 
             // 30 out of 100 are sent to some commissioner. 70 if there is an affine commissioner will be preferred
             // Disabled for student general elections
-            if (false && rnd.Next(100) > 30)
+            if (false && _manager.Rnd.Next(100) > 30)
             {
                 var affineCommissioners = await (from ar in _context.IdentificationCommissionerAffinityRel
                                                  where elections.Contains(ar.ElectionFk)
                                                  select ar.PersonFk).Distinct().ToListAsync();
 
                 var affineIds = await (from psc in _context.PollingStationCommissioner
-                                       where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
-                                       select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
+                                       where !busycomm.Contains(psc.PersonFk) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
+                                       select new { Id = psc.Id, PersonFk = psc.PersonFk, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
 
                 var affineRids = await (from psc in _context.RemoteIdentificationCommissioner
-                                        where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
-                                        select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
+                                        where !busycomm.Contains(psc.PersonFk) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
+                                        select new { Id = psc.Id, PersonFk = psc.PersonFk, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
 
                 affineIds.AddRange(affineRids);
 
                 if (affineIds.Count > 0)
                 {
-                    var selecteda = affineIds[rnd.Next(affineIds.Count)];
-                    if (idtype == IdentificationType.Sampling)
-                    {
-                        lock (BusyRemoteCommissioners)
-                        {
-                            BusyRemoteCommissioners.Add((selecteda.Id, DateTime.Now.AddMinutes(3)));
-                        }
-                    }
-                    return Redirect(selecteda.VirtualRoom);
+                    var selecteda = affineIds[_manager.Rnd.Next(affineIds.Count)];
+                    _manager.AddBusyCommissioner(selecteda.PersonFk);
+                    return Redirect(selectVirtualRoom(selecteda.VirtualRoom));
                 }
             }
 
             var ids = await (from psc in _context.PollingStationCommissioner
-                              where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
-                              select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
+                              where !busycomm.Contains(psc.PersonFk) && comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
+                              select new { Id = psc.Id, PersonFk = psc.PersonFk, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
             var rids = await (from psc in _context.RemoteIdentificationCommissioner
-                              where !busycomm.Contains(psc.Id) && comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
-                              select new { Id = psc.Id, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
+                              where !busycomm.Contains(psc.PersonFk) && comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
+                              select new { Id = psc.Id, PersonFk = psc.PersonFk, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
 
             ids.AddRange(rids);
 
             if (ids.Count > 0)
             {
-                var selected = ids[rnd.Next(ids.Count)];
-                if (idtype == IdentificationType.Sampling)
-                {
-                    lock (BusyRemoteCommissioners)
-                    {
-                        BusyRemoteCommissioners.Add((selected.Id, DateTime.Now.AddMinutes(3)));
-                    }
-                }
+                var selected = ids[_manager.Rnd.Next(ids.Count)];
+                _manager.AddBusyCommissioner(selected.PersonFk);
 
-                // FIXME: if ids.Count == 0 then redirect to a retry page
-                return Redirect(selected.VirtualRoom);
+                return Redirect(selectVirtualRoom(selected.VirtualRoom));
             } else
             {
                 if (idtype == IdentificationType.Sampling)
@@ -284,7 +287,7 @@ namespace EligereES.Controllers
 
             var person = await pq.FirstAsync();
 
-            return View((ReadElectionConf(), person, await GetElections(person)));
+            return View((ReadElectionConf(), person, await GetElections(person), isDesktopOS(Request.Headers["User-Agent"])));
         }
 
         private static string ComputeSha256Hash(string rawData)
@@ -327,11 +330,16 @@ namespace EligereES.Controllers
             if (availableVotes.Count == 0)
                 return Forbid("No ballot to cast");
 
+            var now = DateTime.Now;
+
             var ckvotes = await (from v in _context.Voter
                                  join r in _context.Recognition on v.RecognitionFk equals r.Id
                                  join e in _context.Election on v.ElectionFk equals e.Id
                                  where availableVotes.Contains(v.Id) && !v.Vote.HasValue // ensure that the vote has not been casted
                                  select new { Voter = v, Recognition = r, Election = e }).ToListAsync();
+
+            if (ckvotes.Count() == 0)
+                return Forbid("OTP non valida");
 
             var otps = ckvotes.GroupBy(v => v.Recognition.Otp);
             if (otps.Count() != 1)
