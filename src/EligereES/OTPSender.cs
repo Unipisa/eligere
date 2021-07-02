@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using EligereES.Models;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,10 +25,15 @@ namespace EligereES
 
         public static void SendMail(IConfiguration conf, string otp, string dest)
         {
-            var smtp = new System.Net.Mail.SmtpClient("mixer.unipi.it", 587);
+            var smtpconf = conf.GetValue<SmtpConfiguration>("Smtp");
+            if (smtpconf == null)
+            {
+                return;
+            }
+            var smtp = new System.Net.Mail.SmtpClient(smtpconf.Host, smtpconf.Port);
             smtp.EnableSsl = true;
             smtp.UseDefaultCredentials = false;
-            smtp.Credentials = new System.Net.NetworkCredential("statini", "bDYT5exqLzTwBp9");
+            smtp.Credentials = new System.Net.NetworkCredential(smtpconf.User, smtpconf.Password);
             smtp.Send("no-reply@unipi.it", dest, "Codice OTP per Eligere", $"Il codice OTP per procedere al voto è: {otp}");
         }
 
