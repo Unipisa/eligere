@@ -295,7 +295,7 @@
                 return selected;
             }
             container.isPartyElection = function () { return false; }
-            var cont = '';
+            var cont = '<em>Cercare per cognome il candidato e selezionare dalla lista che appare</em><br/>';
             for (var i = 0; i < numvotes; i++) {
                 cont += '<input type="text" class="form-control" placeholder="Candidato" name="candidate'+i+'" id="candidate'+i+'" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate'+i+'\')" onkeyup="completeCandidate(this.value, \'completionlist'+i+'\', \'candidate'+i+'\', null)">';
                 cont += '<div id="completionlist'+i+'" class="position-relative"></div>';
