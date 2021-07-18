@@ -65,7 +65,7 @@ namespace EligereES.Controllers
 
             var data = d.ToList().ConvertAll(v => (v.Voter, v.Election, v.Commission, v.Past, v.HasVoted));
 
-            var activeel = data.Where(d => !d.Past).ToList();
+            var activeel = data.Where(d => !d.Past && d.Election.Active).ToList();
 
             // integrity check for multiple elections and commissions
             if (activeel.Count > 1)
