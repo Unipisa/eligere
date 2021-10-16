@@ -31,16 +31,22 @@
         <h3>Eligere communication Keyfile (EVS key)</h3>
     </div>
     <div class="form-group">
-        <form method="post" enctype="multipart/form-data" asp-controller="Setup" asp-action="UploadEVSKey" id="uploadkey" class="form w-100">
-            <div class="input-group mb-3">
-                <div class="custom-file">
-                    <input type="file" class="custom-file-input" name="file" id="keyfile">
-                    <label class="custom-file-label" for="keyfile">Choose file</label>
-                </div>
-                <div class="input-group-append">
-                    <input type="submit" class="btn btn-primary" value="Upload" />
-                </div>
-            </div>
-        </form>
+        <div>
+            Generate a new key for communication between ES and VS (It requires application restart)
+        </div>
+        <div class="input-group mb-3">
+            <a asp-controller="Setup" asp-action="ResetKeys" class="btn btn-primary">Reset Key ring</a>
+        </div>
+    </div>
+    <div class="form-group">
+        <div>
+            Generate a download password to enable VS to download the key (it can be used only once)
+        </div>
+        <div class="input-group mb-3">
+            <a asp-controller="Setup" asp-action="GenerateDownloadOTP" class="btn btn-primary">Generate download OTP password</a>
+        </div>
+        <div class="input-group mb-3">
+            <a asp-controller="Setup" asp-action="ResetDownloadOTP" class="btn btn-primary">Reset download OTP password</a>
+        </div>
     </div>
 </div>

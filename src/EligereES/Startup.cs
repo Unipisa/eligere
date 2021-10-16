@@ -46,6 +46,7 @@ namespace EligereES
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<PersistentCommissionManager>();
+            services.AddSingleton<DownloadOTPManager>();
 
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 

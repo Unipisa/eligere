@@ -19,11 +19,13 @@ namespace EligereES.Controllers
     {
         private readonly ESDB _context;
         private string contentRootPath;
+        private DownloadOTPManager _downloadOtpMgr;
 
-        public SetupController(ESDB ctxt, IWebHostEnvironment env)
+        public SetupController(ESDB ctxt, IWebHostEnvironment env, DownloadOTPManager downloadOtpMgr)
         {
             _context = ctxt;
             contentRootPath = env.ContentRootPath;
+            _downloadOtpMgr = downloadOtpMgr;
         }
 
         public static ESConfiguration GetESConfiguration(string contentRootPath)
@@ -59,6 +61,31 @@ namespace EligereES.Controllers
         public IActionResult Index()
         {
             return View(GetESConfiguration(contentRootPath));
+        }
+
+        [AuthorizeRoles(EligereRoles.Admin)]
+        public IActionResult ResetKeys()
+        {
+            var dir = new DirectoryInfo(Path.Combine(contentRootPath, "Data/EVSKey/"));
+            foreach (var f in dir.GetFiles())
+                f.Delete();
+            return View();
+        }
+
+        [AuthorizeRoles(EligereRoles.Admin)]
+        public IActionResult GenerateDownloadOTP()
+        {
+            _downloadOtpMgr.GenerateOTP();
+            ViewData["OTP"] = _downloadOtpMgr.OTP;
+            ViewData["Expiration"] = _downloadOtpMgr.Expiration.HasValue ? _downloadOtpMgr.Expiration.Value.ToString() : "";
+            return View();
+        }
+
+        [AuthorizeRoles(EligereRoles.Admin)]
+        public IActionResult ResetDownloadOTP()
+        {
+            _downloadOtpMgr.ResetOTP();
+            return RedirectToAction("Index");
         }
 
         [AuthorizeRoles(EligereRoles.Admin)]

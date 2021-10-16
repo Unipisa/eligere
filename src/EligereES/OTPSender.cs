@@ -11,12 +11,12 @@ namespace EligereES
 {
     public static class OTPSender
     {
-        public static string GenerateOTP()
+        public static string GenerateOTP(int otpLength = 3)
         {
             var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var rnd = new Random();
             var ret = new System.Text.StringBuilder();
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < otpLength; i++)
             {
                 ret.Append(alphabet[rnd.Next(alphabet.Length)]);
             }

@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using EligereES.Models;
 using EligereES.Models.DB;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 namespace EligereES.Controllers
 {
@@ -24,16 +26,23 @@ namespace EligereES.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ESDB _context;
+        private string contentRootPath;
 
-        public HomeController(ILogger<HomeController> logger, ESDB context)
+        public HomeController(ILogger<HomeController> logger, ESDB context, IWebHostEnvironment env)
         {
             _logger = logger;
             _context = context;
+            contentRootPath = env.ContentRootPath;
         }
 
         [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
+            var dir = new DirectoryInfo(Path.Combine(contentRootPath, "Data/EVSKey/"));
+            if (dir.GetFiles("*.xml").Length == 0)
+            {
+                return RedirectToAction("Index", "Setup");
+            }
             // FIXME: this should be improved, roles are computed upon login so if they are changed during execution should be recomputed
             // in particular when assigned roles are revoked currently login should be forced through server restart.
             // This check is only to ensure that enrolled voters being still acknowledged.
