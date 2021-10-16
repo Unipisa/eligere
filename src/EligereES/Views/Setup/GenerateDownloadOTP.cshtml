@@ -1,0 +1,12 @@
+﻿@{
+    ViewData["Title"] = "EligereVS Configuration";
+    var otp = ViewData["OTP"];
+    var exp = ViewData["Expiration"];
+}
+
+<h1 class="display-4" style="font-size: 1.5rem;">OTP for downloading key from VS</h1>
+
+<div class="container">
+    <h1 class="text-center display-4">@otp</h1>
+    <p>Expiration: @exp</p>
+</div>
