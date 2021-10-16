@@ -23,14 +23,18 @@ namespace EligereVS.Controllers
         private RocksDb configuration;
         private RocksDb secureBallot;
         private IDataProtectionProvider dataprotection;
+        private string contentRoot;
+        private TicketsQueue ticketSender;
 
-        public VoteController(IWebHostEnvironment env, PersistentStores stores, IDataProtectionProvider provider)
+        public VoteController(IWebHostEnvironment env, PersistentStores stores, IDataProtectionProvider provider, TicketsQueue tickets)
         {
+            contentRoot = env.ContentRootPath;
             stores.SetContentRootPath(env.ContentRootPath);
             ticketsDb = stores.Tickets;
             configuration = stores.Configuration;
             secureBallot = stores.SecureBallot;
             dataprotection = provider;
+            ticketSender = tickets;
         }
 
         public IActionResult Index()
@@ -243,12 +247,9 @@ namespace EligereVS.Controllers
             var dp = dataprotection.CreateProtector("EligereMetadataExchange");
             var secretHash = dp.Protect(ticket.HashId);
 
-            var urlBuilder = new System.Text.StringBuilder();
-            urlBuilder.Append(confAPI.ElectionSystemAPI.TrimEnd('/')).Append("/TicketUsed/"+secretHash);
-            var req = WebRequest.Create(urlBuilder.ToString());
-            var resp = req.GetResponse();
-            var text = new StreamReader(resp.GetResponseStream()).ReadToEnd();
-            resp.Close();
+            // Notification may fail, so we bookkeep failed notifications in a queue and retry over time
+            ticketSender.AddTicket(secretHash);
+            ticketSender.NotifyTickets(contentRoot, confAPI.ElectionSystemAPI.TrimEnd('/'));
 
             var ret = new CastBallotResult()
             {

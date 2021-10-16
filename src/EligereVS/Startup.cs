@@ -37,10 +37,12 @@ namespace EligereVS
             services.AddSession();
 
             services.AddSingleton<PersistentStores>();
+            services.AddSingleton<TicketsQueue>();
 
             services.AddDataProtection()
                 .SetApplicationName("Eligere")
-                .PersistKeysToFileSystem(new DirectoryInfo(evsKeyPath));
+                .PersistKeysToFileSystem(new DirectoryInfo(evsKeyPath))
+                .DisableAutomaticKeyGeneration(); // Automatic Key generation introduces unwanted behavior
 
             //services.AddScoped<ClientIpCheckActionFilter>(container =>
             //{

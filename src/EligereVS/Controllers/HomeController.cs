@@ -36,10 +36,11 @@ namespace EligereVS.Controllers
         private RocksDb _conf;
         private RocksDb secureBallot;
         private RocksDb egSecureBallot;
+        private TicketsQueue ticketQueue;
 
         private IDataProtectionProvider dataProtector;
 
-        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment env, PersistentStores stores, IDataProtectionProvider provider)
+        public HomeController(ILogger<HomeController> logger, IWebHostEnvironment env, PersistentStores stores, IDataProtectionProvider provider, TicketsQueue tickets)
         {
             _logger = logger;
             contentRootPath = env.ContentRootPath;
@@ -48,6 +49,7 @@ namespace EligereVS.Controllers
             secureBallot = stores.SecureBallot;
             egSecureBallot = stores.EGSecureBallot;
             dataProtector = provider;
+            ticketQueue = tickets;
 
             var confAPI = new VotingSystemConfiguration();
             lock (_conf)
@@ -70,6 +72,7 @@ namespace EligereVS.Controllers
                 return RedirectToAction("Signin");
 
             var electionDataAvailable = false;
+            var guardiansKeysGenerated = false;
 
             var confAPI = new VotingSystemConfiguration();
             lock (_conf)
@@ -81,12 +84,87 @@ namespace EligereVS.Controllers
                 {
                     confAPI = VotingSystemConfiguration.FromJson(v);
                 }
+                if (_conf.Get(GuardiansKeyGenerated) != null)
+                    guardiansKeysGenerated = true;
             }
 
             ViewData["ESElectionConfigured"] = electionDataAvailable;
             ViewData["ESApiEndPointConfigured"] = confAPI.ElectionSystemAPI != null;
+            ViewData["GuardiansKeysGenerated"] = guardiansKeysGenerated;
+            ViewData["HangingTickets"] = ticketQueue.Count;
 
             return View(confAPI);
+        }
+
+        public IActionResult SendHangingTickets()
+        {
+            if (!HttpContext.Session.Keys.Contains(IsAuthenticated))
+                return RedirectToAction("Signin");
+
+            var confAPI = new VotingSystemConfiguration();
+            lock (_conf)
+            {
+                var v = _conf.Get(APIConfigurationKey);
+                if (v != null)
+                {
+                    confAPI = VotingSystemConfiguration.FromJson(v);
+                }
+            }
+
+            ticketQueue.NotifyTickets(contentRootPath, confAPI.ElectionSystemAPI.TrimEnd('/'));
+
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult TestEligereESConnection()
+        {
+            if (!HttpContext.Session.Keys.Contains(IsAuthenticated))
+                return RedirectToAction("Signin");
+
+            var confAPI = new VotingSystemConfiguration();
+            lock (_conf)
+            {
+                var v = _conf.Get(APIConfigurationKey);
+                if (v != null)
+                {
+                    confAPI = VotingSystemConfiguration.FromJson(v);
+                }
+            }
+
+            var challenge = Convert.ToBase64String(SHA256.Create().ComputeHash(System.Text.UTF8Encoding.UTF8.GetBytes(DateTime.Now.ToString())));
+            try
+            {
+                var urlBuilder = new System.Text.StringBuilder();
+                urlBuilder.Append(confAPI.ElectionSystemAPI.TrimEnd('/')).Append("/TestEligereESConnection?test=").Append(challenge);
+                var req = WebRequest.Create(urlBuilder.ToString());
+                var resp = (HttpWebResponse)req.GetResponse();
+                if (resp.StatusCode == HttpStatusCode.OK)
+                {
+                    var text = new StreamReader(resp.GetResponseStream()).ReadToEnd();
+                    var dp = dataProtector.CreateProtector("EligereTest");
+                    var data = dp.Unprotect(text);
+                    if (data == challenge)
+                    {
+                        ViewData["Result"] = "Test successful";
+                    } 
+                    else
+                    {
+                        ViewData["Result"] = "Error when decoding the challenge";
+                    }
+                }
+                else
+                {
+                    ViewData["Result"] = $"HTTP response status: {resp.StatusCode}";
+                }
+
+                resp.Close();
+            }
+            catch (Exception e)
+            {
+                ViewData["Result"] = $"Exception when invoking API: {e.ToString()}";
+            }
+
+            return View();
         }
 
         public bool JoinKeys(List<string> keys)
@@ -165,6 +243,11 @@ namespace EligereVS.Controllers
             if (!HttpContext.Session.Keys.Contains(IsAuthenticated))
                 return RedirectToAction("Signin");
 
+            lock(_conf)
+            {
+                if (_conf.Get(GuardiansKeyGenerated) != null)
+                    return RedirectToAction("Index");
+            }
             //var guardiansKeys = ElectionGuardGenGuardians(5, 3);
 
             var keys = GenKeys();
@@ -178,6 +261,11 @@ namespace EligereVS.Controllers
                 //System.IO.File.WriteAllText(gfn, guardiansKeys[i]);
                 fnames.Add(Url.Content("~") + $"../temp/key-{i}.txt");
                 //fnames.Add(Url.Content("~") + $"../temp/gkey-{i}.txt");
+            }
+
+            lock (_conf)
+            {
+                _conf.Put(GuardiansKeyGenerated, DateTime.Now.ToString());
             }
 
             return View(fnames);
@@ -347,25 +435,46 @@ namespace EligereVS.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult UploadEVSKey(List<IFormFile> file)
+        public IActionResult DownloadEVSKey(string otp)
         {
             if (!HttpContext.Session.Keys.Contains(IsAuthenticated))
                 return RedirectToAction("Signin");
 
-            if (file.Count != 1)
+            var confAPI = new VotingSystemConfiguration();
+            lock (_conf)
             {
-                throw new Exception("Invalid number of uploaded files");
+                if (_conf.Get(ESElectionConfigurationKey) != null)
+                    return new ForbidResult();
+
+                var v = _conf.Get(APIConfigurationKey);
+                if (v != null)
+                {
+                    confAPI = VotingSystemConfiguration.FromJson(v);
+                }
+            }
+
+            var urlBuilder = new System.Text.StringBuilder();
+            urlBuilder.Append(confAPI.ElectionSystemAPI.TrimEnd('/')).Append($"/GetEncryptionKey?otp={otp}");
+            var req = WebRequest.Create(urlBuilder.ToString());
+
+            var resp = req.GetResponse();
+            var pdata = (new StreamReader(resp.GetResponseStream())).ReadToEnd();
+            if (pdata == "KO")
+            {
+                ViewData["Msg"] = "Failed to get key from EligereES";
+                return View();
             }
 
             var dir = new DirectoryInfo(Path.Combine(contentRootPath, "Data/EVSKey/"));
             foreach (var f in dir.GetFiles())
                 f.Delete();
 
-            var fn = Path.Combine(contentRootPath, "Data/EVSKey/" + file[0].FileName);
-            var k = new StreamReader(file[0].OpenReadStream()).ReadToEnd();
-            System.IO.File.WriteAllText(fn, k);
+            var data = pdata.Split("::");
+            System.IO.File.WriteAllText(Path.Combine(contentRootPath, $"Data/EVSKey/{data[0]}"), data[1]);
 
-            return RedirectToAction("Index");
+            ViewData["Msg"] = "Successfully saved the EligereES Key";
+
+            return View();
         }
 
         private static string ComputeSha256Hash(string rawData)

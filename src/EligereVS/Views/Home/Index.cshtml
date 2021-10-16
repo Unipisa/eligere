@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "EligereVS Configuration";
+    var hangingTickets = (int)ViewData["HangingTickets"];
 }
 
 <div class="text-center">
@@ -16,8 +17,22 @@
     <a asp-controller="Home" asp-action="Tally" class="btn btn-primary">Tally (ends the ballot casting)</a>
 </div>
 
+@if (hangingTickets > 0)
+{
+    <div class="text-center" style="margin-top:50px">
+        <a asp-controller="Home" asp-action="SendHangingTickets" class="btn btn-primary">Try sending @hangingTickets notifications</a>
+    </div>
+}
+
 <div class="text-center" style="margin-top:50px; margin-bottom:50px;">
-    <a asp-controller="Home" asp-action="GuardianKeyGen" class="btn btn-primary">Guardian key generation</a>
+    @if ((bool)ViewData["GuardiansKeysGenerated"])
+    {
+        <em>Guardian keys already generated</em>
+    }
+    else
+    {
+        <a asp-controller="Home" asp-action="GuardianKeyGen" class="btn btn-primary">Guardian key generation</a>
+    }
 </div>
 
 @if (!(bool)ViewData["ESApiEndPointConfigured"])
@@ -63,15 +78,17 @@ else
 </div>
 
 <div class="row offset-2 col-8 text-left">
+    <div class="text-center">
+        <a asp-action="TestEligereESConnection" asp-controller="Home" class="btn btn-primary">Test EligereES connectivity</a>
+    </div>
     <div class="form-group">
-        <form method="post" enctype="multipart/form-data" asp-controller="Home" asp-action="UploadEVSKey" id="uploadkey" class="form w-100">
+        <form method="post" asp-controller="Home" asp-action="DownloadEVSKey" id="downloadkey" class="form w-100">
             <div class="input-group mb-3">
                 <div class="custom-file">
-                    <input type="file" class="custom-file-input" name="file" id="keyfile">
-                    <label class="custom-file-label" for="keyfile">Choose file</label>
+                    <input type="text" class="form-control w-100" name="otp" id="keyotp" placeholder="OTP code from EligereES">
                 </div>
                 <div class="input-group-append">
-                    <input type="submit" class="btn btn-primary" value="Upload" />
+                    <input type="submit" class="btn btn-primary" value="Load key" />
                 </div>
             </div>
         </form>
