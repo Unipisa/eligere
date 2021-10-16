@@ -31,12 +31,14 @@ namespace EligereES.Controllers
         private ESDB _context;
         private string contentRootPath;
         private IDataProtectionProvider dataProtector;
+        private DownloadOTPManager _dotpmgr;
 
-        public EligereESAPI(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider)
+        public EligereESAPI(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider, DownloadOTPManager dotpmgr)
         {
             _context = ctxt;
             contentRootPath = env.ContentRootPath;
             dataProtector = provider;
+            _dotpmgr = dotpmgr;
         }
 
         [HttpGet("Election")]
@@ -261,6 +263,38 @@ namespace EligereES.Controllers
         }
 
         [AllowAnonymous]
+        [HttpGet("GetEncryptionKey")]
+        public string GetEncryptionKey(string otp)
+        {
+            if (_dotpmgr.HasOTP)
+            {
+                if (otp == _dotpmgr.OTP)
+                {
+                    var k = new System.IO.DirectoryInfo(System.IO.Path.Combine(contentRootPath, "Data/EVSKey/"));
+                    var f = k.GetFiles("*.xml");
+                    if (f.Length > 1) throw new Exception("Keyring must contain a single Key");
+                    var fn = f[0].Name;
+                    var kf = System.IO.File.ReadAllText(f[0].FullName);
+                    _dotpmgr.ResetOTP(); // One Time is One Time :)
+                    return $"{fn}::{kf}";
+                } else {
+                    return "KO";
+                }
+            } else {
+                return "KO";
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("TestEligereESConnection")]
+        public string TestEligereESConnection(string test)
+        {
+            var dp = dataProtector.CreateProtector("EligereTest");
+            var data = dp.Protect(test);
+            return data;
+        }
+
+            [AllowAnonymous]
         [HttpGet("RunningElections")]
         public async Task<string> RunningElections()
         {
