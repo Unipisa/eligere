@@ -573,22 +573,26 @@ namespace EligereES.Controllers
         [HttpGet("Counters")]
         public async Task<IActionResult> Counters()
         {
-            var electionsq = from e in _context.Election
-                             where (e.Active)
+            var activeelections = from e in _context.Election where (e.Configuring || e.Active) select e;
+            var electionsq = from e in activeelections
                              join v in _context.Voter on e.Id equals v.ElectionFk
                              //group new { Election = e, Vote(e, v) } by v.Id into g 
                              where v.Vote.HasValue
                              select new { ElectionID = e.Id, ElectionName = e.Name, ElectionConfiguration=e.Configuration, Vote = v.Vote };
 
             var counters = new Dictionary<Guid, int>();
+            foreach (var v in await activeelections.ToListAsync())
+            {
+                if (!counters.ContainsKey(v.Id))
+                    counters.Add(v.Id, 0);
+            }
+
             foreach (var v in await electionsq.ToListAsync())
             {
-                if (!counters.ContainsKey(v.ElectionID))
-                    counters.Add(v.ElectionID, 0);
                 counters[v.ElectionID] = counters[v.ElectionID] + 1;
             }
 
-            var names = (await _context.Election.Where(e => e.Active).ToListAsync());
+            var names = (await _context.Election.Where(e => (e.Configuring || e.Active)).ToListAsync());
             var elnames = new Dictionary<Guid, string>();
             foreach (var e in names) { elnames.Add(e.Id, e.Name); }
 
