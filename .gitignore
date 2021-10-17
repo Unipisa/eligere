@@ -5,7 +5,10 @@
 
 src/DatiProva
 src/EligereVS/Data
-src/EligereES/Data:
+src/EligereES/Data
+src/EligereES/.config/
+src/EligereES/appsettings.prod.json
+src/EligereVS/wwwroot/temp/
 
 # User-specific files
 *.rsuser
