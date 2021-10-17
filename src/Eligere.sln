@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EligereES", "EligereES\Elig
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EligereVS", "EligereVS\EligereVS.csproj", "{A9B88ECB-AF21-4527-BDEB-58270DC5F3A5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EligereSetup", "EligereSetup\EligereSetup.csproj", "{A10BB22D-8CFB-440B-885E-8D2DF4AF38C8}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElectionGuardWebAPIClient", "ElectionGuardWebAPIClient\ElectionGuardWebAPIClient.csproj", "{AF4982EC-F901-429F-995F-0EB8B3259DEA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElectionGuardWebAPIClientTests", "ElectionGuardWebAPIClientTests\ElectionGuardWebAPIClientTests.csproj", "{45E0C8FB-2520-42D2-977D-ACE49B6AF21D}"
@@ -27,10 +25,6 @@ Global
 		{A9B88ECB-AF21-4527-BDEB-58270DC5F3A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9B88ECB-AF21-4527-BDEB-58270DC5F3A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9B88ECB-AF21-4527-BDEB-58270DC5F3A5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A10BB22D-8CFB-440B-885E-8D2DF4AF38C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A10BB22D-8CFB-440B-885E-8D2DF4AF38C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A10BB22D-8CFB-440B-885E-8D2DF4AF38C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A10BB22D-8CFB-440B-885E-8D2DF4AF38C8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AF4982EC-F901-429F-995F-0EB8B3259DEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AF4982EC-F901-429F-995F-0EB8B3259DEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AF4982EC-F901-429F-995F-0EB8B3259DEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
