@@ -24,6 +24,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using ITfoxtec.Identity.Saml2;
+using ITfoxtec.Identity.Saml2.Util;
+using ITfoxtec.Identity.Saml2.Schemas.Metadata;
+using ITfoxtec.Identity.Saml2.MvcCore.Configuration;
+using ITfoxtec.Identity.Saml2.MvcCore;
 
 namespace EligereES
 {
@@ -32,12 +37,14 @@ namespace EligereES
     {
         private string contentRootPath;
         private string evsKeyPath;
+        private IWebHostEnvironment _env;
 
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
             contentRootPath = env.ContentRootPath;
             evsKeyPath = Path.Combine(contentRootPath, "Data/EVSKey/");
+            _env = env;
         }
 
         public IConfiguration Configuration { get; }
@@ -54,33 +61,38 @@ namespace EligereES
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization();
 
-            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
-            //.AddAzureAD(options => Configuration.Bind("AzureAd", options));
+            services.Configure<Saml2Configuration>(Configuration.GetSection("Saml2"));
+            services.Configure<Saml2Configuration>(saml2Configuration =>
+            {
+                //saml2Configuration.SignAuthnRequest = true;
+                saml2Configuration.SigningCertificate = CertificateUtil.Load(_env.MapToPhysicalFilePath(Configuration["Saml2:SigningCertificateFile"]), Configuration["Saml2:SigningCertificatePassword"]);
+
+                //saml2Configuration.SignatureValidationCertificates.Add(CertificateUtil.Load(AppEnvironment.MapToPhysicalFilePath(Configuration["Saml2:SignatureValidationCertificateFile"])));
+                saml2Configuration.AllowedAudienceUris.Add(saml2Configuration.Issuer);
+
+                var entityDescriptor = new EntityDescriptor();
+                entityDescriptor.ReadIdPSsoDescriptorFromUrl(new Uri(Configuration["Saml2:IdPMetadata"]));
+                if (entityDescriptor.IdPSsoDescriptor != null)
+                {
+                    saml2Configuration.AllowedIssuer = entityDescriptor.EntityId;
+                    saml2Configuration.SingleSignOnDestination = entityDescriptor.IdPSsoDescriptor.SingleSignOnServices.First().Location;
+                    saml2Configuration.SingleLogoutDestination = entityDescriptor.IdPSsoDescriptor.SingleLogoutServices.First().Location;
+                    saml2Configuration.SignatureValidationCertificates.AddRange(entityDescriptor.IdPSsoDescriptor.SigningCertificates);
+                    if (entityDescriptor.IdPSsoDescriptor.WantAuthnRequestsSigned.HasValue)
+                    {
+                        saml2Configuration.SignAuthnRequest = entityDescriptor.IdPSsoDescriptor.WantAuthnRequestsSigned.Value;
+                    }
+                }
+                else
+                {
+                    throw new Exception("IdPSsoDescriptor not loaded from metadata.");
+                }
+            });
+
+            services.AddSaml2(slidingExpiration: true);
 
             services.AddDbContext<ESDB>(o => {
                 o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
-            });
-
-            services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, opt =>
-            {
-                var onTokenValidated = opt.Events.OnTokenValidated;
-                opt.Events.OnTokenValidated = (
-                async ctxt =>
-                {
-                    var opt = new DbContextOptionsBuilder<ESDB>();
-                    
-                    using (var esdb = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
-                    {
-                        onTokenValidated?.Invoke(ctxt);
-                        var roles = await EligereRoles.ComputeRoles(esdb, "AzureAD", ctxt.Principal.Identity.Name);
-                        var claims = new List<Claim>();
-                        roles.ForEach(r => claims.Add(new Claim(ClaimTypes.Role, r)));
-                        var appIdentity = new ClaimsIdentity(claims, "EligereIdentity");
-                        ctxt.Principal.AddIdentity(appIdentity);
-
-                    }
-                });
             });
 
             services.AddDataProtection()

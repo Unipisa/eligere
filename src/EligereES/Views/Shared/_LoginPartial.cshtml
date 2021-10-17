@@ -4,16 +4,16 @@
 @if (User.Identity.IsAuthenticated)
 {
         <li class="nav-item">
-            <span class="navbar-text text-dark">Hello @User.Identity.Name!</span>
+            <span class="navbar-text text-dark">Hello @(User.Claims.Where(c => c.Type == "urn:oid:1.2.840.113549.1.9.1.1").First().Value)!</span>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
+            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Logout">Sign out</a>
         </li>
 }
 else
 {
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Sign in</a>
+            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">Sign in</a>
         </li>
 }
 </ul>

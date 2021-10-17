@@ -97,7 +97,7 @@
     @if (!this.User.Identity.IsAuthenticated)
     {
         <div class="text-center">
-            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accesso al sistema</a>
+            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">Accesso al sistema</a>
         </div>
         <div class="text-center">
             <a class="nav-link text-dark" href="https://su.unipi.it/UsareEligere" target="_blank">Istruzioni</a>

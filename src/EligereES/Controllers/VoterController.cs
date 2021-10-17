@@ -138,7 +138,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == "SAML2" && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -246,7 +246,7 @@ namespace EligereES.Controllers
 
                         recognition.Idtype = "_SampledIdentification";
                         recognition.UserId = User.Identity.Name;
-                        recognition.AccountProvider = "AzureAD";
+                        recognition.AccountProvider = "SAML2";
                         recognition.Otp = otp;
                         recognition.State = 0;
                         recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
@@ -278,7 +278,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                          join u in _context.UserLogin on p.Id equals u.PersonFk
-                         where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                         where u.Provider == "SAML2" && u.UserId == this.User.Identity.Name
                          select p;
 
             if (await pq.CountAsync() != 1) 
@@ -315,7 +315,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == "SAML2" && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
