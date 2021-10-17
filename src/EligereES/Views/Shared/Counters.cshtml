@@ -2,7 +2,7 @@
 
 @{ 
     var (counters, elnames) = Model;
-    var table = from c in counters join n in elnames on c.Key equals n.Key select new { ElectionName = n.Value, Count = c.Value };
+    var table = from c in counters join n in elnames on c.Key equals n.Key orderby n.Value select new { ElectionName = n.Value, Count = c.Value };
 }
 
 <div class="text-center">
