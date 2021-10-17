@@ -3,21 +3,22 @@
 @{ 
     ViewData["Title"] = "Risultato elezione";
     var (countings, electioninfo) = Model;
+    var result = from c in countings join e in electioninfo on c.Key equals e.Key orderby e.Value.name select new { Election = e.Value, Count = c.Value };
 }
 
 <div class="text-center">
     <h1 class="display-4">Risultato spoglio elettorale</h1>
 </div>
-@foreach (var elid in countings.Keys)
+@foreach (var elres in result)
 {
     <div class="offset-3 col-5">
-    <h3>@electioninfo[elid].name</h3>
+    <h3>@elres.Election.name</h3>
     <ul class="list-group">
-        @foreach (var n in countings[elid].Keys)
+        @foreach (var n in elres.Count.Keys.OrderBy(s => s))
         {
         <li class="list-group-item d-flex justify-content-between align-items-center">
             @(n == "$spoil$" ? "Scheda nulla" : (n == "$blank$" ? "Scheda bianca" : n))
-            <span class="badge badge-primary badge-pill">@countings[elid][n]</span>
+            <span class="badge badge-primary badge-pill">@elres.Count[n]</span>
         </li>
         }
         </ul>

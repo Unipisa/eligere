@@ -162,7 +162,7 @@
                         $('#addcandidate').val('');
                     }
                     panel = '<div style="margin-top: 25px;" class="input-group">';
-                    panel += '<input type="text" class="form-control" placeholder="Candidato" id="addcandidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate' + i + '\')" onkeyup="completeCandidate(this.value, \'addcompletionlist\', \'addcandidate\', null)">';
+                    panel += '<input type="text" class="form-control" autocomplete="off" placeholder="Candidato" id="addcandidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate' + i + '\')" onkeyup="completeCandidate(this.value, \'addcompletionlist\', \'addcandidate\', null)">';
                     panel += '<div class="input-group-append"><button class="btn btn-outline-secondary" type = "button" onclick = "document.getElementById(\'candidateSelection\').addCandidate()" >+</button ></div >';
                     panel += '</div><div id="addcompletionlist" class="position-relative"></div>';
                 }
@@ -225,7 +225,7 @@
                         $('#addcandidate').val('');
                     }
                     panel = '<div style="margin-top: 25px;" class="input-group">';
-                    panel += '<input type="text" class="form-control" placeholder="Candidato" id="addcandidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate' + i + '\')" onkeyup="completeCandidate(this.value, \'addcompletionlist\', \'addcandidate\', null)">';
+                    panel += '<input type="text" class="form-control" autocomplete="off" placeholder="Candidato" id="addcandidate" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate' + i + '\')" onkeyup="completeCandidate(this.value, \'addcompletionlist\', \'addcandidate\', null)">';
                     panel += '<div class="input-group-append"><button class="btn btn-outline-secondary" type = "button" onclick = "document.getElementById(\'candidateSelection\').addCandidate()" >+</button ></div >';
                     panel += '</div><div id="addcompletionlist" class="position-relative"></div>';
                 }
@@ -297,7 +297,7 @@
             container.isPartyElection = function () { return false; }
             var cont = '<em>Cercare per cognome il candidato e selezionare dalla lista che appare</em><br/>';
             for (var i = 0; i < numvotes; i++) {
-                cont += '<input type="text" class="form-control" placeholder="Candidato" name="candidate'+i+'" id="candidate'+i+'" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate'+i+'\')" onkeyup="completeCandidate(this.value, \'completionlist'+i+'\', \'candidate'+i+'\', null)">';
+                cont += '<input type="text" class="form-control" autocomplete="off" placeholder="Candidato" name="candidate'+i+'" id="candidate'+i+'" spellcheck="false" data-ms-editor="true" onclick="enableAndClear(\'candidate'+i+'\')" onkeyup="completeCandidate(this.value, \'completionlist'+i+'\', \'candidate'+i+'\', null)">';
                 cont += '<div id="completionlist'+i+'" class="position-relative"></div>';
             }
 
