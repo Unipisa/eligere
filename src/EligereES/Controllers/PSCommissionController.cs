@@ -400,21 +400,26 @@ namespace EligereES.Controllers
         [HttpGet("Counters")]
         public async Task<IActionResult> Counters()
         {
-            var electionsq = from e in _context.Election
-                            where (e.Active)
+            var activeelections = from e in _context.Election where (e.Configuring || e.Active) select e;
+            var electionsq = from e in activeelections
                             join v in _context.Voter on e.Id equals v.ElectionFk
                             where v.Vote.HasValue
+                            orderby e.Name
                             select new { ElectionID = e.Id, ElectionName = e.Name,  Vote = v.Vote };
 
             var counters = new Dictionary<Guid, int>();
+            foreach (var v in await activeelections.ToListAsync())
+            {
+                if (!counters.ContainsKey(v.Id))
+                    counters.Add(v.Id, 0);
+            }
+
             foreach (var v in await electionsq.ToListAsync())
             {
-                if (!counters.ContainsKey(v.ElectionID))
-                    counters.Add(v.ElectionID, 0);
                 counters[v.ElectionID] = counters[v.ElectionID] + 1;
             }
 
-            var names = (await _context.Election.Where(e => e.Active).ToListAsync());
+            var names = (await _context.Election.Where(e => (e.Configuring || e.Active)).ToListAsync());
             var elnames = new Dictionary<Guid, string>();
             foreach (var e in names) { elnames.Add(e.Id, e.Name); }
 
@@ -515,7 +520,7 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.PollingStationPresident)]
         [HttpPost("ElectionControl")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ElectionControl(string state)
+        public async Task<IActionResult> ElectionControl(string confstate, string state)
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
@@ -549,12 +554,18 @@ namespace EligereES.Controllers
                 elist = await (from e in _context.Election where e.PollingStationGroupId == gid select e).ToListAsync();
             }
 
+            var config = confstate == "on";
             var active = state == "on";
+
+            if (active) config = false;
 
             foreach (var e in elist)
             {
                 if (e.PollStartDate <= now && e.PollEndDate > today)
+                {
+                    e.Configuring = config;
                     e.Active = active;
+                }
 
                 // Ensures that availability of commissioners is reset to unavailable
                 var pscl = await (
