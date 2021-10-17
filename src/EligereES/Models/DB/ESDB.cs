@@ -34,8 +34,6 @@ namespace EligereES.Models.DB
         public virtual DbSet<RelPollingStationSystemPollingStationCommission> RelPollingStationSystemPollingStationCommission { get; set; }
         public virtual DbSet<RemoteIdentificationCommissioner> RemoteIdentificationCommissioner { get; set; }
         public virtual DbSet<TempCell> TempCell { get; set; }
-        public virtual DbSet<TempComm> TempComm { get; set; }
-        public virtual DbSet<TempEl> TempEl { get; set; }
         public virtual DbSet<UserLogin> UserLogin { get; set; }
         public virtual DbSet<UserLoginRequest> UserLoginRequest { get; set; }
         public virtual DbSet<Voter> Voter { get; set; }
@@ -375,40 +373,6 @@ namespace EligereES.Models.DB
                     .HasColumnName("cellint");
 
                 entity.Property(e => e.Cognome).IsRequired();
-            });
-
-            modelBuilder.Entity<TempComm>(entity =>
-            {
-                entity.HasNoKey();
-
-                entity.Property(e => e.Dipartimento)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsFixedLength(true);
-
-                entity.Property(e => e.FirstName)
-                    .IsRequired()
-                    .HasMaxLength(50)
-                    .IsFixedLength(true);
-
-                entity.Property(e => e.LastName)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.PersonFk).HasColumnName("Person_FK");
-            });
-
-            modelBuilder.Entity<TempEl>(entity =>
-            {
-                entity.HasNoKey();
-
-                entity.Property(e => e.Dipartimento)
-                    .IsRequired()
-                    .HasMaxLength(50);
-
-                entity.Property(e => e.Name)
-                    .IsRequired()
-                    .HasMaxLength(250);
             });
 
             modelBuilder.Entity<UserLogin>(entity =>

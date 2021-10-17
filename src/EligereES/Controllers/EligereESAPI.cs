@@ -317,10 +317,10 @@ namespace EligereES.Controllers
                 return null;
             }
 
-            var time4open = DateTime.Now + TimeSpan.FromMinutes(15); // Early comers (should be a parameter!)
-            var time4close = DateTime.Now - TimeSpan.FromMinutes(15); //Late comers (should be a parameter!)
+            var time4open = DateTime.Now + TimeSpan.FromMinutes(90); // Early comers (should be a parameter!)
+            var time4close = DateTime.Now - TimeSpan.FromMinutes(90); //Late comers (should be a parameter!)
             var electionsq = from e in _context.Election
-                            where e.Active && (e.PollStartDate <= time4open) && (e.PollEndDate >= time4close)
+                            where e.Configuring && (e.PollStartDate <= time4open) && (e.PollEndDate >= time4close)
                             select e;
 
             var elections = await electionsq.ToListAsync();

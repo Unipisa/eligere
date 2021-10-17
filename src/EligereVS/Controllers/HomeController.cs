@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.WebUtilities;
+using System.Web;
 
 namespace EligereVS.Controllers
 {
@@ -135,7 +136,7 @@ namespace EligereVS.Controllers
             try
             {
                 var urlBuilder = new System.Text.StringBuilder();
-                urlBuilder.Append(confAPI.ElectionSystemAPI.TrimEnd('/')).Append("/TestEligereESConnection?test=").Append(challenge);
+                urlBuilder.Append(confAPI.ElectionSystemAPI.TrimEnd('/')).Append("/TestEligereESConnection?test=").Append(HttpUtility.UrlEncode(challenge));
                 var req = WebRequest.Create(urlBuilder.ToString());
                 var resp = (HttpWebResponse)req.GetResponse();
                 if (resp.StatusCode == HttpStatusCode.OK)

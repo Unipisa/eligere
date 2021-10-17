@@ -4,6 +4,7 @@
 @{
     var (p, e) = Model;
     var check = e.Where(el => el.Active).Any();
+    var conf = e.Where(el => el.Configuring).Any();
     var publicIdentification = e.Where(el => el.ElectionConfiguration.IdentificationType == EligereES.Models.Extensions.IdentificationType.Public).Any();
 }
 
@@ -16,6 +17,14 @@
 
 <div class="container">
     <form method="post" asp-action="ElectionControl" id="state">
+        <div class="row" style="margin-bottom: 60px;">
+            <div class="input-group col-4 offset-4">
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" name="confstate" id="customSwitch2" @(conf ? "checked=\"\"" : "") onchange="document.getElementById('state').submit()">
+                    <label class="custom-control-label" for="customSwitch2">Configurazione</label>
+                </div>
+            </div>
+        </div>
         <div class="row" style="margin-bottom: 60px;">
             <div class="input-group col-4 offset-4">
                 <div class="custom-control custom-switch">
