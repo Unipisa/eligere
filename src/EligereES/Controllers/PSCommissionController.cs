@@ -446,7 +446,7 @@ namespace EligereES.Controllers
                               select c.ElectionFk;
 
             // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(90);
             var today = DateTime.Today;
             var elections = from e in _context.Election
                             where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
@@ -538,7 +538,7 @@ namespace EligereES.Controllers
                               select c.ElectionFk;
 
             // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(90);
             var today = DateTime.Today;
             var elections = from e in _context.Election
                             where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
