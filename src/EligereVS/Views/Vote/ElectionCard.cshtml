@@ -419,7 +419,10 @@
         $('#askVoteText').html(txt);
         $('#askVoteDialog').modal('show');
     }
+    var castingVote = false;
     function castVote() {
+        if (castingVote) return;
+        castingVote = true; // avoid multiple calls
         var container = document.getElementById('candidateSelection');
         if ($('#vote').is(':checked')) {
             $('#preferences').val(JSON.stringify(container.readCandidates()));
@@ -441,9 +444,11 @@
                 $('#voteMessage').html(v.message)
                 $('#voteResult').modal('show');
             }
+            castingVote = false;
         }).fail((v) => {
             $('#voteMessage').html('Errore nell\'inserimento del voto nell\'urna')
             $('#voteResult').modal('show');
+            castingVote = false;
         });
     }
 
