@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-#nullable disable
-
 namespace EligereES.Models.DB
 {
     public partial class Recognition
@@ -20,6 +18,9 @@ namespace EligereES.Models.DB
         public string Idtype { get; set; }
         public string AccountProvider { get; set; }
         public string UserId { get; set; }
+        /// <summary>
+        /// 0:Login;1:Recognized;2:Activated(byOTP)
+        /// </summary>
         public int State { get; set; }
         public bool? RemoteIdentification { get; set; }
 

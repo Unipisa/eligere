@@ -96,7 +96,7 @@ namespace EligereVS.Controllers
 
             lock (ticketsDb)
             {
-                ticketsDb.Put(ticket.HashId, ticket.ToJson());
+                    ticketsDb.Put(ticket.HashId, ticket.ToJson());
             }
 
             lock (secureBallot)
@@ -159,6 +159,7 @@ namespace EligereVS.Controllers
                 });
             }
 
+            // Ensure atomicity locking ticketsDB
             lock (ticketsDb)
             {
                 if (ticketsDb.Get(ticket.HashId) != null)
@@ -167,81 +168,81 @@ namespace EligereVS.Controllers
                         Status = 403,
                         Message = "Ticket already used"
                     });
-            }
 
-            if (contests.ContainsKey(election))
-            {
-                var el = contests[election];
-                var candidates = electionDescription.candidates.ToDictionary(v => v.object_id);
-                switch (ballotType)
+                if (contests.ContainsKey(election))
                 {
-                    case "emptyBallot":
-                        CastVote(ticket, "$blank$");
-                        break;
-                    case "spoiledBallot":
-                        CastVote(ticket, "$spoil$");
-                        break;
-                    default:
-                        var prefs = JsonSerializer.Deserialize<string[]>(preferences);
-                        var partyel = (el.extensions["CandidatesType"] == "Party");
+                    var el = contests[election];
+                    var candidates = electionDescription.candidates.ToDictionary(v => v.object_id);
+                    switch (ballotType)
+                    {
+                        case "emptyBallot":
+                            CastVote(ticket, "$blank$");
+                            break;
+                        case "spoiledBallot":
+                            CastVote(ticket, "$spoil$");
+                            break;
+                        default:
+                            var prefs = JsonSerializer.Deserialize<string[]>(preferences);
+                            var partyel = (el.extensions["CandidatesType"] == "Party");
 
-                        if (partyel)
-                        {
-                            var partycount = 0;
+                            if (partyel)
+                            {
+                                var partycount = 0;
+                                foreach (var pref in prefs)
+                                {
+                                    var cand = el.ballot_selections.Where(c => candidates[c.candidate_id].ballot_name.text[0].value == pref).FirstOrDefault();
+                                    if (cand.object_id[0] != '*')
+                                    {
+                                        partycount++;
+                                    }
+                                }
+                                // Check can be improved
+                                if (partycount > 1)
+                                    return Json(new CastBallotResult()
+                                    {
+                                        Status = 403,
+                                        Message = "Too many parties selected (only 1 is allowed)"
+                                    });
+                            }
+
+                            var extracount = partyel ? 1 : 0; // If party election one is for the party
+                            if (prefs.Length > el.votes_allowed + extracount)
+                            {
+                                return Json(new CastBallotResult()
+                                {
+                                    Status = 403,
+                                    Message = $"Too many votes expressed ({prefs.Length}) with respect to the maximum ({el.votes_allowed})"
+                                });
+
+                            }
                             foreach (var pref in prefs)
                             {
                                 var cand = el.ballot_selections.Where(c => candidates[c.candidate_id].ballot_name.text[0].value == pref).FirstOrDefault();
-                                if (cand.object_id[0] != '*')
+                                if (cand == null)
                                 {
-                                    partycount++;
+                                    return Json(new CastBallotResult()
+                                    {
+                                        Status = 403,
+                                        Message = "Invalid candidate"
+                                    });
                                 }
                             }
-                            // Check can be improved
-                            if (partycount > 1)
-                                return Json(new CastBallotResult()
-                                {
-                                    Status = 403,
-                                    Message = "Too many parties selected (only 1 is allowed)"
-                                });
-                        }
-
-                        var extracount = partyel ? 1 : 0; // If party election one is for the party
-                        if (prefs.Length > el.votes_allowed + extracount)
-                        {
-                            return Json(new CastBallotResult()
+                            foreach (var pref in prefs)
                             {
-                                Status = 403,
-                                Message = $"Too many votes expressed ({prefs.Length}) with respect to the maximum ({el.votes_allowed})"
-                            });
-
-                        }
-                        foreach (var pref in prefs)
-                        {
-                            var cand = el.ballot_selections.Where(c => candidates[c.candidate_id].ballot_name.text[0].value == pref).FirstOrDefault();
-                            if (cand == null)
-                            {
-                                return Json(new CastBallotResult()
-                                {
-                                    Status = 403,
-                                    Message = "Invalid candidate"
-                                });
+                                CastVote(ticket, pref);
                             }
-                        }
-                        foreach (var pref in prefs)
-                        {
-                            CastVote(ticket, pref);
-                        }
-                        break;
-                }
+                            break;
+                    }
 
-            } 
-            else
-            {
-                return Json(new CastBallotResult()
+                }
+                else
                 {
-                    Status = 500,
-                    Message = "Invalid election id"
-                });
+                    return Json(new CastBallotResult()
+                    {
+                        Status = 500,
+                        Message = "Invalid election id"
+                    });
+                }
             }
 
             var dp = dataprotection.CreateProtector("EligereMetadataExchange");
