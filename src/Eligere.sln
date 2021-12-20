@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30114.105
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EligereES", "EligereES\EligereES.csproj", "{854F70AC-3F88-4431-8097-AD8DC8644D9A}"
 EndProject
@@ -11,7 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElectionGuardWebAPIClient",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ElectionGuardWebAPIClientTests", "ElectionGuardWebAPIClientTests\ElectionGuardWebAPIClientTests.csproj", "{45E0C8FB-2520-42D2-977D-ACE49B6AF21D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tktdump", "tktdump\tktdump.csproj", "{0E6503E5-3915-488A-93CB-DDD032417144}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tktdump", "tktdump\tktdump.csproj", "{0E6503E5-3915-488A-93CB-DDD032417144}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EligereVS.BallotBox", "BallotBox\EligereVS.BallotBox.csproj", "{855A92F7-C6EB-4792-8F42-65CDBD72FE1D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EligereVS.BallotBox.UnitTests", "EligereVS.BallotBox.UnitTests\EligereVS.BallotBox.UnitTests.csproj", "{B684EA10-0FA1-4239-8761-ECCC69E726B8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,14 @@ Global
 		{0E6503E5-3915-488A-93CB-DDD032417144}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0E6503E5-3915-488A-93CB-DDD032417144}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0E6503E5-3915-488A-93CB-DDD032417144}.Release|Any CPU.Build.0 = Release|Any CPU
+		{855A92F7-C6EB-4792-8F42-65CDBD72FE1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{855A92F7-C6EB-4792-8F42-65CDBD72FE1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{855A92F7-C6EB-4792-8F42-65CDBD72FE1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{855A92F7-C6EB-4792-8F42-65CDBD72FE1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B684EA10-0FA1-4239-8761-ECCC69E726B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B684EA10-0FA1-4239-8761-ECCC69E726B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B684EA10-0FA1-4239-8761-ECCC69E726B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B684EA10-0FA1-4239-8761-ECCC69E726B8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

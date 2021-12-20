@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.0" />
+    <PackageReference Include="RocksDbNative" Version="6.2.2" />
+    <PackageReference Include="RocksDbSharp" Version="6.2.2" />
+  </ItemGroup>
+
+</Project>
