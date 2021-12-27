@@ -20,6 +20,7 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.DataProtection;
 using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace EligereES.Controllers
 {
@@ -32,13 +33,15 @@ namespace EligereES.Controllers
         private string contentRootPath;
         private IDataProtectionProvider dataProtector;
         private DownloadOTPManager _dotpmgr;
+        private string defaultProvider;
 
-        public EligereESAPI(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider, DownloadOTPManager dotpmgr)
+        public EligereESAPI(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider, IConfiguration configuration, DownloadOTPManager dotpmgr)
         {
             _context = ctxt;
             contentRootPath = env.ContentRootPath;
             dataProtector = provider;
             _dotpmgr = dotpmgr;
+            defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
         }
 
         [HttpGet("Election")]
@@ -481,7 +484,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -513,7 +516,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -536,7 +539,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -559,7 +562,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -591,7 +594,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -621,7 +624,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -655,7 +658,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)

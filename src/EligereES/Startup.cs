@@ -32,12 +32,14 @@ namespace EligereES
     {
         private string contentRootPath;
         private string evsKeyPath;
+        private string defaultProvider;
 
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
             contentRootPath = env.ContentRootPath;
             evsKeyPath = Path.Combine(contentRootPath, "Data/EVSKey/");
+            defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
         }
 
         public IConfiguration Configuration { get; }
@@ -73,7 +75,7 @@ namespace EligereES
                     using (var esdb = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
                     {
                         onTokenValidated?.Invoke(ctxt);
-                        var roles = await EligereRoles.ComputeRoles(esdb, "AzureAD", ctxt.Principal.Identity.Name);
+                        var roles = await EligereRoles.ComputeRoles(esdb, defaultProvider, ctxt.Principal.Identity.Name);
                         var claims = new List<Claim>();
                         roles.ForEach(r => claims.Add(new Claim(ClaimTypes.Role, r)));
                         var appIdentity = new ClaimsIdentity(claims, "EligereIdentity");

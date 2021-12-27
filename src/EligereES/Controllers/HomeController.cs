@@ -10,6 +10,7 @@ using EligereES.Models;
 using EligereES.Models.DB;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace EligereES.Controllers
 {
@@ -26,13 +27,17 @@ namespace EligereES.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ESDB _context;
+        private readonly IConfiguration _config;
         private string contentRootPath;
+        private string defaultProvider;
 
-        public HomeController(ILogger<HomeController> logger, ESDB context, IWebHostEnvironment env)
+        public HomeController(ILogger<HomeController> logger, ESDB context, IWebHostEnvironment env, IConfiguration configuration)
         {
             _logger = logger;
             _context = context;
+            _config = configuration;
             contentRootPath = env.ContentRootPath;
+            defaultProvider = _config.GetValue(typeof(string), "DefaultAuthProvider") as string;
         }
 
         [AllowAnonymous]
@@ -43,10 +48,11 @@ namespace EligereES.Controllers
             {
                 return RedirectToAction("Index", "Setup");
             }
+
             // FIXME: this should be improved, roles are computed upon login so if they are changed during execution should be recomputed
             // in particular when assigned roles are revoked currently login should be forced through server restart.
             // This check is only to ensure that enrolled voters being still acknowledged.
-            if (User.Identity.IsAuthenticated && await EligereRoles.InconsistentRoles(User, _context, "AzureAD", User.Identity.Name))
+            if (User.Identity.IsAuthenticated && await EligereRoles.InconsistentRoles(User, _context,  defaultProvider, User.Identity.Name))
             {
                 return RedirectToAction("SignOut", "Account", new { Area = "MicrosoftIdentity" });
             }
@@ -98,7 +104,7 @@ namespace EligereES.Controllers
             var r = new UserLoginRequest()
             {
                 Id = System.Guid.NewGuid(),
-                Provider = "AzureAD",
+                Provider = defaultProvider,
                 UserId = User.Identity.Name,
                 PersonFk = person.Id
             };

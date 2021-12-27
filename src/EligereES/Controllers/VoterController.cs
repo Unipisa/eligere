@@ -30,6 +30,7 @@ namespace EligereES.Controllers
         private IDataProtectionProvider dataprotection;
         private IConfiguration Configuration;
         private PersistentCommissionManager _manager;
+        private string defaultProvider;
 
         public VoterController(ESDB ctxt, IWebHostEnvironment env, PersistentCommissionManager manager, IDataProtectionProvider provider, IConfiguration configuration)
         {
@@ -39,6 +40,7 @@ namespace EligereES.Controllers
             _manager.Expiration = TimeSpan.FromMinutes(3); // Should be added to configuration
             dataprotection = provider;
             Configuration = configuration;
+            defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
         }
 
         private async Task<List<(Voter, Election, List<PollingStationCommission>, bool, DateTime?)>> GetElections(Person person)
@@ -138,7 +140,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -246,7 +248,7 @@ namespace EligereES.Controllers
 
                         recognition.Idtype = "_SampledIdentification";
                         recognition.UserId = User.Identity.Name;
-                        recognition.AccountProvider = "AzureAD";
+                        recognition.AccountProvider = defaultProvider;
                         recognition.Otp = otp;
                         recognition.State = 0;
                         recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
@@ -278,7 +280,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                          join u in _context.UserLogin on p.Id equals u.PersonFk
-                         where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                         where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                          select p;
 
             if (await pq.CountAsync() != 1) 
@@ -315,7 +317,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
