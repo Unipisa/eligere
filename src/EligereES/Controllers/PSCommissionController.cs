@@ -21,12 +21,14 @@ namespace EligereES.Controllers
         private ESDB _context;
         private IConfiguration Configuration;
         private PersistentCommissionManager _manager;
+        private string defaultProvider;
 
         public PSCommissionController(ESDB ctxt, PersistentCommissionManager manager, IConfiguration configuration)
         {
             _context = ctxt;
             Configuration = configuration;
             _manager = manager;
+            defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
         }
 
 
@@ -117,7 +119,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -143,7 +145,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -169,7 +171,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -220,7 +222,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -260,7 +262,7 @@ namespace EligereES.Controllers
 
                 recognition.Idtype = "_PublicIdentification";
                 recognition.UserId = User.Identity.Name;
-                recognition.AccountProvider = "AzureAD";
+                recognition.AccountProvider = defaultProvider;
                 recognition.Otp = otp;
                 recognition.State = 0;
                 recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
@@ -289,7 +291,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -354,7 +356,7 @@ namespace EligereES.Controllers
 
                 recognition.Idtype = rectype;
                 recognition.UserId = User.Identity.Name;
-                recognition.AccountProvider = "AzureAD";
+                recognition.AccountProvider = defaultProvider;
                 recognition.Otp = otp;
                 recognition.State = 0;
                 recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
@@ -432,7 +434,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -472,7 +474,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
@@ -524,7 +526,7 @@ namespace EligereES.Controllers
         {
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == "AzureAD" && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
                      select p;
 
             if (await pq.CountAsync() != 1)
