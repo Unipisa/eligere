@@ -21,9 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Logging;
-using Microsoft.Identity.Web;
-using Microsoft.Identity.Web.UI;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace EligereES
 {
@@ -54,34 +52,43 @@ namespace EligereES
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization();
 
-            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+            services.AddAuthentication(options => {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            }).AddCookie(options => {
+                options.LoginPath = "/account/google-login";
+            }).AddGoogle(googleOptions => {
+                googleOptions.ClientId = "568552033988-qq1o72e8u53dlbja52i4034fi1f8950k.apps.googleusercontent.com";
+                googleOptions.ClientSecret = "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";
+            });
+
+            //services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+            //    .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
             //.AddAzureAD(options => Configuration.Bind("AzureAd", options));
 
             services.AddDbContext<ESDB>(o => {
                 o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
             });
 
-            services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, opt =>
-            {
-                var onTokenValidated = opt.Events.OnTokenValidated;
-                opt.Events.OnTokenValidated = (
-                async ctxt =>
-                {
-                    var opt = new DbContextOptionsBuilder<ESDB>();
+            //services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, opt =>
+            //{
+            //    var onTokenValidated = opt.Events.OnTokenValidated;
+            //    opt.Events.OnTokenValidated = (
+            //    async ctxt =>
+            //    {
+            //        var opt = new DbContextOptionsBuilder<ESDB>();
                     
-                    using (var esdb = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
-                    {
-                        onTokenValidated?.Invoke(ctxt);
-                        var roles = await EligereRoles.ComputeRoles(esdb, "AzureAD", ctxt.Principal.Identity.Name);
-                        var claims = new List<Claim>();
-                        roles.ForEach(r => claims.Add(new Claim(ClaimTypes.Role, r)));
-                        var appIdentity = new ClaimsIdentity(claims, "EligereIdentity");
-                        ctxt.Principal.AddIdentity(appIdentity);
+            //        using (var esdb = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
+            //        {
+            //            onTokenValidated?.Invoke(ctxt);
+            //            var roles = await EligereRoles.ComputeRoles(esdb, "AzureAD", ctxt.Principal.Identity.Name);
+            //            var claims = new List<Claim>();
+            //            roles.ForEach(r => claims.Add(new Claim(ClaimTypes.Role, r)));
+            //            var appIdentity = new ClaimsIdentity(claims, "EligereIdentity");
+            //            ctxt.Principal.AddIdentity(appIdentity);
 
-                    }
-                });
-            });
+            //        }
+            //    });
+            //});
 
             services.AddDataProtection()
                .SetApplicationName("Eligere")
@@ -94,9 +101,7 @@ namespace EligereES
                     .Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
             });
-            services.AddRazorPages()
-                .AddMicrosoftIdentityUI();
-            IdentityModelEventSource.ShowPII = true;
+            services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

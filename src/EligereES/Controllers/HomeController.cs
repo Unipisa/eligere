@@ -10,6 +10,8 @@ using EligereES.Models;
 using EligereES.Models.DB;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace EligereES.Controllers
 {
@@ -43,14 +45,20 @@ namespace EligereES.Controllers
             {
                 return RedirectToAction("Index", "Setup");
             }
+
+            var uc = User.Claims.Where(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress").FirstOrDefault();
+            var u = uc == null ? null : uc.Value;
             // FIXME: this should be improved, roles are computed upon login so if they are changed during execution should be recomputed
             // in particular when assigned roles are revoked currently login should be forced through server restart.
             // This check is only to ensure that enrolled voters being still acknowledged.
-            if (User.Identity.IsAuthenticated && await EligereRoles.InconsistentRoles(User, _context, "AzureAD", User.Identity.Name))
+            if (User.Identity.IsAuthenticated && await EligereRoles.InconsistentRoles(User, _context, "AzureAD", u))
             {
-                return RedirectToAction("SignOut", "Account", new { Area = "MicrosoftIdentity" });
+                var roles = await EligereRoles.ComputeRoles(_context, "AzureAD", u);
+                var lclaims = new List<Claim>();
+                roles.ForEach(r => lclaims.Add(new Claim(ClaimTypes.Role, r)));
+                var appIdentity = new ClaimsIdentity(lclaims, "EligereIdentity");
+                User.AddIdentity(appIdentity);
             }
-            var u = User.Identity.Name;
             var pendingUserLoginRequest = false;
             if (User.IsInRole(EligereRoles.AuthenticatedUser) && !User.IsInRole(EligereRoles.AuthenticatedPerson))
             {
