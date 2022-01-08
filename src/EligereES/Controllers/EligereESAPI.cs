@@ -482,13 +482,14 @@ namespace EligereES.Controllers
         [HttpPut("PSCommission/StaffAvailability")]
         public async Task<bool> StaffAvailability(bool available)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -514,13 +515,14 @@ namespace EligereES.Controllers
         [HttpGet("PSCommission/StaffAvailability")]
         public async Task<bool> StaffAvailability()
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -537,13 +539,14 @@ namespace EligereES.Controllers
         [HttpGet("PSCommission/RemoteIdAvailability")]
         public async Task<bool> RemoteIdAvailability()
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -560,13 +563,14 @@ namespace EligereES.Controllers
         [HttpPut("PSCommission/RemoteIdAvailability")]
         public async Task<bool> RemoteIdAvailability(bool available)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -592,13 +596,14 @@ namespace EligereES.Controllers
         [HttpGet("Elections/ApproveUserLoginRequest/{id}")]
         public async Task<bool> ApproveUserLoginRequest(Guid id)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -622,13 +627,15 @@ namespace EligereES.Controllers
         [HttpGet("Elections/ApproveUserLoginRequests")]
         public async Task<bool> ApproveUserLoginRequest()
         {
+            var userid = EligereRoles.UserId(this.User);
+
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -656,13 +663,14 @@ namespace EligereES.Controllers
         [HttpGet("Elections/RejectUserLoginRequest/{id}")]
         public async Task<bool> RejectUserLoginRequest(Guid id)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 

@@ -1,12 +1,13 @@
 ﻿@{
     ViewData["Title"] = "OTP inviata";
+    var userid = EligereRoles.UserId(this.User);
 }
 
 @if (((string)ViewData["OTPResult"]) == "Success")
 {
     <div class="text-center offset-2 col-8">
         <h1 class="display-4">OTP inviato</h1>
-        <h3>Il codice OTP &egrave; stato inviato all'indirizzo @this.User.Identity.Name</h3>
+        <h3>Il codice OTP &egrave; stato inviato all'indirizzo @userid</h3>
     </div>
 
 }
@@ -14,6 +15,6 @@ else
 {
     <div class="text-center offset-2 col-8">
         <h1 class="display-4">Problema nell'invio dell'OTP</h1>
-        <h3>Errore nell'invio del codice OTP all'indirizzo @this.User.Identity.Name riprovare e in caso di ulteriore malfunzionamento contattare la commissione</h3>
+        <h3>Errore nell'invio del codice OTP all'indirizzo @userid riprovare e in caso di ulteriore malfunzionamento contattare la commissione</h3>
     </div>
 }

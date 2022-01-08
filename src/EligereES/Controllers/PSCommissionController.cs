@@ -117,13 +117,14 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff)]
         public async Task<IActionResult> Index()
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
             
             var person = await pq.FirstAsync();
             var now = DateTime.Now + TimeSpan.FromMinutes(15);
@@ -143,13 +144,14 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.RemoteIdentificationOfficer)]
         public async Task<IActionResult> RemoteIdentification()
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
             var now = DateTime.Now + TimeSpan.FromMinutes(15);
@@ -169,13 +171,14 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff, EligereRoles.RemoteIdentificationOfficer)]
         public async Task<IActionResult> Identify(string id, string otpresult)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -220,13 +223,14 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident)]
         public async Task<IActionResult> PublicIdentificationElection(string remote)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -261,7 +265,7 @@ namespace EligereES.Controllers
                 }
 
                 recognition.Idtype = "_PublicIdentification";
-                recognition.UserId = User.Identity.Name;
+                recognition.UserId = userid;
                 recognition.AccountProvider = defaultProvider;
                 recognition.Otp = otp;
                 recognition.State = 0;
@@ -289,13 +293,14 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff, EligereRoles.RemoteIdentificationOfficer)]
         public async Task<IActionResult> Identify(string id, string mobile, string remote, string rectype, string idnum, DateTime? idexp)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -355,7 +360,7 @@ namespace EligereES.Controllers
                 }
 
                 recognition.Idtype = rectype;
-                recognition.UserId = User.Identity.Name;
+                recognition.UserId = userid;
                 recognition.AccountProvider = defaultProvider;
                 recognition.Otp = otp;
                 recognition.State = 0;
@@ -432,13 +437,14 @@ namespace EligereES.Controllers
         [HttpGet("ElectionControl")]
         public async Task<IActionResult> ElectionControl()
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -472,13 +478,14 @@ namespace EligereES.Controllers
         [HttpGet("CommissionStatus")]
         public async Task<IActionResult> CommissionStatus()
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
@@ -524,13 +531,14 @@ namespace EligereES.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ElectionControl(string confstate, string state)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
