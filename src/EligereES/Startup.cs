@@ -43,6 +43,7 @@ namespace EligereES
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<IClaimsTransformation, EligereClaimsTransformation>();
             services.AddSingleton<PersistentCommissionManager>();
             services.AddSingleton<DownloadOTPManager>();
 
@@ -68,27 +69,6 @@ namespace EligereES
             services.AddDbContext<ESDB>(o => {
                 o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
             });
-
-            //services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, opt =>
-            //{
-            //    var onTokenValidated = opt.Events.OnTokenValidated;
-            //    opt.Events.OnTokenValidated = (
-            //    async ctxt =>
-            //    {
-            //        var opt = new DbContextOptionsBuilder<ESDB>();
-                    
-            //        using (var esdb = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
-            //        {
-            //            onTokenValidated?.Invoke(ctxt);
-            //            var roles = await EligereRoles.ComputeRoles(esdb, "AzureAD", ctxt.Principal.Identity.Name);
-            //            var claims = new List<Claim>();
-            //            roles.ForEach(r => claims.Add(new Claim(ClaimTypes.Role, r)));
-            //            var appIdentity = new ClaimsIdentity(claims, "EligereIdentity");
-            //            ctxt.Principal.AddIdentity(appIdentity);
-
-            //        }
-            //    });
-            //});
 
             services.AddDataProtection()
                .SetApplicationName("Eligere")

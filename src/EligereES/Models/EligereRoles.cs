@@ -1,5 +1,7 @@
 ﻿using EligereES.Models.DB;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,6 +65,53 @@ namespace EligereES.Models
                 if (!user.IsInRole(r)) return true;
             }
             return false;
+        }
+
+        internal async static Task<ClaimsPrincipal> UpdateRoles(ClaimsPrincipal user, ESDB esdb, string provider, string username)
+        {
+            var roles = await ComputeRoles(esdb, provider, username);
+            ClaimsIdentity claimsIdentity = user.Identities.Where(c => c.AuthenticationType == "EligereIdentity").Any() ? user.Identities.Where(c => c.AuthenticationType == "EligereIdentity").First() : null;
+            var claims = new List<Claim>();
+            roles.ForEach(r => claims.Add(new Claim(ClaimTypes.Role, r)));
+            if (claimsIdentity != null)
+            {
+                foreach (var c in claimsIdentity.Claims.ToArray())
+                {
+                    claimsIdentity.RemoveClaim(c);
+                }
+                claimsIdentity.AddClaims(claims);
+            }
+            else
+            {
+                claimsIdentity = new ClaimsIdentity(claims, "EligereIdentity");
+                user.AddIdentity(claimsIdentity);
+            }
+
+            return user;
+        }
+    }
+
+    public class EligereClaimsTransformation : IClaimsTransformation
+    {
+        private IConfiguration _configuration;
+        private string defaultProvider;
+
+        public EligereClaimsTransformation(IConfiguration configuration)
+        {
+            _configuration = configuration;
+            defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
+        }
+
+        public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
+        {
+            var opt = new DbContextOptionsBuilder<ESDB>();
+
+            using (var esdb = new ESDB(opt.UseSqlServer(_configuration.GetConnectionString("ESDB")).Options))
+            {
+                await EligereRoles.UpdateRoles(principal, esdb, defaultProvider, principal.Identity.Name);
+            }
+
+            return principal;
         }
     }
 }
