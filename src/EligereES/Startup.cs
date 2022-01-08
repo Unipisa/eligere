@@ -56,10 +56,11 @@ namespace EligereES
             services.AddAuthentication(options => {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             }).AddCookie(options => {
-                options.LoginPath = "/account/google-login";
+                options.LoginPath = Configuration.GetValue<string>("Google:LoginPath");
+                options.LogoutPath = Configuration.GetValue<string>("Google:LogoutPath");
             }).AddGoogle(googleOptions => {
-                googleOptions.ClientId = "568552033988-qq1o72e8u53dlbja52i4034fi1f8950k.apps.googleusercontent.com";
-                googleOptions.ClientSecret = "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";
+                googleOptions.ClientId = Configuration.GetValue<string>("Google:ClientId");
+                googleOptions.ClientSecret = Configuration.GetValue<string>("Google:ClientSecret");
             });
 
             services.AddDbContext<ESDB>(o => {

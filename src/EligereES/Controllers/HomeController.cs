@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
+using Microsoft.Extensions.Configuration;
 
 namespace EligereES.Controllers
 {
@@ -29,12 +30,14 @@ namespace EligereES.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly ESDB _context;
         private string contentRootPath;
+        private string defaultProvider;
 
-        public HomeController(ILogger<HomeController> logger, ESDB context, IWebHostEnvironment env)
+        public HomeController(IConfiguration configuration, ILogger<HomeController> logger, ESDB context, IWebHostEnvironment env)
         {
             _logger = logger;
             _context = context;
             contentRootPath = env.ContentRootPath;
+            defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
         }
 
         [AllowAnonymous]

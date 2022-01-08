@@ -94,8 +94,8 @@ namespace EligereES.Models
         public static string UserId(ClaimsPrincipal principal)
         {
             if (principal == null) return "";
-
-            return principal.Identity.Name;
+            var uc = principal.Claims.Where(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress").FirstOrDefault();
+            return uc == null ? "" : uc.Value;
         }
     }
 
