@@ -45,17 +45,6 @@ namespace EligereES.Controllers
         public async Task<IActionResult> GoogleResponse()
         {
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-            var opt = new DbContextOptionsBuilder<ESDB>();
-            using (var esdb = new ESDB(opt.UseSqlServer(_config.GetConnectionString("ESDB")).Options))
-            {
-                var roles = await EligereRoles.ComputeRoles(esdb, "AzureAD", result.Principal.Identity.Name);
-                var lclaims = new List<Claim>();
-                roles.ForEach(r => lclaims.Add(new Claim(ClaimTypes.Role, r)));
-                var appIdentity = new ClaimsIdentity(lclaims, "EligereIdentity");
-                result.Principal.AddIdentity(appIdentity);
-            }
-
             return RedirectToAction("Index", "Home");
         }
     }

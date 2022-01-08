@@ -62,10 +62,6 @@ namespace EligereES
                 googleOptions.ClientSecret = "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";
             });
 
-            //services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-            //    .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
-            //.AddAzureAD(options => Configuration.Bind("AzureAd", options));
-
             services.AddDbContext<ESDB>(o => {
                 o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
             });
