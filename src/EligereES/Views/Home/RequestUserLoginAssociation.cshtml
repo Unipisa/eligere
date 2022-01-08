@@ -16,7 +16,7 @@
                 <p>&Egrave; possibile chiudere la scheda</p>
                 break;
             case EligereES.Controllers.UserLoginRequestResult.AssociationAlreadyRequested:
-                <h4>&egrave; gi&agrave; presente una richiesta per il login @User.Identity.Name</h4>
+                <h4>&egrave; gi&agrave; presente una richiesta per il login @EligereRoles.UserId(User)</h4>
                 <p>&Egrave; possibile chiudere la scheda</p>
                 break;
             case EligereES.Controllers.UserLoginRequestResult.MissingPerson:
@@ -24,7 +24,7 @@
                 <p>&Egrave; possibile chiudere la scheda</p>
                 break;
             case EligereES.Controllers.UserLoginRequestResult.LoginAlreadyAssociated:
-                <h4>&egrave; gi&agrave; presente un'associazione per il login @User.Identity.Name</h4>
+                <h4>&egrave; gi&agrave; presente un'associazione per il login @EligereRoles.UserId(User)</h4>
                 <p>&Egrave; possibile chiudere la scheda</p>
                 break;
         }

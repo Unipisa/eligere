@@ -50,7 +50,7 @@ namespace EligereES.Controllers
                 return RedirectToAction("Index", "Setup");
             }
 
-            var u = User.Identity.Name;
+            var u = EligereRoles.UserId(User);
             var pendingUserLoginRequest = false;
             if (User.IsInRole(EligereRoles.AuthenticatedUser) && !User.IsInRole(EligereRoles.AuthenticatedPerson))
             {
@@ -78,7 +78,7 @@ namespace EligereES.Controllers
         {
             cf = cf.Trim(' ', '\t').ToUpperInvariant();
 
-            var u = User.Identity.Name;
+            var u = EligereRoles.UserId(User);
 
             var req = _context.UserLoginRequest.Where(l => l.UserId == cf).FirstOrDefault();
 
@@ -99,7 +99,7 @@ namespace EligereES.Controllers
             {
                 Id = System.Guid.NewGuid(),
                 Provider = defaultProvider,
-                UserId = User.Identity.Name,
+                UserId = u,
                 PersonFk = person.Id
             };
             _context.UserLoginRequest.Add(r);

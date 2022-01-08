@@ -78,7 +78,7 @@
     <div class="col-6 offset-3">
         <hr />
         <h4>Registrazione</h4>
-        <p>Per poter esercitare il diritto al voto &egrave; necessario indicare il proprio codice fiscale associato all'account <i>@User.Identity.Name</i>. Il C.F. dovr&agrave; risultare tra i codici fiscali in anagrafe.</p>
+        <p>Per poter esercitare il diritto al voto &egrave; necessario indicare il proprio codice fiscale associato all'account <i>@EligereRoles.UserId(User)</i>. Il C.F. dovr&agrave; risultare tra i codici fiscali in anagrafe.</p>
     </div>
     <form method="post" asp-controller="Home" asp-action="RequestUserLoginAssociation">
         <div class="input-group mb-3 w-50 col-6 offset-3">

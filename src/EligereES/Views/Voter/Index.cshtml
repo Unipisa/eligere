@@ -90,7 +90,7 @@
                         <button class="btn btn-outline-secondary" type="button" onclick="vote()">Procedi al voto</button>
                     </div>
                 </div>
-                <p>Inserire il codice OTP ricevuto via Email all'indirizzo @this.User.Identity.Name.</p>
+                <p>Inserire il codice OTP ricevuto via Email all'indirizzo @EligereRoles.UserId(this.User).</p>
                 <p><em>In caso di mancata ricezione del messaggio di posta elettronica contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
                 @*<p>Inserire il codice OTP ricevuto via SMS.</p>
                 <p><em>In caso di mancata ricezione dell'SMS contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>*@

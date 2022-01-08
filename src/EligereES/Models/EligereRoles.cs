@@ -89,6 +89,14 @@ namespace EligereES.Models
 
             return user;
         }
+
+        // Method designed to harmonize the way different auth providers maps the Identity.Name property
+        public static string UserId(ClaimsPrincipal principal)
+        {
+            if (principal == null) return "";
+
+            return principal.Identity.Name;
+        }
     }
 
     public class EligereClaimsTransformation : IClaimsTransformation
@@ -108,7 +116,7 @@ namespace EligereES.Models
 
             using (var esdb = new ESDB(opt.UseSqlServer(_configuration.GetConnectionString("ESDB")).Options))
             {
-                await EligereRoles.UpdateRoles(principal, esdb, defaultProvider, principal.Identity.Name);
+                await EligereRoles.UpdateRoles(principal, esdb, defaultProvider, EligereRoles.UserId(principal));
             }
 
             return principal;

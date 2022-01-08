@@ -138,13 +138,15 @@ namespace EligereES.Controllers
         [HttpGet("IdentificationLink")]
         public async Task<IActionResult> IdentificationLink()
         {
+            var userid = EligereRoles.UserId(this.User);
+
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
 
             var person = await pq.FirstAsync();
@@ -247,7 +249,7 @@ namespace EligereES.Controllers
                         }
 
                         recognition.Idtype = "_SampledIdentification";
-                        recognition.UserId = User.Identity.Name;
+                        recognition.UserId = userid;
                         recognition.AccountProvider = defaultProvider;
                         recognition.Otp = otp;
                         recognition.State = 0;
@@ -259,7 +261,7 @@ namespace EligereES.Controllers
 
                     try
                     {
-                        OTPSender.SendMail(Configuration, otp, this.User.Identity.Name);
+                        OTPSender.SendMail(Configuration, otp, userid);
                         ViewData["OTPResult"] = "Success";
                     }
                     catch
@@ -278,13 +280,14 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.AuthenticatedPerson)]
         public async Task<IActionResult> Index()
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                          join u in _context.UserLogin on p.Id equals u.PersonFk
-                         where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                         where u.Provider == defaultProvider && u.UserId == userid
                          select p;
 
             if (await pq.CountAsync() != 1) 
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
 
             var person = await pq.FirstAsync();
@@ -315,13 +318,14 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Voter)]
         public async Task<IActionResult> GenerateTicket(string otp)
         {
+            var userid = EligereRoles.UserId(this.User);
             var pq = from p in _context.Person
                      join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == this.User.Identity.Name
+                     where u.Provider == defaultProvider && u.UserId == userid
                      select p;
 
             if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + this.User.Identity.Name);
+                throw new Exception("Internal error! Too many persons associated with login " + userid);
 
             var person = await pq.FirstAsync();
 
