@@ -79,6 +79,11 @@
     var cardData = @{ WriteLiteral(JsonSerializer.Serialize<VoteInformation>(info)); };
     var candidates = {};
 
+    function escapeAttributeValue(s) {
+        var ret = s.replaceAll('"', '&quot;');
+        return ret;
+    }
+
     function findElection(id) {
         for (var i = 0; i < cardData.ElectionDescription.contests.length; i++)
             if (cardData.ElectionDescription.contests[i].object_id == id)
@@ -130,7 +135,7 @@
                         visibleCandidates[ballotname] = true;
                         cont +=
                             '<div class="custom-control custom-radio">' +
-                            '<input type="radio" id="candidate' + count + '" name="candidate" value="' + ballotname + '" class="custom-control-input" />' +
+                            '<input type="radio" id="candidate' + count + '" name="candidate" value="' + escapeAttributeValue(ballotname) + '" class="custom-control-input" />' +
                             '<label for= "candidate' + count + '" class= "custom-control-label" > ' + ballotname + '</label >' +
                             '</div>';
                     }
@@ -155,7 +160,7 @@
                         count++;
                         cont =
                             '<div class="custom-control custom-radio">' +
-                            '<input type="radio" id="candidate' + count + '" name="candidate' + count + '" value="' + cand + '" class="custom-control-input" />' +
+                            '<input type="radio" id="candidate' + count + '" name="candidate' + count + '" value="' + escapeAttributeValue(cand) + '" class="custom-control-input" />' +
                             '<label for= "candidate' + count + '" class= "custom-control-label" > ' + cand + '</label >' +
                             '</div>';
                         $('#candidateSelection').html($('#candidateSelection').html() + cont)
@@ -193,7 +198,7 @@
                         visibleCandidates[ballotname] = true;
                         cont +=
                             '<div class="custom-control custom-radio">' +
-                            '<input type="checkbox" id="candidate' + count + '" name="candidate' + count + '" value="' + ballotname + '" class="custom-control-input" onchange="if (!checkNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
+                            '<input type="checkbox" id="candidate' + count + '" name="candidate' + count + '" value="' + escapeAttributeValue(ballotname) + '" class="custom-control-input" onchange="if (!checkNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
                             '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname + '</label>' +
                             '</div>';
                     }
@@ -218,7 +223,7 @@
                         count++;
                         cont =
                             '<div class="custom-control custom-radio">' +
-                            '<input type="checkbox" id="candidate' + count + '" name="candidate' + count + '" value="' + cand + '" class="custom-control-input added-candidate" onchange="if (!checkNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
+                            '<input type="checkbox" id="candidate' + count + '" name="candidate' + count + '" value="' + escapeAttributeValue(cand) + '" class="custom-control-input added-candidate" onchange="if (!checkNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
                             '<label for="candidate' + count + '" class="custom-control-label" >' + cand + '</label>' +
                             '</div>';
                         $('#candidateSelection').html($('#candidateSelection').html() + cont)
@@ -264,7 +269,7 @@
                     listcount++;
                     cont +=
                         '<div class="custom-control custom-radio">' +
-                        '<input type="radio" id="party' + count + '" name="party" value="' + ballotname + '" class="custom-control-input" onchange="$(\'.partylist-data >> input\').prop(\'checked\', false); $(\'#candidateSelection >> input\').prop(\'checked\', false); $(\'.partylist-data\').hide(); $(\'#partylist' + count + '\').show(); $(\'#party' + count + '\').prop(\'checked\', true); " />' +
+                        '<input type="radio" id="party' + count + '" name="party" value="' + escapeAttributeValue(ballotname) + '" class="custom-control-input" onchange="$(\'.partylist-data >> input\').prop(\'checked\', false); $(\'#candidateSelection >> input\').prop(\'checked\', false); $(\'.partylist-data\').hide(); $(\'#partylist' + count + '\').show(); $(\'#party' + count + '\').prop(\'checked\', true); " />' +
                         '<label for="party' + count + '" class="custom-control-label" >' + ballotname + '</label>' +
                         '<div id="partylist' + count + '" class="partylist-data" style="display: none">';
                 } else {
@@ -276,7 +281,7 @@
                     }
                     cont +=
                         '<div class="custom-control custom-radio">' +
-                        '<input type="' + inptype + '" id="candidate' + count + '" name="' + inpname + '" value="' + ballotname + '" class="custom-control-input" onchange="if (!checkPartyNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
+                        '<input type="' + inptype + '" id="candidate' + count + '" name="' + inpname + '" value="' + escapeAttributeValue(ballotname) + '" class="custom-control-input" onchange="if (!checkPartyNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
                         '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname.substring(ballotname.lastIndexOf('- ') + 2) + '</label>' +
                         '</div>';
                 }
