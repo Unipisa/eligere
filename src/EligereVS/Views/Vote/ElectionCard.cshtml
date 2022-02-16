@@ -55,7 +55,7 @@
                     <input type="radio" id="schedaBianca" name="ballotType" value="emptyBallot" class="custom-control-input" style="margin-top: 16px;">
                     <label class="custom-control-label" for="schedaBianca">Scheda bianca</label>
                 </div>
-                <div class="custom-control custom-radio">
+                <div class="custom-control custom-radio" id="nullVote">
                     <input type="radio" id="schedaNulla" name="ballotType" value="spoiledBallot" class="custom-control-input">
                     <label class="custom-control-label" for="schedaNulla">Scheda nulla</label>
                 </div>
@@ -101,11 +101,14 @@
 
     function generateCandidateList(election) {
         var hasCandidates = election.extensions.HasCandidates != "False";
+        var noNullVote = election.extensions.NoNullVote == "True";
         var candidateType = election.extensions.CandidatesType;
         var numvotes = election.votes_allowed;
         var selections = election.ballot_selections;
         var numsel = selections.length;
         var container = document.getElementById('candidateSelection');
+
+        if (noNullVote) $('#nullVote').hide();
 
         if (hasCandidates && candidateType == "Implicit") candidateType = "OnlyExplicit"; // Backward compatibility
 
@@ -160,7 +163,7 @@
                         count++;
                         cont =
                             '<div class="custom-control custom-radio">' +
-                            '<input type="radio" id="candidate' + count + '" name="candidate' + count + '" value="' + escapeAttributeValue(cand) + '" class="custom-control-input" />' +
+                            '<input type="radio" id="candidate' + count + '" name="candidate" value="' + escapeAttributeValue(cand) + '" class="custom-control-input" />' +
                             '<label for= "candidate' + count + '" class= "custom-control-label" > ' + cand + '</label >' +
                             '</div>';
                         $('#candidateSelection').html($('#candidateSelection').html() + cont)
@@ -253,26 +256,40 @@
 
             var cont = '';
             var count = 0;
-            var listcount = 0;
-            var firstparty = true;
-            // Assumption: candidates are grouped by party
+            //var firstparty = true;
+
+            // now parties are partially ordered
+            var parties = new Array();
             for (var i = 0; i < numsel; i++) {
                 var candidate = candidates[selections[i].candidate_id];
                 var ballotname = candidate.ballot_name.text[0].value;
-                count++;
                 if (candidate.object_id[0] != '*') {
-                    if (!firstparty) {
-                        cont += '</div></div>'
-                    } else {
-                        firstparty = false;
+                    parties.push({ "id": candidate.object_id, "party_id": candidate.ballot_name.party_id, "text": candidate.ballot_name.text[0].value, "candidates": new Array() });
+                }
+            }
+
+            for (var i = 0; i < parties.length; i++) {
+                for (var j = 0; j < numsel; j++) {
+                    var candidate = candidates[selections[j].candidate_id];
+                    var ballotname = candidate.ballot_name.text[0].value;
+                    if (candidate.object_id[0] == '*' && parties[i].party_id == candidate.ballot_name.party_id) {
+                        parties[i].candidates.push(ballotname);
                     }
-                    listcount++;
-                    cont +=
-                        '<div class="custom-control custom-radio">' +
-                        '<input type="radio" id="party' + count + '" name="party" value="' + escapeAttributeValue(ballotname) + '" class="custom-control-input" onchange="$(\'.partylist-data >> input\').prop(\'checked\', false); $(\'#candidateSelection >> input\').prop(\'checked\', false); $(\'.partylist-data\').hide(); $(\'#partylist' + count + '\').show(); $(\'#party' + count + '\').prop(\'checked\', true); " />' +
-                        '<label for="party' + count + '" class="custom-control-label" >' + ballotname + '</label>' +
-                        '<div id="partylist' + count + '" class="partylist-data" style="display: none">';
-                } else {
+                }
+            }
+
+            for (var i = 0; i < parties.length; i++) {
+                count++;
+                var partyname = parties[i].text;
+                cont +=
+                    '<div class="custom-control custom-radio">' +
+                '<input type="radio" id="party' + count + '" name="party" value="' + escapeAttributeValue(partyname) + '" class="custom-control-input" onchange="$(\'.partylist-data >> input\').prop(\'checked\', false); $(\'#candidateSelection >> input\').prop(\'checked\', false); $(\'.partylist-data\').hide(); $(\'#partylist' + count + '\').show(); $(\'#party' + count + '\').prop(\'checked\', true); " />' +
+                '<label for="party' + count + '" class="custom-control-label" >' + partyname + '</label>' +
+                    '<div id="partylist' + count + '" class="partylist-data" style="display: none">';
+
+                for (var j = 0; j < parties[i].candidates.length; j++) {
+                    var ballotname = parties[i].candidates[j];
+                    count++;
                     var inptype = 'checkbox';
                     var inpname = 'candidate' + count;
                     if (numvotes == 1) {
@@ -285,8 +302,41 @@
                         '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname.substring(ballotname.lastIndexOf('- ') + 2) + '</label>' +
                         '</div>';
                 }
+
+                cont += '</div></div>'
             }
-            cont += '</div></div>';
+
+            //// Assumption: candidates are grouped by party
+            //for (var i = 0; i < numsel; i++) {
+            //    var candidate = candidates[selections[i].candidate_id];
+            //    var ballotname = candidate.ballot_name.text[0].value;
+            //    count++;
+            //    if (candidate.object_id[0] != '*') {
+            //        if (!firstparty) {
+            //            cont += '</div></div>'
+            //        } else {
+            //            firstparty = false;
+            //        }
+            //        cont +=
+            //            '<div class="custom-control custom-radio">' +
+            //            '<input type="radio" id="party' + count + '" name="party" value="' + escapeAttributeValue(ballotname) + '" class="custom-control-input" onchange="$(\'.partylist-data >> input\').prop(\'checked\', false); $(\'#candidateSelection >> input\').prop(\'checked\', false); $(\'.partylist-data\').hide(); $(\'#partylist' + count + '\').show(); $(\'#party' + count + '\').prop(\'checked\', true); " />' +
+            //            '<label for="party' + count + '" class="custom-control-label" >' + ballotname + '</label>' +
+            //            '<div id="partylist' + count + '" class="partylist-data" style="display: none">';
+            //    } else {
+            //        var inptype = 'checkbox';
+            //        var inpname = 'candidate' + count;
+            //        if (numvotes == 1) {
+            //            inptype = 'radio';
+            //            inpname = 'partycandidate';
+            //        }
+            //        cont +=
+            //            '<div class="custom-control custom-radio">' +
+            //            '<input type="' + inptype + '" id="candidate' + count + '" name="' + inpname + '" value="' + escapeAttributeValue(ballotname) + '" class="custom-control-input" onchange="if (!checkPartyNumVotes(' + numvotes + ')) { $(this).prop(\'checked\', false); }" />' +
+            //            '<label for="candidate' + count + '" class="custom-control-label" >' + ballotname.substring(ballotname.lastIndexOf('- ') + 2) + '</label>' +
+            //            '</div>';
+            //    }
+            //}
+            //cont += '</div></div>';
             $('#candidateSelection').html(cont);
         } else {
             container.clean = function () {
