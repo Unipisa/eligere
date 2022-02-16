@@ -24,6 +24,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using Microsoft.Extensions.Logging;
 
 namespace EligereES
 {
@@ -33,6 +34,8 @@ namespace EligereES
         private string contentRootPath;
         private string evsKeyPath;
         private string defaultProvider;
+        private ILogger<Startup> _logger;
+
 
         public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
@@ -61,6 +64,7 @@ namespace EligereES
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
             //.AddAzureAD(options => Configuration.Bind("AzureAd", options));
 
+
             services.AddDbContext<ESDB>(o => {
                 o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
             });
@@ -82,8 +86,9 @@ namespace EligereES
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILogger<Startup> logger)
         {
+            _logger = logger;
 
             if (env.IsDevelopment())
             {
