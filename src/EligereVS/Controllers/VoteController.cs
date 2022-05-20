@@ -264,6 +264,18 @@ namespace EligereVS.Controllers
         [HttpGet]
         public IActionResult VoteConclusion()
         {
+            var confAPI = new VotingSystemConfiguration();
+            lock (configuration)
+            {
+                var v = configuration.Get(HomeController.APIConfigurationKey);
+                if (v != null)
+                {
+                    confAPI = VotingSystemConfiguration.FromJson(v);
+                }
+            }
+
+            var u = new Uri(confAPI.ElectionSystemAPI);
+            ViewData["ReturnURL"] = u.AbsoluteUri.Replace(u.AbsolutePath, "") + "/Voter";
             return View();
         }
     }

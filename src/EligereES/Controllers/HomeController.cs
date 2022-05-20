@@ -43,12 +43,16 @@ namespace EligereES.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                _logger.LogWarning($"User {User.Identity.Name} logged from {Request.HttpContext.Connection.RemoteIpAddress?.ToString()}");
+            }
+
             var dir = new DirectoryInfo(Path.Combine(contentRootPath, "Data/EVSKey/"));
             if (dir.GetFiles("*.xml").Length == 0)
             {
                 return RedirectToAction("Index", "Setup");
             }
-
             var u = EligereRoles.UserId(User);
             var pendingUserLoginRequest = false;
             if (User.IsInRole(EligereRoles.AuthenticatedUser) && !User.IsInRole(EligereRoles.AuthenticatedPerson))

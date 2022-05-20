@@ -11,6 +11,7 @@ using EligereES.Models;
 using Microsoft.AspNetCore.Http;
 using EligereES.Models.Client;
 using System.IO;
+using Microsoft.Extensions.Configuration;
 
 namespace EligereES.Controllers
 {
@@ -20,12 +21,14 @@ namespace EligereES.Controllers
         private readonly ESDB _context;
         private string contentRootPath;
         private DownloadOTPManager _downloadOtpMgr;
+        private IConfiguration Configuration;
 
-        public SetupController(ESDB ctxt, IWebHostEnvironment env, DownloadOTPManager downloadOtpMgr)
+        public SetupController(ESDB ctxt, IWebHostEnvironment env, IConfiguration conf, DownloadOTPManager downloadOtpMgr)
         {
             _context = ctxt;
             contentRootPath = env.ContentRootPath;
             _downloadOtpMgr = downloadOtpMgr;
+            Configuration = conf;
         }
 
         public static ESConfiguration GetESConfiguration(string contentRootPath)
@@ -121,6 +124,15 @@ namespace EligereES.Controllers
             var k = new StreamReader(file[0].OpenReadStream()).ReadToEnd();
             System.IO.File.WriteAllText(fn, k);
 
+            return RedirectToAction("Index");
+        }
+
+        [AuthorizeRoles(EligereRoles.Admin)]
+        [HttpGet]
+        public IActionResult TestSmtpServer(string dest)
+        {
+            if (dest == null) dest = "antonio.cisternino@unipi.it";
+            OTPSender.SendMail(Configuration, "ABC", dest);
             return RedirectToAction("Index");
         }
 

@@ -25,16 +25,29 @@ namespace EligereES
 
         public static void SendMail(IConfiguration conf, string otp, string dest)
         {
-            var smtpconf = conf.GetValue<SmtpConfiguration>("Smtp");
+            var host = conf.GetValue<string>("Smtp:Host");
+            var port = conf.GetValue<int>("Smtp:Port");
+            var enableSSL = conf.GetValue<bool>("Smtp:Encryption");
+            var useAuth = conf.GetValue<bool>("Smtp:UseAuthentication");
+            var user = conf.GetValue<string>("Smtp:User");
+            var password = conf.GetValue<string>("Smtp:Password");
+            var sender = conf.GetValue<string>("Smtp:Sender");
+
+            if (host == null)
+            {
+                return;
+            }
+            var smtpconf = new SmtpConfiguration { Host = host, Port = port, Encryption = enableSSL, UseAuthentication = useAuth, User = user, Password = password, Sender = sender };
             if (smtpconf == null)
             {
                 return;
             }
             var smtp = new System.Net.Mail.SmtpClient(smtpconf.Host, smtpconf.Port);
-            smtp.EnableSsl = true;
-            smtp.UseDefaultCredentials = false;
-            smtp.Credentials = new System.Net.NetworkCredential(smtpconf.User, smtpconf.Password);
-            smtp.Send("no-reply@unipi.it", dest, "Codice OTP per Eligere", $"Il codice OTP per procedere al voto è: {otp}");
+            smtp.EnableSsl = smtpconf.Encryption;
+            smtp.UseDefaultCredentials = !smtpconf.UseAuthentication;
+            if (smtpconf.UseAuthentication)
+                smtp.Credentials = new System.Net.NetworkCredential(smtpconf.User, smtpconf.Password);
+            smtp.Send(smtpconf.Sender, dest, "Codice OTP per Eligere", $"Il codice OTP per procedere al voto è: {otp}");
         }
 
         public static void SendSMS(IConfiguration conf, string otp, string mobile)

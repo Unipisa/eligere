@@ -75,5 +75,8 @@ namespace EligereES.Models.Extensions
         public double SamplingRate { get; set; }
 
         public int EligibleSeats { get; set; }
+
+        // if true the election card will only contains blank vote not null vote option
+        public bool NoNullVote { get; set; }
     }
 }

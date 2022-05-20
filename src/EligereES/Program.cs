@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.EventLog;
 
 namespace EligereES
 {
@@ -27,6 +28,16 @@ namespace EligereES
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+                .ConfigureLogging(loggingBuilder =>
+                    loggingBuilder
+                        .ClearProviders()
+                        .AddEventLog(new EventLogSettings()
+                        {
+                            SourceName = "EligereES",
+                            LogName = "EligereES"
+                        })
+                        .AddEventSourceLogger()
+                )
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
