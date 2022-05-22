@@ -1,0 +1,25 @@
+IIS Installation
+----------------
+
+You can deploy on IIS using WebDeploy (both online or as a package). 
+You should pay attention that the process must have write permission to the directory of the EligereES application:
+
+Data
+
+You should also pay attention that the process must have write permission to the directories of the EligereVS application:
+
+Data
+wwwroot/temp
+
+
+When installing on IIS if the WebDAV module is installed add the following to Web.Config to disable it:
+
+<system.webServer>
+  <modules runAllManagedModulesForAllRequests="false">
+    <remove name="WebDAVModule" />
+  </modules>
+</system.webServer>
+
+More information:
+
+https://www.ryadel.com/en/error-405-methods-not-allowed-asp-net-core-put-delete-requests/
