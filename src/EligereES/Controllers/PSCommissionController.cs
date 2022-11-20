@@ -117,16 +117,9 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff)]
         public async Task<IActionResult> Index()
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
+            var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply PFK should be not null
+            var person = await _context.Person.FindAsync(pfk);
 
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-            
-            var person = await pq.FirstAsync();
             var now = DateTime.Now + TimeSpan.FromMinutes(15);
             var today = DateTime.Today;
             var available = await (from pc in _context.PollingStationCommissioner
@@ -144,16 +137,9 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.RemoteIdentificationOfficer)]
         public async Task<IActionResult> RemoteIdentification()
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
+            var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply this should be non null
+            var person = await _context.Person.FindAsync(pfk);
 
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
             var now = DateTime.Now + TimeSpan.FromMinutes(15);
             var today = DateTime.Today;
             var available = await (from pc in _context.RemoteIdentificationCommissioner
@@ -171,16 +157,8 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Admin, EligereRoles.ElectionOfficer, EligereRoles.PollingStationPresident, EligereRoles.PollingStationStaff, EligereRoles.RemoteIdentificationOfficer)]
         public async Task<IActionResult> Identify(string id, string otpresult)
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
+            var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk is non null
+            var person = await _context.Person.FindAsync(pfk);
 
             var voter = await _context.Person.FirstOrDefaultAsync(p => p.PublicId == id);
             if (voter == null) return NotFound("PublicId not found");
@@ -224,15 +202,9 @@ namespace EligereES.Controllers
         public async Task<IActionResult> PublicIdentificationElection(string remote)
         {
             var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
+            var provider = EligereRoles.Provider(this.User, defaultProvider);
+            var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk is non null
+            var person = await _context.Person.FindAsync(pfk);
 
             var (per, elections, count, commissions) = await GetElectionData(person);
 
@@ -266,7 +238,7 @@ namespace EligereES.Controllers
 
                 recognition.Idtype = "_PublicIdentification";
                 recognition.UserId = userid;
-                recognition.AccountProvider = defaultProvider;
+                recognition.AccountProvider = provider;
                 recognition.Otp = otp;
                 recognition.State = 0;
                 recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
@@ -294,20 +266,14 @@ namespace EligereES.Controllers
         public async Task<IActionResult> Identify(string id, string mobile, string remote, string rectype, string idnum, DateTime? idexp)
         {
             var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
+            var provider = EligereRoles.Provider(this.User, defaultProvider);
+            var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk non null
+            var person = await _context.Person.FindAsync(pfk);
 
             var voter = await _context.Person.FirstOrDefaultAsync(p => p.PublicId == id);
             if (voter == null) return NotFound("PublicId not found");
 
-            var voteruseridq = from u in _context.UserLogin
+            var voteruseridq = from u in _context.UserLogin // Recognition assumes voter is not from SPID
                               where u.PersonFk == voter.Id
                               select u.UserId;
 
@@ -361,7 +327,7 @@ namespace EligereES.Controllers
 
                 recognition.Idtype = rectype;
                 recognition.UserId = userid;
-                recognition.AccountProvider = defaultProvider;
+                recognition.AccountProvider = provider;
                 recognition.Otp = otp;
                 recognition.State = 0;
                 recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
@@ -437,16 +403,8 @@ namespace EligereES.Controllers
         [HttpGet("ElectionControl")]
         public async Task<IActionResult> ElectionControl()
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
+            var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk non null
+            var person = await _context.Person.FindAsync(pfk);
 
             var commissions = from c in _context.PollingStationCommission
                               join pc in _context.PollingStationCommissioner on c.Id equals pc.PollingStationCommissionFk
@@ -478,16 +436,8 @@ namespace EligereES.Controllers
         [HttpGet("CommissionStatus")]
         public async Task<IActionResult> CommissionStatus()
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
+            var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk non null
+            var person = await _context.Person.FindAsync(pfk);
 
             var commissions = from c in _context.PollingStationCommission
                               join pc in _context.PollingStationCommissioner on c.Id equals pc.PollingStationCommissionFk
@@ -531,20 +481,13 @@ namespace EligereES.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ElectionControl(string confstate, string state)
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
+            var pfk = EligereRoles.PersonFK(this.User);
+            if (!pfk.HasValue)
+                throw new Exception("Internal error! Cannot associate PublicID with current user");
 
             var commissions = from c in _context.PollingStationCommission
                               join pc in _context.PollingStationCommissioner on c.Id equals pc.PollingStationCommissionFk
-                              where c.PresidentFk == pc.Id && pc.PersonFk == person.Id
+                              where c.PresidentFk == pc.Id && pc.PersonFk == pfk
                               select c.ElectionFk;
 
             // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed

@@ -139,17 +139,11 @@ namespace EligereES.Controllers
         public async Task<IActionResult> IdentificationLink()
         {
             var userid = EligereRoles.UserId(this.User);
+            var pfk = EligereRoles.PersonFK(this.User);
+            if (!pfk.HasValue)
+                throw new Exception("Internal error! Cannot associate PublicID with current user");
 
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-
-            var person = await pq.FirstAsync();
+            var person = await _context.Person.FindAsync(pfk);
 
             var comm = new List<Guid>();
             var elections = new List<Guid>();
@@ -280,17 +274,8 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.AuthenticatedPerson)]
         public async Task<IActionResult> Index()
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                         join u in _context.UserLogin on p.Id equals u.PersonFk
-                         where u.Provider == defaultProvider && u.UserId == userid
-                         select p;
-
-            if (await pq.CountAsync() != 1) 
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-
-            var person = await pq.FirstAsync();
+            var pfk = EligereRoles.PersonFK(this.User); // If AuthenticatedPerson person should be populated
+            var person = await _context.Person.FindAsync(pfk);
 
             return View((ReadElectionConf(), person, await GetElections(person), isDesktopOS(Request.Headers["User-Agent"])));
         }
@@ -318,16 +303,8 @@ namespace EligereES.Controllers
         [AuthorizeRoles(EligereRoles.Voter)]
         public async Task<IActionResult> GenerateTicket(string otp)
         {
-            var userid = EligereRoles.UserId(this.User);
-            var pq = from p in _context.Person
-                     join u in _context.UserLogin on p.Id equals u.PersonFk
-                     where u.Provider == defaultProvider && u.UserId == userid
-                     select p;
-
-            if (await pq.CountAsync() != 1)
-                throw new Exception("Internal error! Too many persons associated with login " + userid);
-
-            var person = await pq.FirstAsync();
+            var pfk = EligereRoles.PersonFK(this.User); // Voter role implies AuthenticatedPerson and thus pfk should be populated
+            var person = await _context.Person.FindAsync(pfk);
 
             var votes = await GetElections(person);
 

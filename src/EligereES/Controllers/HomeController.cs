@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace EligereES.Controllers
 {
@@ -118,5 +120,26 @@ namespace EligereES.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        [AllowAnonymous]
+        public IActionResult ExternalLogin()
+        {
+            return Challenge(new AuthenticationProperties() { RedirectUri=Url.Action("SpidSignin") },  "Spid");
+        }
+
+        [AllowAnonymous]
+        public async Task<IActionResult> SpidSignin()
+        {
+            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
+        }
+
+        [Route("spid-logout")]
+        public async Task<IActionResult> SpidLogout()
+        {
+            await HttpContext.SignOutAsync();
+            return RedirectToAction("Index", "Home");
+        }
+
     }
 }
