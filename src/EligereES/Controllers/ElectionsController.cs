@@ -48,13 +48,18 @@ namespace EligereES.Controllers
                 group v by v.ElectionFk into vg
                 select new { ElectionFk = vg.Key, Count = vg.Count() }, g => g.ElectionFk, g => g.Count);
             var ballots =
-                await ToDict(from b in _context.BallotName
+                await ToDict(from b in _context.BallotName where !b.IsCandidate.HasValue || b.IsCandidate==true
                 group b by b.ElectionFk into bg
                 select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
+            var ballotParties =
+                await ToDict(from b in _context.BallotName
+                             where b.IsCandidate == false
+                             group b by b.ElectionFk into bg
+                             select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
             var elections = await _context.Election.ToListAsync();
             
 
-            return View((elections, commissions, voters, ballots));
+            return View((elections, commissions, voters, ballots, ballotParties));
         }
 
         public async Task<IActionResult> Details(Guid? id)
@@ -255,7 +260,7 @@ namespace EligereES.Controllers
                     break;
             }
             int pageSize = 25;
-            return View(await PaginatedList<Models.DB.Person>.CreateAsync(people.AsNoTracking(), pageNumber ?? 1, pageSize));
+            return View((await PaginatedList<Models.DB.Person>.CreateAsync(people.AsNoTracking(), pageNumber ?? 1, pageSize), await _context.Election.FindAsync(id)));
         }
 
         [HttpPost("VotersBulkUpload/{id}")]
@@ -266,62 +271,67 @@ namespace EligereES.Controllers
             {
                 return NotFound(); // FixMe should not be not found
             }
-            var result = new List<(Person person, (string firstName, string lastName, string publicId, DateTime birthDate, string birthPlace, string role)? data, string reason)>();
+            var result = new List<(Person person, CsvPerson data, string reason)>();
             var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentUICulture)
             {
                 Delimiter = ";"
             };
+            var lines = new List<CsvPerson>();
             using (var csv = new CsvReader(new System.IO.StreamReader(file[0].OpenReadStream()), conf))
             {
-                csv.Read();
-                csv.ReadHeader();
-                while (await csv.ReadAsync())
-                {
-                    var firstName = csv.GetField<string>(0).Trim(' ', '\t');
-                    var lastName = csv.GetField<string>(1).Trim(' ', '\t');
-                    var companyId = csv.GetField<string>(2).Trim(' ', '\t');
-                    var publicId = csv.GetField<string>(3).Trim(' ', '\t').ToUpperInvariant();
-                    var birthPlace = csv.GetField<string>(4).Trim(' ', '\t');
-                    var birthDate = csv.GetField<DateTime>(5);
-                    var role = csv.GetField<string>(6).Trim(' ', '\t');
+                lines = CsvUtils.ParsePeople(csv);
 
-                    var q = from p in _context.Person join v in _context.Voter on p.Id equals v.PersonFk where v.ElectionFk == id select p;
-                    // For the moment is a weak check before insert
-                    if (await q.CountAsync(p => p.PublicId == publicId) > 0)
+                var dups = from l in lines group l by l.PublicId into grp where grp.Count() > 1 select grp;
+
+                foreach (var d in dups)
+                {
+                    foreach (var dl in d.Skip(1))
                     {
-                        result.Add(
-                            (await _context.Person.FirstAsync(p => p.PublicId == publicId),
-                            (firstName, lastName, publicId, birthDate, birthPlace, role),
-                            "Person already present"));
-                        // Add secure log entry here!
+                        result.Add((null, dl, "Duplicate entry"));
+                        lines.Remove(dl);
                     }
-                    else
+                }
+
+                foreach (var l in lines.Where(l => l.Status != null))
+                {
+                    result.Add((null, l, l.Status));
+                }
+
+                var q = new List<Person>();
+                var pids = lines.Select(l => l.PublicId).ToArray();
+                for (var i = 0; i < pids.Length; i += 1000)
+                {
+                    var toadd = pids.Skip(i).Take(Math.Min(1000, pids.Length - i)).ToArray();
+                    q.AddRange(from p in _context.Person where toadd.Contains(p.PublicId) select p);
+                }
+                var existingpids = q.Select(p => p.PublicId);
+
+                foreach (var a in (from l in lines where l.Status == null && !existingpids.Contains(l.PublicId) select l))
+                {
+                    result.Add((null, a, "Person missing")); 
+                }
+
+                var voters = (from v in _context.Voter where v.ElectionFk==id select v.PersonFk).ToArray();
+
+                foreach (var p in (from pp in q where voters.Contains(pp.Id) select pp))
+                {
+                    result.Add((p, null, "Person already present"));
+                }
+
+                foreach (var p in (from pp in q where !voters.Contains(pp.Id) select pp))
+                {
+                    var toadd = new Voter()
                     {
-                        var p = await _context.Person.FirstOrDefaultAsync(per => per.PublicId == publicId);
-                        if (p == null)
-                        {
-                            result.Add(
-                                (await _context.Person.FirstAsync(p => p.PublicId == publicId),
-                                (firstName, lastName, publicId, birthDate, birthPlace, role),
-                                "Person missing from database"));
-                            // Add secure log entry here!
-                        }
-                        else
-                        {
-                            var toadd = new Voter()
-                            {
-                                Id = Guid.NewGuid(),
-                                ElectionFk = id,
-                                PersonFk = p.Id
-                            };
-                            _context.Voter.Add(toadd);
-                            result.Add((p, null, null));
-                            // Add secure log entry here!
-                        }
-                    }
+                        Id = Guid.NewGuid(),
+                        ElectionFk = id,
+                        PersonFk = p.Id
+                    };
+                    _context.Voter.Add(toadd);
+                    result.Add((p, null, null));
                 }
                 await _context.SaveChangesAsync();
             }
+
             return View(result);
         }
 
@@ -345,23 +355,23 @@ namespace EligereES.Controllers
 
             var people = from p in _context.Person 
                          join c in _context.EligibleCandidate on p.Id equals c.PersonFk 
-                         join bn in _context.BallotName on c.BallotNameFk equals bn.Id 
-                         where bn.ElectionFk == id select p;
+                         join bn in _context.BallotName on c.BallotNameFk equals bn.Id
+                         where bn.ElectionFk == id select new EligibleCandidateBallotNameViewModel { Person = p, BallotName = bn };
             if (!String.IsNullOrEmpty(searchString))
             {
-                people = people.Where(p => p.LastName.Contains(searchString) || p.FirstName.Contains(searchString) || p.PublicId.Contains(searchString));
+                people = people.Where(p => p.Person.LastName.Contains(searchString) || p.Person.FirstName.Contains(searchString) || p.Person.PublicId.Contains(searchString));
             }
             switch (sortOrder)
             {
                 case "lastName_desc":
-                    people = people.OrderByDescending(p => p.LastName);
+                    people = people.OrderByDescending(p => p.Person.LastName);
                     break;
                 default:
-                    people = people.OrderBy(p => p.LastName);
+                    people = people.OrderBy(p => p.Person.LastName);
                     break;
             }
             int pageSize = 25;
-            return View(await PaginatedList<Models.DB.Person>.CreateAsync(people.AsNoTracking(), pageNumber ?? 1, pageSize));
+            return View((await PaginatedList<EligibleCandidateBallotNameViewModel>.CreateAsync(people.AsNoTracking(), pageNumber ?? 1, pageSize), await _context.Election.FindAsync(id), _context));
         }
 
         [HttpPost("CandidatesBulkUpload/{id}")]
@@ -372,69 +382,67 @@ namespace EligereES.Controllers
             {
                 return NotFound(); // FixMe should not be not found
             }
-            var result = new List<(Person person, (string firstName, string lastName, string publicId)? data, string reason)>();
+            var result = new List<(Person person, CsvPerson data, string reason)>();
             var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentUICulture)
             {
                 Delimiter = ";"
             };
+            var lines = new List<CsvPerson>();
             using (var csv = new CsvReader(new System.IO.StreamReader(file[0].OpenReadStream()), conf))
             {
-                csv.Read();
-                csv.ReadHeader();
-                while (await csv.ReadAsync())
-                {
-                    var firstName = csv.GetField<string>(0);
-                    var lastName = csv.GetField<string>(1);
-                    var companyId = csv.GetField<string>(2);
-                    var publicId = csv.GetField<string>(3);
+                lines = CsvUtils.ParsePeople(csv);
 
-                    var q = from p in _context.Person 
-                            join c in _context.EligibleCandidate on p.Id equals c.PersonFk 
-                            join bn in _context.BallotName on c.BallotNameFk equals bn.Id
-                            where bn.ElectionFk == id select p;
-                    // For the moment is a weak check before insert
-                    if (await q.CountAsync(p => p.PublicId == publicId) > 0)
+                var dups = from l in lines group l by l.PublicId into grp where grp.Count() > 1 select grp;
+
+                foreach (var d in dups)
+                {
+                    foreach (var dl in d.Skip(1))
                     {
-                        result.Add(
-                            (await _context.Person.FirstAsync(p => p.PublicId == publicId),
-                            (firstName, lastName, publicId),
-                            "Person already present"));
-                        // Add secure log entry here!
+                        result.Add((null, dl, "Duplicate entry"));
+                        lines.Remove(dl);
                     }
-                    else
+                }
+
+                foreach (var l in lines.Where(l => l.Status != null))
+                {
+                    result.Add((null, l, l.Status));
+                }
+
+                var q = new List<Person>();
+                var pids = lines.Select(l => l.PublicId).ToArray();
+                for (var i = 0; i < pids.Length; i += 1000)
+                {
+                    var toadd = pids.Skip(i).Take(Math.Min(1000, pids.Length - i)).ToArray();
+                    q.AddRange(from p in _context.Person where toadd.Contains(p.PublicId) select p);
+                }
+                var existingpids = q.Select(p => p.PublicId);
+
+                foreach (var a in (from l in lines where l.Status == null && !existingpids.Contains(l.PublicId) select l))
+                {
+                    result.Add((null, a, "Person missing"));
+                }
+
+                foreach (var p in q)
+                {
+                    var ballotname = new BallotName()
                     {
-                        var p = await _context.Person.FirstOrDefaultAsync(per => per.PublicId == publicId);
-                        if (p == null)
-                        {
-                            result.Add(
-                                (await _context.Person.FirstAsync(p => p.PublicId == publicId),
-                                (firstName, lastName, publicId),
-                                "Person missing from database"));
-                            // Add secure log entry here!
-                        }
-                        else
-                        {
-                            var ballotname = new BallotName()
-                            {
-                                Id = Guid.NewGuid(),
-                                BallotNameLabel = $"{p.LastName} {p.FirstName}",
-                                ElectionFk = id
-                            };
-                            var toadd = new EligibleCandidate()
-                            {
-                                Id = Guid.NewGuid(),
-                                BallotNameFk = ballotname.Id,
-                                PersonFk = p.Id
-                            };
-                            _context.BallotName.Add(ballotname);
-                            _context.EligibleCandidate.Add(toadd);
-                            result.Add((p, null, null));
-                            // Add secure log entry here!
-                        }
-                    }
+                        Id = Guid.NewGuid(),
+                        BallotNameLabel = $"{p.LastName} {p.FirstName}",
+                        ElectionFk = id
+                    };
+                    var toadd = new EligibleCandidate()
+                    {
+                        Id = Guid.NewGuid(),
+                        BallotNameFk = ballotname.Id,
+                        PersonFk = p.Id
+                    };
+                    _context.BallotName.Add(ballotname);
+                    _context.EligibleCandidate.Add(toadd);
+                    result.Add((p, null, null));
                 }
                 await _context.SaveChangesAsync();
             }
+
             return View(result);
         }
 

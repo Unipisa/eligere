@@ -156,7 +156,7 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (var c in ps.PollingStationCommissioner)
+                @foreach (var c in ps.PollingStationCommissioner.OrderBy(c => c.PersonFkNavigation.LastName))
                 {
                     <tr>
                         <td>

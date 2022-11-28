@@ -308,12 +308,39 @@ namespace EligereES.Controllers
 
             var votes = await GetElections(person);
 
-            var availableVotes = votes.Where(v => !v.Item4 && !v.Item5.HasValue).Select(v => v.Item1.Id).ToList();
+            var availableVotes = votes.Where(v => (v.Item2.Active || (EligereRoles.Provider(this.User,defaultProvider) == "Spid" && v.Item2.PollStartDate < DateTime.Now && v.Item2.PollEndDate > DateTime.Now)) && !v.Item4 && !v.Item5.HasValue).Select(v => v.Item1.Id).ToList();
 
             if (availableVotes.Count == 0)
                 return Forbid("No ballot to cast");
 
             var now = DateTime.Now;
+
+            // If strong Authentication recognition is performed automatically
+            if (EligereRoles.Provider(this.User, defaultProvider) == "Spid" && votes.Where(v => ElectionConfiguration.FromJson(v.Item2.Configuration).IdentificationType == IdentificationType.IndividualAndSPID).Any())
+            {
+                var recognitions = await (from v in _context.Voter join r in _context.Recognition on v.RecognitionFk equals r.Id where availableVotes.Contains(v.Id) && !v.Vote.HasValue select r).ToListAsync();
+                var ckrecognition = await (from v in _context.Voter where availableVotes.Contains(v.Id) && !v.Vote.HasValue && !v.RecognitionFk.HasValue select v).ToArrayAsync();
+                foreach (var v in ckrecognition)
+                {
+                    var recognition = new Recognition()
+                    {
+                        Id = Guid.NewGuid(),
+                    };
+                    v.RecognitionFk = recognition.Id;
+                    _context.Recognition.Add(recognition);
+                    recognitions.Add(recognition);
+                }
+                foreach (var recognition in recognitions)
+                {
+                    recognition.Idtype = "SpidAuth";
+                    recognition.UserId = EligereRoles.UserId(this.User);
+                    recognition.AccountProvider = "Spid";
+                    recognition.Otp = otp;
+                    recognition.State = 0;
+                    recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                }
+                await _context.SaveChangesAsync();
+            }
 
             var ckvotes = await (from v in _context.Voter
                                  join r in _context.Recognition on v.RecognitionFk equals r.Id

@@ -13,6 +13,8 @@ namespace EligereES.Models.DB
         public Guid Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
+        public string LogoUri { get; set; }
+        public Guid? ElectionFk { get; set; }
 
         public virtual ICollection<BallotName> BallotName { get; set; }
     }

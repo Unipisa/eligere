@@ -1,4 +1,4 @@
-﻿@model ValueTuple<List<EligereES.Models.DB.Election>, Dictionary<Guid, int>, Dictionary<Guid, int>, Dictionary<Guid, int>>
+﻿@model ValueTuple<List<EligereES.Models.DB.Election>, Dictionary<Guid, int>, Dictionary<Guid, int>, Dictionary<Guid, int>, Dictionary<Guid, int>>
 
 @{
     ViewData["Title"] = "Elections";
@@ -6,6 +6,7 @@
     var commissions = Model.Item2;
     var voters = Model.Item3;
     var ballotNames = Model.Item4;
+    var ballotParties = Model.Item5;
 }
 
 <style>
@@ -76,7 +77,7 @@
                 </td>
                 <td>
                     <a asp-action="Candidates" asp-route-id="@item.Id">
-                        @(ballotNames.ContainsKey(item.Id) ? ballotNames[item.Id] : 0)
+                        @(ballotNames.ContainsKey(item.Id) ? ballotNames[item.Id] : 0) @(ballotParties.ContainsKey(item.Id) ? "[" + ballotParties[item.Id] + "]" : "")
                     </a>
                 </td>
                 <td>

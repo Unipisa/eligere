@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using EligereES.Models;
 using EligereES.Models.DB;
 using Microsoft.AspNetCore.Http;
 using CsvHelper;
@@ -194,47 +195,64 @@ namespace EligereES.Controllers
             {
                 return NotFound(); // FixMe should not be not found
             }
-            var result = new List<(Person person, (string firstName, string lastName, string publicId, DateTime birthDate, string birthPlace, string role)? data, string reason)>();
+            var result = new List<(Person person, CsvPerson data, string reason)>();
             var conf = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.CurrentUICulture) { 
                 Delimiter = ";"
             };
+            var lines = new List<CsvPerson>();
             using (var csv = new CsvReader(new System.IO.StreamReader(file[0].OpenReadStream()), conf))
             {
-                csv.Read();
-                csv.ReadHeader();
-                while (await csv.ReadAsync())
-                {
-                    var firstName = csv.GetField<string>(0);
-                    var lastName = csv.GetField<string>(1);
-                    var companyId = csv.GetField<string>(2);
-                    var publicId = csv.GetField<string>(3);
-                    var birthPlace = csv.GetField<string>(4);
-                    var birthDate = csv.GetField<DateTime>(5);
-                    var role = csv.GetField<string>(6);
+                lines = CsvUtils.ParsePeople(csv);
 
-                    // For the moment is a weak check before insert
-                    if (await _context.Person.CountAsync(p => p.PublicId == publicId) > 0)
+                var dups = from l in lines group l by l.PublicId into grp where grp.Count() > 1 select grp;
+
+                foreach (var d in dups)
+                {
+                    foreach (var dl in d.Skip(1))
                     {
-                        result.Add(
-                            (await _context.Person.FirstAsync(p => p.PublicId == publicId),
-                            (firstName, lastName, publicId, birthDate, birthPlace, role), 
-                            "Person already exists"));
-                        // Add secure log entry here!
-                    } else {
-                        var toadd = new Person() {
-                            Id = Guid.NewGuid(),
-                            FirstName = firstName,
-                            LastName = lastName, 
-                            PublicId = publicId, 
-                            BirthDate = birthDate, 
-                            BirthPlace = birthPlace, 
-                            Attributes = (new PersonAttributes() { Role = role, CompanyId = companyId }).ToJson()
-                        };
-                        _context.Person.Add(toadd);
-                        result.Add((toadd, null, null));
-                        // Add secure log entry here!
+                        result.Add((null, dl, "Duplicate entry"));
+                        lines.Remove(dl);
                     }
                 }
+
+                foreach (var l in lines.Where(l=> l.Status != null))
+                {
+                    result.Add((null, l, l.Status));
+                }
+
+                var q = new List<Person>();
+                var pids = lines.Select(l => l.PublicId).ToArray();
+                for (var i = 0; i < pids.Length; i += 1000)
+                {
+                    var toadd = pids.Skip(i).Take(Math.Min(1000, pids.Length - i)).ToArray();
+                    q.AddRange(from p in _context.Person where toadd.Contains(p.PublicId) select p);
+                }
+                var existingpids = q.Select(p => p.PublicId);
+
+                foreach (var a in (from l in lines where l.Status == null && !existingpids.Contains(l.PublicId) select l))
+                {
+                    var toadd = new Person()
+                    {
+                        Id = Guid.NewGuid(),
+                        FirstName = a.FirstName,
+                        LastName = a.LastName,
+                        PublicId = a.PublicId,
+                        BirthDate = a.BirthDate,
+                        BirthPlace = a.BirthPlace,
+                        Attributes = (new PersonAttributes() { Role = a.Role, CompanyId = a.CompanyId }).ToJson()
+                    };
+                    _context.Person.Add(toadd);
+                    result.Add((toadd, null, null));
+                }
+
+                foreach (var a in (from l in lines where l.Status == null && existingpids.Contains(l.PublicId) select l))
+                {
+                        result.Add(
+                            (q.Where(p => p.PublicId == a.PublicId).First(),
+                            a,
+                            "Person already exists"));
+                }
+
                 await _context.SaveChangesAsync();
             }
             return View(result);

@@ -44,67 +44,93 @@
 
 @if (availableVotes.Where(v => !v.Item4).Count() > 0)
 {
-@if (availableVotes.Where(v => !v.Item5.HasValue && v.Item2.Active && !v.Item4).Count() > 0)
+    var now = DateTime.Now;
+    if (availableVotes.Where(v => now > v.Item2.PollStartDate && now <= v.Item2.PollEndDate && !v.Item5.HasValue && !v.Item4).Count() > 0)
     {
-<script type="text/javascript">
-    function vote() {
-        $.ajax({
-            url: '@(Url.Content("~"))/Voter/GenerateTicket/' + $("#otpid").val().toUpperCase(),
-            method: 'GET'
-        }).done((v) => {
-            $('#ticketdata').val(v);
-            $('#vsgate').submit();
-            $('#govote').modal('hide')
-        }).fail((v) => {
-            $('#govote').modal('hide')
-            alert('OTP inserita non valida');
-        });
-    }
-</script>
-<form method="post" id="vsgate" action="@conf.VotingSystemTicketAPI">
-    <input type="hidden" id="ticketdata" name="tickets" />
-</form>
-<div class="modal" role="dialog" id="govote">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Accesso al voto</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@(Url.Content("~"))/Voter/IdentificationLink" style="text-decoration: underline" target="_blank">per procedere al riconoscimento</a><br /> per l'identificazione e la generazione dell'OTP, 
-@*                    @if (isDesktop) {
+        if (EligereRoles.Provider(this.User, null) == "Spid" && availableVotes.Where(v => ElectionConfiguration.FromJson(v.Item2.Configuration).ActiveForStronglyAuthenticatedUsers).Any())
+        {
+                                <script type="text/javascript">
+                            function vote() {
+                                $.ajax({
+                                    url: '@(Url.Content("~"))/Voter/GenerateTicket/@(OTPSender.GenerateOTP().ToUpperInvariant())',
+                                    method: 'GET'
+                                }).done((v) => {
+                                    $('#ticketdata').val(v);
+                                    $('#vsgate').submit();
+                                }).fail((v) => {
+                                    alert('Errore interno');
+                                });
+                            }
+                            </script>
+                        <form method="post" id="vsgate" action="@conf.VotingSystemTicketAPI">
+                            <input type="hidden" id="ticketdata" name="tickets" />
+                        </form>
+                                 <div class="text-center">
+                            <button type="button" class="btn btn-primary btn-lg w-25" onclick="vote()">Vota</button>
+                        </div>               
+        }
+        else if (availableVotes.Where(v => v.Item2.Active).Count() > 0)
+        {
+                                <script type="text/javascript">
+                            function vote() {
+                                $.ajax({
+                                    url: '@(Url.Content("~"))/Voter/GenerateTicket/' + $("#otpid").val().toUpperCase(),
+                                    method: 'GET'
+                                }).done((v) => {
+                                    $('#ticketdata').val(v);
+                                    $('#vsgate').submit();
+                                    $('#govote').modal('hide')
+                                }).fail((v) => {
+                                    $('#govote').modal('hide')
+                                    alert('OTP inserita non valida');
+                                });
+                            }
+                        </script>
+                        <form method="post" id="vsgate" action="@conf.VotingSystemTicketAPI">
+                            <input type="hidden" id="ticketdata" name="tickets" />
+                        </form>
+                        <div class="modal" role="dialog" id="govote">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Accesso al voto</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body text-center">
+                                        <p><em>Se si vota da remoto cliccare sul link seguente <br /> <a href="@(Url.Content("~"))/Voter/IdentificationLink" style="text-decoration: underline" target="_blank">per procedere al riconoscimento</a><br /> per l'identificazione e la generazione dell'OTP, 
+                                    @*                    @if (isDesktop) {
                         <b>il sistema avvier&agrave; una chiamata ad uno dei commissari disponibili</b>
                     } else {
                         <b>il sistema aprir&agrave; la chat Teams di un commissario e si deve avviare la chiamata per avviare il riconoscimento</b>
                     }.</em></p>
 *@                <p>Inserire il codice ricevuto in assemblea e premere il bottone <em>Procedi al voto</em></p>
-                <hr />
-                <div class="input-group mb-3 w-75 offset-2">
-                    <input type="text" class="form-control" autocomplete="off" placeholder="Codice accesso" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="button" onclick="vote()">Procedi al voto</button>
-                    </div>
-                </div>
-@*                <p>Inserire il codice OTP ricevuto via Email all'indirizzo @EligereRoles.UserId(this.User).</p>
+                                        <hr />
+                                        <div class="input-group mb-3 w-75 offset-2">
+                                            <input type="text" class="form-control" autocomplete="off" placeholder="Codice accesso" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="vote()">Procedi al voto</button>
+                                            </div>
+                                        </div>
+                                    @*                <p>Inserire il codice OTP ricevuto via Email all'indirizzo @EligereRoles.UserId(this.User).</p>
                 <p><em>In caso di mancata ricezione del messaggio di posta elettronica contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
 *@                @*<p>Inserire il codice OTP ricevuto via SMS.</p>
                 <p><em>In caso di mancata ricezione dell'SMS contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>*@
-                <!--
-                <p><em>In caso di necessità contattare la <a href="https://call.unipi.it/giuntacrui" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
-    -->
-            </div>
-            <div class="modal-footer">
-                &nbsp;
-            </div>
-        </div>
-    </div>
-</div>
-<div class="text-center">
-    <button type="button" class="btn btn-primary btn-lg w-25" onclick="javascript:$('#govote').modal('show')">Vota</button>
-</div>
+                                        <!--
+                                        <p><em>In caso di necessità contattare la <a href="https://call.unipi.it/giuntacrui" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
+                            -->
+                                    </div>
+                                    <div class="modal-footer">
+                                        &nbsp;
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <button type="button" class="btn btn-primary btn-lg w-25" onclick="javascript:$('#govote').modal('show')">Vota</button>
+                        </div>            
+        }
     }
 <h3>Elezioni future</h3>
 <table class="table table-hover">

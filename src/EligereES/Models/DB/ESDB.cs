@@ -214,6 +214,8 @@ namespace EligereES.Models.DB
             {
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.ElectionFk).HasColumnName("Election_FK");
+
                 entity.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(512);

@@ -7,13 +7,21 @@
             <span class="navbar-text text-dark">Hello @EligereRoles.UserId(User)</span>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
+            @if (EligereRoles.Provider(this.User, null) == "Spid")
+            {
+                <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Sign out</a>                
+            } else
+            {
+                <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>                
+            }
         </li>
 }
 else
 {
         <li class="nav-item">
+            <!--
             <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Sign in</a>
+            -->
         </li>
 }
 </ul>

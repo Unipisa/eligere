@@ -26,7 +26,8 @@ namespace EligereES.Models.Extensions
     {
         Individual = 0,
         Public = 1,
-        Sampling = 2
+        Sampling = 2,
+        IndividualAndSPID = 3
     }
 
     // This class is used to define configuration of a specific election (i.e. Quorum, ecc)
@@ -78,5 +79,7 @@ namespace EligereES.Models.Extensions
 
         // if true the election card will only contains blank vote not null vote option
         public bool NoNullVote { get; set; }
+
+        public bool ActiveForStronglyAuthenticatedUsers { get; set; }
     }
 }

@@ -124,14 +124,7 @@ namespace EligereES.Controllers
         [AllowAnonymous]
         public IActionResult ExternalLogin()
         {
-            return Challenge(new AuthenticationProperties() { RedirectUri=Url.Action("SpidSignin") },  "Spid");
-        }
-
-        [AllowAnonymous]
-        public async Task<IActionResult> SpidSignin()
-        {
-            var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Index", "Home");
+            return Challenge(new AuthenticationProperties() { RedirectUri=Url.Action("Index", "Home") },  "Spid");
         }
 
         [Route("spid-logout")]

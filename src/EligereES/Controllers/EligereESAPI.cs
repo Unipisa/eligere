@@ -354,13 +354,16 @@ namespace EligereES.Controllers
 
             if (parties.Count > 0)
             {
-                var partydescs = parties.ConvertAll(p => new ElectionGuard.PartyDescription() { 
+                var partydescs = parties.ConvertAll(p => new ElectionGuard.PartyDescription()
+                {
                     object_id = p.Id.ToString(),
-                    name = new ElectionGuard.ListOfLocalizedText() { 
+                    name = new ElectionGuard.ListOfLocalizedText()
+                    {
                         text = new ElectionGuard.LocalizedText[] {
                             new ElectionGuard.LocalizedText() { language = "it", value = p.Name }
                         }
-                    }
+                    },
+                    logo_uri = p.LogoUri
                 });
                 electionDescription.parties = partydescs.ToArray();
             }

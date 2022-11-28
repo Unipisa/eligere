@@ -1,4 +1,4 @@
-﻿@model IEnumerable<(EligereES.Models.DB.Person person, (string firstName, string lastName, string publicId, DateTime birthDate, string birthPlace, string role)? data, string reason)>
+﻿@model IEnumerable<(EligereES.Models.DB.Person person, CsvPerson data, string reason)>
 
 <table class="table">
     <thead>
@@ -34,13 +34,14 @@
                 }
                     </td>
             <td>
-                @Html.DisplayFor(modelItem => item.person.FirstName)
+                @(item.person == null ? item.data.FirstName : Html.DisplayFor(modelItem => item.person.FirstName))
+                
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.person.LastName)
+                @(item.person == null ? item.data.LastName : Html.DisplayFor(modelItem => item.person.LastName))
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.person.PublicId)
+                @(item.person == null ? item.data.PublicId : Html.DisplayFor(modelItem => item.person.PublicId))
             </td>
             <td>
                 @if (item.reason != null)

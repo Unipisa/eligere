@@ -4,16 +4,24 @@
 @if (User.Identity.IsAuthenticated)
 {
         <li class="nav-item">
-            <span class="navbar-text text-dark">@EligereRoles.UserId(User)</span>
+            <span class="navbar-text text-dark">@EligereRoles.UserDisplayName(User) (@(EligereRoles.UserId(User))@(EligereRoles.Provider(this.User, null) == "Spid" ? " SPID" : ""))</span>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
+            @if (EligereRoles.Provider(this.User, null) == "Spid")
+            {
+                <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>                
+            } else
+            {
+                <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>                
+            }
         </li>
 }
 else
 {
         <li class="nav-item">
+            <!--
             <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accedi</a>
+            -->
         </li>
 }
 </ul>

@@ -1,10 +1,10 @@
-﻿@model PaginatedList<EligereES.Models.DB.Person>
+﻿@model (PaginatedList<EligereES.Models.DB.Person> list, EligereES.Models.DB.Election election)
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Voters for " + this.Model.election.Name;
 }
 
-<h1>Index</h1>
+<h1>Voters for @this.Model.election.Name</h1>
 
 <p>
     <a asp-action="Create">Create New</a> | <a href="javascript:$('#bulkform').modal('show')">Bulk upload</a>
@@ -54,22 +54,22 @@
     <thead>
         <tr>
             <th>
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["LastNameSortParam"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">@Html.DisplayNameFor(model => model.FirstOrDefault().LastName)</a>
+                <a asp-action="Index" asp-route-sortOrder="@ViewData["LastNameSortParam"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">@Html.DisplayNameFor(model => model.list.FirstOrDefault().LastName)</a>
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.FirstOrDefault().FirstName)
+                @Html.DisplayNameFor(model => model.list.FirstOrDefault().FirstName)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.FirstOrDefault().PublicId)
+                @Html.DisplayNameFor(model => model.list.FirstOrDefault().PublicId)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.FirstOrDefault().Attributes)
+                @Html.DisplayNameFor(model => model.list.FirstOrDefault().Attributes)
             </th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model) {
+        @foreach (var item in Model.list) {
         <tr>
             <td>
                 @Html.DisplayFor(modelItem => item.LastName)
@@ -92,14 +92,14 @@
 </table>
 
 @{
-    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
-    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+    var prevDisabled = !Model.list.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.list.HasNextPage ? "disabled" : "";
 }
 
 <a asp-action="Voters"
    asp-route-id="@ViewData["electionId"]"
    asp-route-sortOrder="@ViewData["CurrentSort"]"
-   asp-route-pageNumber="@(Model.PageIndex - 1)"
+   asp-route-pageNumber="@(Model.list.PageIndex - 1)"
    asp-route-currentFilter="@ViewData["CurrentFilter"]"
    class="btn btn-default @prevDisabled">
     Previous
@@ -107,7 +107,7 @@
 <a asp-action="Voters"
    asp-route-id="@ViewData["electionId"]"
    asp-route-sortOrder="@ViewData["CurrentSort"]"
-   asp-route-pageNumber="@(Model.PageIndex + 1)"
+   asp-route-pageNumber="@(Model.list.PageIndex + 1)"
    asp-route-currentFilter="@ViewData["CurrentFilter"]"
    class="btn btn-default @nextDisabled">
     Next
