@@ -44,11 +44,12 @@
     </div>
 </div>
 
-<div class="text-center offset-2 col-8">
+<div class="text-center offset-1 col-10">
+    <h4 class="display-4" style="font-size:1rem;">Hai <span id="ncards" style="text-emphasis"></span> schede da compilare</h4>
     <h3 class="display-4" style="font-size: 1.4rem;"><i>scheda elettorale</i><br /><span id="electionName"></span></h3>
     <div class="container">
         <form id="voteData">
-            <div class="form-group text-left offset-2 col-8">
+            <div class="form-group text-left col-12">
                 <input type="hidden" name="tickets" value="@tickets" />
                 <input type="hidden" name="election" id="election" />
                 <div class="custom-control custom-radio">
@@ -264,7 +265,7 @@
                 var candidate = candidates[selections[i].candidate_id];
                 var ballotname = candidate.ballot_name.text[0].value;
                 if (candidate.object_id[0] != '*') {
-                    parties.push({ "id": candidate.object_id, "party_id": candidate.ballot_name.party_id, "text": candidate.ballot_name.text[0].value, "candidates": new Array() });
+                    parties.push({ "id": candidate.object_id, "party_id": candidate.ballot_name.party_id, "text": candidate.ballot_name.text[0].value, "logo_uri": cardData.ElectionDescription.parties.find((e) => e.object_id == candidate.ballot_name.party_id).logo_uri, "candidates": new Array() });
                 }
             }
 
@@ -281,11 +282,13 @@
             for (var i = 0; i < parties.length; i++) {
                 count++;
                 var partyname = parties[i].text;
+                var bg = parties[i].logo_uri ? "background-image: url('"+parties[i].logo_uri+"'); background-size:64px 64px;" : "";
                 cont +=
-                    '<div class="custom-control custom-radio">' +
+                    '<div class="custom-control custom-radio" style="margin-top: 16px;">' +
+                    '<span style="display: block; width: 64px; height: 64px; position: relative; left: -24px;'+bg+'"> </span>' +
                 '<input type="radio" id="party' + count + '" name="party" value="' + escapeAttributeValue(partyname) + '" class="custom-control-input" onchange="$(\'.partylist-data >> input\').prop(\'checked\', false); $(\'#candidateSelection >> input\').prop(\'checked\', false); $(\'.partylist-data\').hide(); $(\'#partylist' + count + '\').show(); $(\'#party' + count + '\').prop(\'checked\', true); " />' +
                 '<label for="party' + count + '" class="custom-control-label" >' + partyname + '</label>' +
-                    '<div id="partylist' + count + '" class="partylist-data" style="display: none">';
+                    '<div id="partylist' + count + '" class="partylist-data" style="display: none; padding-left: 8px;">';
 
                 for (var j = 0; j < parties[i].candidates.length; j++) {
                     var ballotname = parties[i].candidates[j];
@@ -406,6 +409,7 @@
             document.location = '@(Url.Content("~"))/Vote/VoteConclusion';
             return;
         }
+        $("#ncards").text(cardData.AvailableTickets.length);
         var ticket = cardData.AvailableTickets[0];
         var election = findElection(ticket.ElectionId);
         $('#numpref').html(election.votes_allowed == 1 ? 'Preferenza' : election.votes_allowed + ' preferenze');
