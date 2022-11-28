@@ -172,7 +172,8 @@ namespace EligereVS.Controllers
         {
             var d = new DirectoryInfo(Path.Combine(contentRootPath, "Data/EVSKey"));
             if (!d.Exists) throw new Exception("Missing EVSKey directory");
-            if (d.GetFiles().Length != 1) throw new Exception("Too many files in EVSKey directory");
+            // Check disarmed until key generation handling is under control. Security is ok since keyid is not compromised by this
+            //if (d.GetFiles().Length != 1) throw new Exception("Too many files in EVSKey directory");
             var content = System.IO.File.ReadAllText(d.GetFiles()[0].FullName);
 
             var protector = dataProtector.CreateProtector("GuardianKeys");
@@ -191,7 +192,8 @@ namespace EligereVS.Controllers
         {
             var d = new DirectoryInfo(Path.Combine(contentRootPath, "Data/EVSKey"));
             if (!d.Exists) throw new Exception("Missing EVSKey directory");
-            if (d.GetFiles().Length != 1) throw new Exception("Too many files in EVSKey directory");
+            // Check disarmed until key generation handling is under control. Security is ok since keyid is not compromised by this
+            //if (d.GetFiles().Length != 1) throw new Exception("Too many files in EVSKey directory");
             var content = System.IO.File.ReadAllText(d.GetFiles()[0].FullName);
             var stride = content.Length / 5;
             var protector = dataProtector.CreateProtector("GuardianKeys");
