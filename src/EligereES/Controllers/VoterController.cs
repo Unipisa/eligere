@@ -31,16 +31,22 @@ namespace EligereES.Controllers
         private IConfiguration Configuration;
         private PersistentCommissionManager _manager;
         private string defaultProvider;
+        private int _otpLifetime = EligereESAPI.DefaultOTPLifetime;
+        private int _ticketLifetime = EligereESAPI.DefaultTicketLifetime;
+        private int _voteIdentificationSpan = EligereESAPI.DefaultVoteIdentificationSpan;
 
         public VoterController(ESDB ctxt, IWebHostEnvironment env, PersistentCommissionManager manager, IDataProtectionProvider provider, IConfiguration configuration)
         {
+            _voteIdentificationSpan = configuration.GetValue(typeof(int), "VoteIdentificationSpan") as int? ?? EligereESAPI.DefaultVoteIdentificationSpan;
             _context = ctxt;
             contentRootPath = env.ContentRootPath;
             _manager = manager;
-            _manager.Expiration = TimeSpan.FromMinutes(3); // Should be added to configuration
+            _manager.Expiration = TimeSpan.FromMinutes(_voteIdentificationSpan); // Should be added to configuration
             dataprotection = provider;
             Configuration = configuration;
             defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
+            _otpLifetime = configuration.GetValue(typeof(int), "OTPLifetime") as int? ?? EligereESAPI.DefaultOTPLifetime;
+            _ticketLifetime = configuration.GetValue(typeof(int), "TicketLifetime") as int? ?? EligereESAPI.DefaultTicketLifetime;
         }
 
         private async Task<List<(Voter, Election, List<PollingStationCommission>, bool, DateTime?)>> GetElections(Person person)
@@ -67,7 +73,7 @@ namespace EligereES.Controllers
 
             var data = d.ToList().ConvertAll(v => (v.Voter, v.Election, v.Commission, v.Past, v.HasVoted));
 
-            var activeel = data.Where(d => !d.Past && d.Election.Active).ToList();
+            var activeel = data.Where(d => !d.Past && d.Election.Started.HasValue && !d.Election.Closed.HasValue && d.Election.Active).ToList();
 
             // integrity check for multiple elections and commissions
             if (activeel.Count > 1)
@@ -180,32 +186,6 @@ namespace EligereES.Controllers
             _manager.CollectExpiredItems();
             busycomm = _manager.GetBusyCommissioners();
 
-            // 30 out of 100 are sent to some commissioner. 70 if there is an affine commissioner will be preferred
-            // Disabled for student general elections
-            if (false && _manager.Rnd.Next(100) > 30)
-            {
-                var affineCommissioners = await (from ar in _context.IdentificationCommissionerAffinityRel
-                                                 where elections.Contains(ar.ElectionFk)
-                                                 select ar.PersonFk).Distinct().ToListAsync();
-
-                var affineIds = await (from psc in _context.PollingStationCommissioner
-                                       where !busycomm.Contains(psc.PersonFk) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
-                                       select new { Id = psc.Id, PersonFk = psc.PersonFk, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
-
-                var affineRids = await (from psc in _context.RemoteIdentificationCommissioner
-                                        where !busycomm.Contains(psc.PersonFk) && comm.Contains(psc.PollingStationCommissionFk) && affineCommissioners.Contains(psc.PersonFk) && psc.AvailableForRemoteRecognition
-                                        select new { Id = psc.Id, PersonFk = psc.PersonFk, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
-
-                affineIds.AddRange(affineRids);
-
-                if (affineIds.Count > 0)
-                {
-                    var selecteda = affineIds[_manager.Rnd.Next(affineIds.Count)];
-                    _manager.AddBusyCommissioner(selecteda.PersonFk);
-                    return Redirect(selectVirtualRoom(selecteda.VirtualRoom));
-                }
-            }
-
             var ids = await (from psc in _context.PollingStationCommissioner
                               where !busycomm.Contains(psc.PersonFk) && comm.Contains(psc.PollingStationCommissionFk) && psc.AvailableForRemoteRecognition
                               select new { Id = psc.Id, PersonFk = psc.PersonFk, VirtualRoom = psc.VirtualRoom }).Distinct().ToListAsync();
@@ -247,7 +227,7 @@ namespace EligereES.Controllers
                         recognition.AccountProvider = defaultProvider;
                         recognition.Otp = otp;
                         recognition.State = 0;
-                        recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                        recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(_otpLifetime);
                         recognition.RemoteIdentification = true;
                     }
 
@@ -308,7 +288,7 @@ namespace EligereES.Controllers
 
             var votes = await GetElections(person);
 
-            var availableVotes = votes.Where(v => (v.Item2.Active || (EligereRoles.Provider(this.User,defaultProvider) == "Spid" && v.Item2.PollStartDate < DateTime.Now && v.Item2.PollEndDate > DateTime.Now)) && !v.Item4 && !v.Item5.HasValue).Select(v => v.Item1.Id).ToList();
+            var availableVotes = votes.Where(v => (v.Item2.Active || (EligereRoles.Provider(this.User,defaultProvider) == "Spid" && v.Item2.PollStartDate < DateTime.Now && v.Item2.PollEndDate > DateTime.Now)) && v.Item2.Started.HasValue && !v.Item2.Closed.HasValue && !v.Item4 && !v.Item5.HasValue).Select(v => v.Item1.Id).ToList();
 
             if (availableVotes.Count == 0)
                 return Forbid("No ballot to cast");
@@ -337,7 +317,7 @@ namespace EligereES.Controllers
                     recognition.AccountProvider = "Spid";
                     recognition.Otp = otp;
                     recognition.State = 0;
-                    recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                    recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(_otpLifetime);
                 }
                 await _context.SaveChangesAsync();
             }
@@ -349,7 +329,7 @@ namespace EligereES.Controllers
                                  select new { Voter = v, Recognition = r, Election = e }).ToListAsync();
 
             if (ckvotes.Count() == 0)
-                return Forbid("OTP non valida");
+                return Forbid("Non vi sono voti esprimibili (l'urna potrebbe non essere ancora pronta)");
 
             var otps = ckvotes.GroupBy(v => v.Recognition.Otp);
             if (otps.Count() != 1)
@@ -367,7 +347,7 @@ namespace EligereES.Controllers
                 var ticket = new VoteTicket();
                 ticket.HashId = ComputeSha256Hash(ticketIdClearText);
                 ticket.Issued = DateTime.Now;
-                ticket.Expiration = DateTime.Now + TimeSpan.FromMinutes(30);
+                ticket.Expiration = DateTime.Now + TimeSpan.FromMinutes(_ticketLifetime);
                 ticket.ElectionId = v.Voter.ElectionFk.ToString();
                 ticket.ElectionName = v.Election.Name;
                 tickets.Add(ticket);

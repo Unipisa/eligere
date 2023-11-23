@@ -29,11 +29,19 @@ namespace EligereES.Controllers
     [ApiController]
     public class EligereESAPI : ControllerBase
     {
+        public const int DefaultMinutesBeforeElectionStarts = 15;
+        public const int DefaultMinutesAfterElectionEnds = 15;
+        public const int DefaultOTPLifetime = 30;
+        public const int DefaultTicketLifetime = 30;
+        public const int DefaultVoteIdentificationSpan = 3;
+
         private ESDB _context;
         private string contentRootPath;
         private IDataProtectionProvider dataProtector;
         private DownloadOTPManager _dotpmgr;
         private string defaultProvider;
+        private int _minutesBeforeElectionStarts = DefaultMinutesBeforeElectionStarts;
+        private int _minutesAfterElectionEnds = DefaultMinutesAfterElectionEnds;
 
         public EligereESAPI(ESDB ctxt, IWebHostEnvironment env, IDataProtectionProvider provider, IConfiguration configuration, DownloadOTPManager dotpmgr)
         {
@@ -42,13 +50,15 @@ namespace EligereES.Controllers
             dataProtector = provider;
             _dotpmgr = dotpmgr;
             defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
+            _minutesBeforeElectionStarts = configuration.GetValue(typeof(int), "MinutesBeforeElectionStarts") as int? ?? DefaultMinutesBeforeElectionStarts;
+            _minutesAfterElectionEnds = configuration.GetValue(typeof(int), "MinutesAfterElectionEnds") as int? ?? DefaultMinutesAfterElectionEnds;
         }
 
         [HttpGet("Election")]
         public async Task<List<ElectionUI>> ListElections(bool? valid)
         {
             var onlyvalid = valid ?? true;
-            var q = from e in _context.Election where (!onlyvalid || e.Active) select e;
+            var q = from e in _context.Election where (!onlyvalid || (e.Active && e.Started.HasValue && !e.Closed.HasValue)) select e;
             var d = await q.ToListAsync();
             return d.ConvertAll(e => new ElectionUI(e));
         }
@@ -297,7 +307,43 @@ namespace EligereES.Controllers
             return data;
         }
 
-            [AllowAnonymous]
+        [AllowAnonymous]
+        [HttpPut("StartElections")]
+        public async Task<ActionResult> StartElections([FromForm] string data)
+        {
+            var dp = dataProtector.CreateProtector("EligereMetadataExchange");
+            var plainData = dp.Unprotect(data);
+            var electionIdsData = JsonSerializer.Deserialize<List<string>>(plainData);
+            var electionIds = electionIdsData.ConvertAll(e => Guid.Parse(e));
+            var elections = await (from e in _context.Election where electionIds.Contains(e.Id) select e).ToListAsync();
+            foreach (var e in elections)
+            {
+                e.Started = DateTime.Now;
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [AllowAnonymous]
+        [HttpPut("CloseElections")]
+        public async Task<ActionResult> CloseElections([FromForm] string data)
+        {
+            var dp = dataProtector.CreateProtector("EligereMetadataExchange");
+            var plainData = dp.Unprotect(data);
+            var electionIdsData = JsonSerializer.Deserialize<List<string>>(plainData);
+            var electionIds = electionIdsData.ConvertAll(e => Guid.Parse(e));
+            var elections = await (from e in _context.Election where electionIds.Contains(e.Id) select e).ToListAsync();
+            foreach (var e in elections)
+            {
+                e.Closed = DateTime.Now;
+                e.Configuring = false;
+                e.Active = false;
+            }
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [AllowAnonymous]
         [HttpGet("RunningElections")]
         public async Task<string> RunningElections()
         {
@@ -320,8 +366,8 @@ namespace EligereES.Controllers
                 return null;
             }
 
-            var time4open = DateTime.Now + TimeSpan.FromMinutes(90); // Early comers (should be a parameter!)
-            var time4close = DateTime.Now - TimeSpan.FromMinutes(90); //Late comers (should be a parameter!)
+            var time4open = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts); // Early comers
+            var time4close = DateTime.Now - TimeSpan.FromMinutes(_minutesAfterElectionEnds); //Late comers
             var electionsq = from e in _context.Election
                             where e.Configuring && (e.PollStartDate <= time4open) && (e.PollEndDate >= time4close)
                             select e;
@@ -334,6 +380,23 @@ namespace EligereES.Controllers
                 throw new Exception("Multiple elections with different PollingStationGroupIds");
 
             var groupid = elections[0].PollingStationGroupId == null ? Guid.NewGuid() : elections[0].PollingStationGroupId;
+
+            // In general this would be empty, but in a scenario with multiple days of voting if one or more elections
+            // start after the first day they will be missing in the voting system. Therefore we must ensure that all the
+            // elections in the same group are present in the voting system
+            var missingElectionIds = await (from e in _context.Election
+                                      where !electionids.Contains(e.Id) && e.PollingStationGroupId == groupid
+                                      select e.Id).ToListAsync();
+            var missingElections = await (from e in _context.Election
+                                          where missingElectionIds.Contains(e.Id)
+                                          select e).ToListAsync();
+
+            if (missingElectionIds.Count > 0)
+            {
+                electionids.AddRange(missingElectionIds);
+                elections.AddRange(missingElections);
+            }
+
 
             // Ignoring name, election_scope_id, start_date, end_date, type, geopolitical_units
             var electionDescription = new ElectionGuard.ElectionDescription();
@@ -489,7 +552,7 @@ namespace EligereES.Controllers
             var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk non null
             var person = await _context.Person.FindAsync(pfk);
 
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             var psc = await (from pc in _context.PollingStationCommissioner
                              join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id
@@ -514,7 +577,7 @@ namespace EligereES.Controllers
             var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk non null
             var person = await _context.Person.FindAsync(pfk);
 
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             return await (from pc in _context.PollingStationCommissioner
                              join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id
@@ -530,7 +593,7 @@ namespace EligereES.Controllers
             var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk non null
             var person = await _context.Person.FindAsync(pfk);
 
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             return await (from pc in _context.RemoteIdentificationCommissioner
                              join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id
@@ -546,7 +609,7 @@ namespace EligereES.Controllers
             var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply pfk non null
             var person = await _context.Person.FindAsync(pfk);
 
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             var psc = await (from pc in _context.RemoteIdentificationCommissioner
                              join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id

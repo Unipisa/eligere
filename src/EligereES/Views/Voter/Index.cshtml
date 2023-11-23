@@ -143,7 +143,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var (v, e, com, p, hasVoted) in availableVotes.Where(a => { var (v, e, c, p, d) = a; return !p; }))
+            @foreach (var (v, e, com, p, hasVoted) in availableVotes.Where(a => { var (v, e, c, p, d) = a; return !p; }).OrderBy(a => { var (v, e, c, p, d) = a; return a.Item2.PollStartDate; }))
             {
         <tr>
             <td>

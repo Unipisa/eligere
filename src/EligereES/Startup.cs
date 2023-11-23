@@ -69,40 +69,43 @@ namespace EligereES
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
 
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddOAuth("Spid", options =>
-                {
-                    options.AuthorizationEndpoint = Configuration["Spid:AuthorizationEndpoint"];
-                    options.TokenEndpoint = Configuration["Spid:TokenEndpoint"];
-                    options.UserInformationEndpoint = Configuration["Spid:UserInformationEndpoint"];
-                    options.CallbackPath = "/spid-signin";
-                    options.ClientId = Configuration["Spid:OAuth:ClientId"];
-                    options.ClientSecret = Configuration["Spid:OAuth:ClientSecret"];
-
-                    options.Scope.Add("openid");
-
-                    options.Events = new OAuthEvents
+            if (Configuration.GetValue<bool?>("Spid:Enabled") ?? false)
+            {
+                services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                    .AddOAuth("Spid", options =>
                     {
-                        OnCreatingTicket = async context =>
+                        options.AuthorizationEndpoint = Configuration["Spid:AuthorizationEndpoint"];
+                        options.TokenEndpoint = Configuration["Spid:TokenEndpoint"];
+                        options.UserInformationEndpoint = Configuration["Spid:UserInformationEndpoint"];
+                        options.CallbackPath = "/spid-signin";
+                        options.ClientId = Configuration["Spid:OAuth:ClientId"];
+                        options.ClientSecret = Configuration["Spid:OAuth:ClientSecret"];
+
+                        options.Scope.Add("openid");
+
+                        options.Events = new OAuthEvents
                         {
-                            var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-                            var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                            response.EnsureSuccessStatusCode();
-                            var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                            var gn = json.RootElement.GetProperty("given_name").GetString();
-                            var ln = json.RootElement.GetProperty("family_name").GetString();
-                            var fid = json.RootElement.GetProperty("fiscalNumber").GetString();
-                            var email = json.RootElement.GetProperty("email").GetString();
-                            context.Identity.AddClaim(new Claim(ClaimTypes.GivenName, gn, ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                            context.Identity.AddClaim(new Claim(ClaimTypes.Surname, ln, ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                            context.Identity.AddClaim(new Claim(ClaimTypes.Name, $"{gn} {ln}", ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                            context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fid, ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                            context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                        }
-                    };
-                });
+                            OnCreatingTicket = async context =>
+                            {
+                                var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+                                var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                                response.EnsureSuccessStatusCode();
+                                var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                                var gn = json.RootElement.GetProperty("given_name").GetString();
+                                var ln = json.RootElement.GetProperty("family_name").GetString();
+                                var fid = json.RootElement.GetProperty("fiscalNumber").GetString();
+                                var email = json.RootElement.GetProperty("email").GetString();
+                                context.Identity.AddClaim(new Claim(ClaimTypes.GivenName, gn, ClaimValueTypes.String, context.Options.ClaimsIssuer));
+                                context.Identity.AddClaim(new Claim(ClaimTypes.Surname, ln, ClaimValueTypes.String, context.Options.ClaimsIssuer));
+                                context.Identity.AddClaim(new Claim(ClaimTypes.Name, $"{gn} {ln}", ClaimValueTypes.String, context.Options.ClaimsIssuer));
+                                context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fid, ClaimValueTypes.String, context.Options.ClaimsIssuer));
+                                context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, context.Options.ClaimsIssuer));
+                            }
+                        };
+                    });
+            }
 
             //.AddAzureAD(options => Configuration.Bind("AzureAd", options));
 

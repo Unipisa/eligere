@@ -17,6 +17,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Web;
+using System.Net.Http;
 
 namespace EligereVS.Controllers
 {
@@ -321,6 +322,29 @@ namespace EligereVS.Controllers
                 eldesc = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(_conf.Get(ESElectionConfigurationKey));
             }
 
+            // Communicate closed elections
+            var confAPI = new VotingSystemConfiguration();
+            lock (_conf)
+            {
+                var v = _conf.Get(APIConfigurationKey);
+                if (v != null)
+                {
+                    confAPI = VotingSystemConfiguration.FromJson(v);
+                }
+            }
+
+            var xchgProtector = dataProtector.CreateProtector("EligereMetadataExchange");
+            var elidss = Array.ConvertAll(eldesc.contests, c => c.object_id);
+            var elids = xchgProtector.Protect(JsonSerializer.Serialize(elidss));
+            var client = new HttpClient();
+            var urlBuilder = new System.Text.StringBuilder();
+            urlBuilder.Append(confAPI.ElectionSystemAPI.TrimEnd('/')).Append("/CloseElections");
+            var j = client.PutAsync(urlBuilder.ToString(), new StringContent("=" + elids, Encoding.UTF8, "application/x-www-form-urlencoded"));
+            j.Wait();
+            var ret = j.Result;
+            if (ret.StatusCode != HttpStatusCode.OK)
+                return RedirectToAction("Tally", new { msg = "Fail to communicate closed elections" });
+
             var protector = dataProtector.CreateProtector("SecureBallot");
             var ballots = new List<BallotContent>();
             lock (secureBallot)
@@ -391,10 +415,22 @@ namespace EligereVS.Controllers
             System.IO.File.WriteAllText(fn, data);
             var eldesc = JsonSerializer.Deserialize<ElectionGuard.ElectionDescription>(data);
 
-            lock(_conf)
+            var electionids = Array.ConvertAll(eldesc.contests, c => c.object_id);
+            var payload = dp.Protect(JsonSerializer.Serialize(electionids));
+            urlBuilder = new System.Text.StringBuilder();
+            urlBuilder.Append(confAPI.ElectionSystemAPI.TrimEnd('/')).Append("/StartElections");
+            var client = new HttpClient();
+            var j = client.PutAsync(urlBuilder.ToString(), new StringContent("="+payload, Encoding.UTF8, "application/x-www-form-urlencoded"));
+            j.Wait();
+            var ret = j.Result;
+
+            // FixMe: check client response
+
+            lock (_conf)
             {
                 _conf.Put(ESElectionConfigurationKey, JsonSerializer.Serialize<ElectionGuard.ElectionDescription>(eldesc));
             }
+
 
             return View("ShowESElectionConfiguration", eldesc);
         }

@@ -64,6 +64,7 @@ namespace EligereES.Controllers
                     pendingUserLoginRequest = true;
             }
             ViewData["PendingUserLoginRequest"] = pendingUserLoginRequest;
+            ViewData["SpidEnabled"] = _config.GetValue<bool?>("Spid:Enabled") ?? false;
             return View();
         }
 

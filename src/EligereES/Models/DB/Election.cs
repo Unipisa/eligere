@@ -25,6 +25,8 @@ namespace EligereES.Models.DB
         public Guid? ElectionTypeFk { get; set; }
         public Guid? PollingStationGroupId { get; set; }
         public bool Configuring { get; set; }
+        public DateTime? Closed { get; set; }
+        public DateTime? Started { get; set; }
 
         public virtual ElectionType ElectionTypeFkNavigation { get; set; }
         public virtual ICollection<BallotName> BallotName { get; set; }

@@ -77,6 +77,8 @@ namespace EligereES.Models.DB
             {
                 entity.Property(e => e.Id).HasDefaultValueSql("(newid())");
 
+                entity.Property(e => e.Closed).HasColumnType("datetime");
+
                 entity.Property(e => e.Configuration).IsRequired();
 
                 entity.Property(e => e.Description).IsRequired();
@@ -90,6 +92,8 @@ namespace EligereES.Models.DB
                 entity.Property(e => e.PollEndDate).HasColumnType("datetime");
 
                 entity.Property(e => e.PollStartDate).HasColumnType("datetime");
+
+                entity.Property(e => e.Started).HasColumnType("datetime");
 
                 entity.HasOne(d => d.ElectionTypeFkNavigation)
                     .WithMany(p => p.Election)

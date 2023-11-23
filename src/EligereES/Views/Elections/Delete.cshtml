@@ -1,0 +1,40 @@
+﻿@model EligereES.Models.DB.Election
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h4>Election</h4>
+<hr />
+
+<h5>@Model.Name</h5>
+
+@if (Model.Started.HasValue)
+{
+    <text>
+        L'elezione &egrave; gi&agrave; stata avviata, non &egrave; possibile eliminarla.
+    </text>
+    <div class="form-actions no-color">
+        @Html.ActionLink("Back to List", "Index")
+    </div>
+}
+else
+{
+    using (Html.BeginForm("Delete", "Elections"))
+    {
+        @Html.AntiForgeryToken()
+        <text>
+            Si &egrave; sicuri di voler eliminare l'elezione?
+        </text>
+        <div class="form-actions no-color">
+            <input type="submit" value="Delete" class="btn btn-danger" /> |
+            @Html.ActionLink("Back to List", "Index")
+        </div>
+    }
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

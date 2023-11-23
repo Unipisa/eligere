@@ -22,6 +22,8 @@ namespace EligereES.Controllers
         private IConfiguration Configuration;
         private PersistentCommissionManager _manager;
         private string defaultProvider;
+        private int _minutesBeforeElectionStarts = EligereESAPI.DefaultMinutesBeforeElectionStarts;
+        private int _otpLifetime = EligereESAPI.DefaultOTPLifetime;
 
         public PSCommissionController(ESDB ctxt, PersistentCommissionManager manager, IConfiguration configuration)
         {
@@ -29,6 +31,8 @@ namespace EligereES.Controllers
             Configuration = configuration;
             _manager = manager;
             defaultProvider = configuration.GetValue(typeof(string), "DefaultAuthProvider") as string;
+            _minutesBeforeElectionStarts = configuration.GetValue(typeof(int), "MinutesBeforeElectionStarts") as int? ?? EligereESAPI.DefaultMinutesBeforeElectionStarts;
+            _otpLifetime = configuration.GetValue(typeof(int), "OTPLifetime") as int? ?? EligereESAPI.DefaultOTPLifetime;
         }
 
 
@@ -120,12 +124,12 @@ namespace EligereES.Controllers
             var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply PFK should be not null
             var person = await _context.Person.FindAsync(pfk);
 
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             var available = await (from pc in _context.PollingStationCommissioner
                                    join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id
                                    join e in _context.Election on c.ElectionFk equals e.Id
-                                   where e.PollStartDate <= now && e.PollEndDate > today && pc.PersonFk == person.Id && pc.AvailableForRemoteRecognition
+                                   where !e.Closed.HasValue && e.PollStartDate <= now && e.PollEndDate > today && pc.PersonFk == person.Id && pc.AvailableForRemoteRecognition
                                    select pc).AnyAsync();
 
             ViewData["available"] = available;
@@ -140,12 +144,12 @@ namespace EligereES.Controllers
             var pfk = EligereRoles.PersonFK(this.User); // Authorized roles imply this should be non null
             var person = await _context.Person.FindAsync(pfk);
 
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             var available = await (from pc in _context.RemoteIdentificationCommissioner
                                    join c in _context.PollingStationCommission on pc.PollingStationCommissionFk equals c.Id
                                    join e in _context.Election on c.ElectionFk equals e.Id
-                                   where e.PollStartDate <= now && e.PollEndDate > today && pc.PersonFk == person.Id && pc.AvailableForRemoteRecognition
+                                   where !e.Closed.HasValue && e.PollStartDate <= now && e.PollEndDate > today && pc.PersonFk == person.Id && pc.AvailableForRemoteRecognition
                                    select pc).AnyAsync();
 
             ViewData["available"] = available;
@@ -241,7 +245,7 @@ namespace EligereES.Controllers
                 recognition.AccountProvider = provider;
                 recognition.Otp = otp;
                 recognition.State = 0;
-                recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(_otpLifetime);
                 if (User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
                 {
                     recognition.RemoteIdentification = true;
@@ -330,7 +334,7 @@ namespace EligereES.Controllers
                 recognition.AccountProvider = provider;
                 recognition.Otp = otp;
                 recognition.State = 0;
-                recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(30);
+                recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(_otpLifetime);
                 if (User.IsInRole(EligereRoles.RemoteIdentificationOfficer))
                 {
                     recognition.RemoteIdentification = true;
@@ -412,10 +416,10 @@ namespace EligereES.Controllers
                               select c.ElectionFk;
 
             // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
-            var now = DateTime.Now + TimeSpan.FromMinutes(90);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             var elections = from e in _context.Election
-                            where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
+                            where !e.Closed.HasValue && commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
                             select e;
 
             var elist = await elections.ToListAsync();
@@ -425,7 +429,19 @@ namespace EligereES.Controllers
             if (elist.Count >1)
             {
                 var gid = elist[0].PollingStationGroupId;
-                elist = await (from e in _context.Election where e.PollingStationGroupId == gid select e).ToListAsync();
+                if (gid == null)
+                {
+                    // Without group we allow to start only the first election (this is good for multiple contests in the same day)
+                    elist = await (from e in _context.Election 
+                                   where !e.Closed.HasValue && (e.PollStartDate <= now) && e.PollEndDate > today 
+                                   select e).OrderBy(e => e.PollStartDate).Take(1).ToListAsync();
+                }
+                else
+                {
+                    elist = await (from e in _context.Election 
+                                   where !e.Closed.HasValue && e.PollingStationGroupId == gid 
+                                   select e).ToListAsync();
+                }
             }
                
 
@@ -445,10 +461,10 @@ namespace EligereES.Controllers
                               select c.ElectionFk;
 
             // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             var elections = from e in _context.Election
-                            where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
+                            where !e.Closed.HasValue && commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
                             select e;
 
             var elist = await elections.ToListAsync();
@@ -458,8 +474,21 @@ namespace EligereES.Controllers
             if (elist.Count > 1)
             {
                 var gid = elist[0].PollingStationGroupId;
-                elist = await (from e in _context.Election where e.Active && e.PollingStationGroupId == gid select e).ToListAsync();
+                if (gid == null)
+                {
+                    // Without group we allow to start only the first election (this is good for multiple contests in the same day)
+                    elist = await (from e in _context.Election
+                                   where !e.Closed.HasValue && e.Active && (e.PollStartDate <= now) && e.PollEndDate > today
+                                   select e).OrderBy(e => e.PollStartDate).Take(1).ToListAsync();
+                }
+                else
+                {
+                    elist = await (from e in _context.Election
+                                   where !e.Closed.HasValue && e.Active && e.PollingStationGroupId == gid
+                                   select e).ToListAsync();
+                }
             }
+
 
             var eids = elist.ConvertAll(e => e.Id);
             var commissioners = await (from c in _context.PollingStationCommission
@@ -491,10 +520,10 @@ namespace EligereES.Controllers
                               select c.ElectionFk;
 
             // FIXME: if president does not close after end of poll the UI may become inconsistent: to be fixed
-            var now = DateTime.Now + TimeSpan.FromMinutes(15);
+            var now = DateTime.Now + TimeSpan.FromMinutes(_minutesBeforeElectionStarts);
             var today = DateTime.Today;
             var elections = from e in _context.Election
-                            where commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
+                            where !e.Closed.HasValue && commissions.Contains(e.Id) && (e.PollStartDate <= now) && e.PollEndDate > today
                             select e;
 
             var elist = await elections.ToListAsync();
@@ -504,8 +533,21 @@ namespace EligereES.Controllers
             if (elist.Count > 1)
             {
                 var gid = elist[0].PollingStationGroupId;
-                elist = await (from e in _context.Election where e.PollingStationGroupId == gid select e).ToListAsync();
+                if (gid == null)
+                {
+                    // Without group we allow to start only the first election (this is good for multiple contests in the same day)
+                    elist = await (from e in _context.Election
+                                   where !e.Closed.HasValue && (e.PollStartDate <= now) && e.PollEndDate > today
+                                   select e).OrderBy(e => e.PollStartDate).Take(1).ToListAsync();
+                }
+                else
+                {
+                    elist = await (from e in _context.Election
+                                   where !e.Closed.HasValue && e.PollingStationGroupId == gid
+                                   select e).ToListAsync();
+                }
             }
+
 
             var config = confstate == "on";
             var active = state == "on";

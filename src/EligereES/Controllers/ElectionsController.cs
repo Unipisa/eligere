@@ -37,6 +37,7 @@ namespace EligereES.Controllers
             return ret;
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         public async Task<IActionResult> Index()
         {
             var commissions =
@@ -62,6 +63,7 @@ namespace EligereES.Controllers
             return View((elections, commissions, voters, ballots, ballotParties));
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         public async Task<IActionResult> Details(Guid? id)
         {
             if (id == null)
@@ -80,12 +82,14 @@ namespace EligereES.Controllers
             return View(election);
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         public IActionResult Create()
         {
             ViewData["ElectionTypeFk"] = new SelectList(_context.ElectionType, "Id", "Name");
             return View();
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,Description,PollStartDate,PollEndDate,ElectorateListClosingDate,ElectionTypeFk")] Election election)
@@ -102,6 +106,7 @@ namespace EligereES.Controllers
             return View(election);
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         public async Task<IActionResult> Edit(Guid? id)
         {
             if (id == null)
@@ -118,6 +123,57 @@ namespace EligereES.Controllers
             return View(election);
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        public async Task<IActionResult> Delete(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+            return View(election);
+        }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+
+            if ((from v in _context.Voter where v.ElectionFk == id && v.Vote.HasValue select v).Any())
+            {
+                return BadRequest("Election has casted votes");
+            }
+
+            var com = _context.PollingStationCommission.FirstOrDefault(c => c.ElectionFk == id);
+            if (com != null)
+            {
+                com.PresidentFk = null;
+                await _context.SaveChangesAsync();
+                _context.PollingStationCommissioner.RemoveRange(from pc in _context.PollingStationCommissioner where pc.PollingStationCommissionFk == com.Id select pc);
+                _context.RemoteIdentificationCommissioner.RemoveRange(from c in _context.RemoteIdentificationCommissioner where c.PollingStationCommissionFk == com.Id select c);
+            }
+            _context.Voter.RemoveRange(from v in _context.Voter where v.ElectionFk == id select v);
+            _context.EligibleCandidate.RemoveRange(from c in _context.EligibleCandidate join bn in _context.BallotName on c.BallotNameFk equals bn.Id where bn.ElectionFk == id select c);
+            _context.BallotName.RemoveRange(from bn in _context.BallotName where bn.ElectionFk == id select bn);
+            _context.PollingStationCommission.RemoveRange(from c in _context.PollingStationCommission where c.ElectionFk == id select c);
+            _context.Election.Remove(election);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, [Bind("Id,Name,Description,PollStartDate,PollEndDate,ElectorateListClosingDate")] Election election)
@@ -156,6 +212,7 @@ namespace EligereES.Controllers
             return View(election);
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet]
         public async Task<IActionResult> EditPollingStations(Guid id)
         {
@@ -165,6 +222,7 @@ namespace EligereES.Controllers
             return View(pollingStation);
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPSCommission(PollingStationCommissionUI comm, Guid? presidentFK)
@@ -189,8 +247,7 @@ namespace EligereES.Controllers
             return RedirectToAction("EditPollingStations", new { id = comm.ElectionFk });
         }
 
-        [Authorize(Roles = EligereRoles.Admin)]
-        [Authorize(Roles = EligereRoles.ElectionOfficer)]
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddPSCommissioner(Guid electionFK, Guid commissionFK, Guid memberFK)
@@ -211,6 +268,8 @@ namespace EligereES.Controllers
             return RedirectToAction("EditPollingStations", new { id = electionFK });
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+
         [HttpGet]
         public async Task<IActionResult> RemovePSCommissioner(Guid commissionerId)
         {
@@ -227,6 +286,8 @@ namespace EligereES.Controllers
 
             return RedirectToAction("EditPollingStations", new { id = pc.ElectionFk });
         }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
 
         [HttpGet("Voters/{id}")]
         public async Task<IActionResult> Voters(Guid id, string sortOrder, string currentFilter, string searchString, int? pageNumber)
@@ -336,6 +397,7 @@ namespace EligereES.Controllers
         }
 
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet("Candidates/{id}")]
         public async Task<IActionResult> Candidates(Guid id, string sortOrder, string currentFilter, string searchString, int? pageNumber)
         {
@@ -446,6 +508,7 @@ namespace EligereES.Controllers
             return View(result);
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet("RemoveCandidate")]
         public async Task<IActionResult> RemoveCandidate(Guid electionid, Guid personid)
         {
@@ -462,6 +525,7 @@ namespace EligereES.Controllers
             return RedirectToAction("Candidates", new { id = electionid });
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet("RemoveVoter")]
         public async Task<IActionResult> RemoveVoter(Guid electionid, Guid personid)
         {
@@ -476,6 +540,7 @@ namespace EligereES.Controllers
             return RedirectToAction("Voters", new { id = electionid });
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet("ClonePSCommissions")]
         public async Task<IActionResult> ClonePSCommissions(Guid id)
         {
@@ -486,6 +551,7 @@ namespace EligereES.Controllers
             return View(list);
         }
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpPost("ClonePSCommissions")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClonePSCommissions(Guid src, Guid dst)
@@ -577,7 +643,7 @@ namespace EligereES.Controllers
             return RedirectToAction("EditPollingStations", new { id = dste.Id });
         }
 
-        [AuthorizeRoles(EligereRoles.ElectionOfficer)]
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet("Counters")]
         public async Task<IActionResult> Counters()
         {
