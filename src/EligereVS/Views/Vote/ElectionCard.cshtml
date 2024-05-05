@@ -46,7 +46,8 @@
 
 <div class="text-center offset-1 col-10">
     <h4 class="display-4" style="font-size:1rem;">Hai <span id="ncards" style="text-emphasis"></span> schede da compilare</h4>
-    <h3 class="display-4" style="font-size: 1.4rem;"><i>scheda elettorale</i><br /><span id="electionName"></span></h3>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="SkipVote" onclick="skipVote()" style="margin-bottom: 12px">Prossima scheda</button>
+    <h3 class="display-4" style="font-size: 1.4rem; margin-bottom: 24px;"><i>scheda elettorale</i><br /><span id="electionName"></span></h3>
     <div class="container">
         <form id="voteData">
             <div class="form-group text-left col-12">
@@ -74,7 +75,6 @@
         </form>
         <hr />
         <button type="button" class="btn btn-primary" onclick="askVote()">Vota</button>
-        <button type="button" class="btn btn-primary" id="SkipVote" onclick="skipVote()">Prossima scheda</button>
     </div>
 </div>
 <script type="text/javascript">
