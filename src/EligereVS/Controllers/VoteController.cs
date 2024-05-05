@@ -77,6 +77,7 @@ namespace EligereVS.Controllers
                     availableTickets.Add(ticket);
                 }
             }
+            availableTickets = availableTickets.OrderByDescending(t => int.Parse(electionmap[t.ElectionId].extensions["VoterCount"])).ThenBy(t => electionmap[t.ElectionId].name).ToList();
             electionDescription.contests = electionDescription.contests.Where(c => elections2Send.Contains(c.object_id)).ToArray();
             var cardData = new VoteInformation()
             {

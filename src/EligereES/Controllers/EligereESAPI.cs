@@ -475,6 +475,7 @@ namespace EligereES.Controllers
                 contest.extensions["PollStartDate"] = e.PollStartDate.ToString(CultureInfo.GetCultureInfo("it-it"));
                 contest.extensions["PollEndDate"] = e.PollEndDate.ToString(CultureInfo.GetCultureInfo("it-it"));
                 contest.extensions["NoNullVote"] = config.NoNullVote.ToString();
+                contest.extensions["VoterCount"] = _context.Voter.Where(v => v.ElectionFk == e.Id).Count().ToString();
                 var ob = ballotnames.Where(b => b.ElectionFk == e.Id && b.SequenceOrder.HasValue).OrderBy(b => b.SequenceOrder).ThenBy(b => b.BallotNameLabel).ToList();
                 var ub = ballotnames.Where(b => b.ElectionFk == e.Id && !b.SequenceOrder.HasValue).OrderBy(b => b.BallotNameLabel).ToList();
                 ob.AddRange(ub);

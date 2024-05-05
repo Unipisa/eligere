@@ -74,6 +74,7 @@
         </form>
         <hr />
         <button type="button" class="btn btn-primary" onclick="askVote()">Vota</button>
+        <button type="button" class="btn btn-primary" id="SkipVote" onclick="skipVote()">Prossima scheda</button>
     </div>
 </div>
 <script type="text/javascript">
@@ -409,6 +410,8 @@
             document.location = '@(Url.Content("~"))/Vote/VoteConclusion';
             return;
         }
+        if (cardData.AvailableTickets.length == 1) $('#SkipVote').hide();
+        else $('#SkipVote').show();
         $("#ncards").text(cardData.AvailableTickets.length);
         var ticket = cardData.AvailableTickets[0];
         var election = findElection(ticket.ElectionId);
@@ -478,6 +481,13 @@
         $('#askVoteText').html(txt);
         $('#askVoteDialog').modal('show');
     }
+
+    function skipVote() {
+        var ticket = cardData.AvailableTickets.shift();
+        cardData.AvailableTickets.push(ticket);
+        UseTicket();
+    }
+
     var castingVote = false;
     function castVote() {
         if (castingVote) return;
