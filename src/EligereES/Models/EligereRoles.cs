@@ -88,7 +88,7 @@ namespace EligereES.Models
 
             return user;
         }
-
+         
         // Method designed to harmonize the way different auth providers maps the Identity.Name property
         public static string UserId(ClaimsPrincipal principal)
         {

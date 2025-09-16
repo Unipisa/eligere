@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace EligereES.Controllers
 {
@@ -65,7 +67,38 @@ namespace EligereES.Controllers
             }
             ViewData["PendingUserLoginRequest"] = pendingUserLoginRequest;
             ViewData["SpidEnabled"] = _config.GetValue<bool?>("Spid:Enabled") ?? false;
+            ViewData["SAML2Enabled"] = _config.GetValue<bool?>("SAML2:Enabled") ?? false;
             return View();
+        }
+
+        public IActionResult SAMLLogin()
+        {
+
+            /// sure?
+
+            string name = User.Claims.Where(c => c.Type == "Name").First().Value;
+            string familyName = User.Claims.Where(c => c.Type == "familyName").First().Value;
+            string fiscalNumber = User.Claims.Where(c => c.Type == "fiscalNumber").First().Value;
+            string dateOfBirth = User.Claims.Where(c => c.Type == "dateOfBirth").First().Value;
+
+            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.GivenName, name, ClaimValueTypes.String, "SAML2"));
+            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.Surname, familyName, ClaimValueTypes.String, "SAML2"));
+            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.Name, $"{name} {familyName}", ClaimValueTypes.String, "SAML2"));
+            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.NameIdentifier, fiscalNumber, ClaimValueTypes.String, "SAML2"));
+            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.Email, "", ClaimValueTypes.String, "SAML2"));
+            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.AuthorizationDecision, "Verify", ClaimValueTypes.String, "SAML2"));
+
+            return RedirectToAction("Index", "Home");
+            /*
+             * debug only: inspect all claims returned by the IdP
+             * 
+            IDictionary<string, string?> Attributes = new Dictionary<string, string?>();
+            foreach (var c in User.Claims)
+            {
+                Attributes[c.Type] = c.Value;
+            }
+            return View("SAMLLogin", Attributes);
+            */
         }
 
         [AllowAnonymous]

@@ -1,0 +1,29 @@
+﻿@Model IDictionary<string, string?>
+@{
+        Layout = "";
+        ViewData["Title"] = "SAML Attributes Test";
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>Elenco attributi</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Chiave</th>
+                <th>Valore</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var attr in Model)
+            {
+                if (!string.IsNullOrEmpty(attr.Value))
+                {
+                    <tr>
+                        <td>@attr.Key</td>
+                        <td>@attr.Value</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
