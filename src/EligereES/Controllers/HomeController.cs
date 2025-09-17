@@ -73,32 +73,21 @@ namespace EligereES.Controllers
 
         public IActionResult SAMLLogin()
         {
-
-            /// sure?
-
-            string name = User.Claims.Where(c => c.Type == "Name").First().Value;
-            string familyName = User.Claims.Where(c => c.Type == "familyName").First().Value;
-            string fiscalNumber = User.Claims.Where(c => c.Type == "fiscalNumber").First().Value;
-            string dateOfBirth = User.Claims.Where(c => c.Type == "dateOfBirth").First().Value;
-
-            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.GivenName, name, ClaimValueTypes.String, "SAML2"));
-            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.Surname, familyName, ClaimValueTypes.String, "SAML2"));
-            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.Name, $"{name} {familyName}", ClaimValueTypes.String, "SAML2"));
-            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.NameIdentifier, fiscalNumber, ClaimValueTypes.String, "SAML2"));
-            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.Email, "", ClaimValueTypes.String, "SAML2"));
-            User.Identities.FirstOrDefault().AddClaim(new Claim(ClaimTypes.AuthorizationDecision, "Verify", ClaimValueTypes.String, "SAML2"));
-
-            return RedirectToAction("Index", "Home");
             /*
-             * debug only: inspect all claims returned by the IdP
+             * debug only: inspect all claims 
              * 
+             * */
             IDictionary<string, string?> Attributes = new Dictionary<string, string?>();
-            foreach (var c in User.Claims)
+            foreach(var i in User.Identities)
             {
-                Attributes[c.Type] = c.Value;
-            }
+                foreach (var c in User.Claims)
+                {
+                    Attributes["<strong>" + i.AuthenticationType + "</strong> / " + c.Type] = c.Value;
+                }
+                Attributes["-------------------"] = "------------------";   
+            }   
+              
             return View("SAMLLogin", Attributes);
-            */
         }
 
         [AllowAnonymous]

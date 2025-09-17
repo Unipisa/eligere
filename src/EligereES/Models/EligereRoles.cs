@@ -93,8 +93,12 @@ namespace EligereES.Models
         public static string UserId(ClaimsPrincipal principal)
         {
             if (principal == null) return "";
-            if (principal.Identities.Where(c => c.AuthenticationType == "Spid").Any())
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid).Any())
                 return principal.Claims.Where(c => c.Type == ClaimTypes.Email).First().Value;
+
+            /// TODO: Fiscalcode as userid for SAML/CIE/SPID?
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
+                return principal.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).First().Value;
 
             return principal.Identity.Name;
         }
@@ -103,8 +107,10 @@ namespace EligereES.Models
         {
             if (principal == null) return defaultProvider;
 
-            if (principal.Identities.Where(c => c.AuthenticationType == "Spid").Any())
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid).Any())
                 return "Spid";
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
+                return Constants.Federation;
 
             return defaultProvider;
         }
@@ -112,7 +118,7 @@ namespace EligereES.Models
         public static string UserDisplayName(ClaimsPrincipal principal)
         {
             if (principal == null) return "";
-            if (principal.Identities.Where(c => c.AuthenticationType == "Spid").Any())
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid || c.AuthenticationType == Constants.Federation).Any())
                 return principal.Identity.Name;
 
             return principal.Claims.Where(c => c.Type == "name").First().Value;

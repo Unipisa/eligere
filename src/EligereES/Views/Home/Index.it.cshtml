@@ -109,7 +109,7 @@
             }
             @if (ViewData["SAML2Enabled"] != null && (bool)ViewData["SAML2Enabled"])
             {
-                <a class="nav-link text-dark" href="/Saml2/SignIn?ReturnUrl=/Home/SAMLLogin">Accesso con SAML2</a>
+                <a class="nav-link text-dark" href="/Saml2/SignIn?ReturnUrl=/">Accesso con SAML2</a>
             }
         <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accesso con credenziali federate</a>
     </div>

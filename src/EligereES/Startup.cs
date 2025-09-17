@@ -35,6 +35,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Sustainsys.Saml2;
 using Sustainsys.Saml2.AspNetCore2;
 using Sustainsys.Saml2.Metadata;
+using Sustainsys.Saml2.Configuration;
+using System.Security.Cryptography;
+using System.Security.Principal;
 
 namespace EligereES
 {
@@ -90,6 +93,28 @@ namespace EligereES
                             MetadataLocation = Configuration["SAML2:EntityIDMetadata"],
                             LoadMetadata = true
                         });
+                    options.Notifications.AcsCommandResultCreated = new Action<Sustainsys.Saml2.WebSso.CommandResult, Sustainsys.Saml2.Saml2P.Saml2Response>((commandResult, saml2Response) =>
+                    {
+                        string ClaimsIssuer = "SAML2";
+                        bool StrongAuthentication = Configuration.GetValue<bool?>("SAML2:StrongAuthentication") ?? false;
+                        var identity = (ClaimsIdentity)commandResult.Principal.Identity;
+
+                        string name = identity.Claims.Where(c => c.Type == "Name").First().Value;
+                        string familyName = identity.Claims.Where(c => c.Type == "familyName").First().Value;
+                        string fiscalNumber = identity.Claims.Where(c => c.Type == "codice_fiscale").First().Value;
+
+                        // string dateOfBirth = identity.Claims.Where(c => c.Type == "dateOfBirth").First().Value;
+                        // dateOfBirth not used 
+
+                        string email = "", userid = "";
+
+                        identity.AddClaim(new Claim(ClaimTypes.GivenName, name, ClaimValueTypes.String, ClaimsIssuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Surname, familyName, ClaimValueTypes.String, ClaimsIssuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Name, $"{name} {familyName}", ClaimValueTypes.String, ClaimsIssuer));
+                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fiscalNumber, ClaimValueTypes.String, ClaimsIssuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, ClaimsIssuer));
+                        identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, ClaimsIssuer));
+                    });
                 });
             }
 

@@ -1,27 +1,37 @@
 ﻿@using System.Security.Principal
 
 <ul class="navbar-nav">
-@if (User.Identity.IsAuthenticated)
-{
+    @if (User.Identity.IsAuthenticated)
+    {
         <li class="nav-item">
-            <span class="navbar-text text-dark">@EligereRoles.UserDisplayName(User) (@(EligereRoles.UserId(User))@(EligereRoles.Provider(this.User, null) == "Spid" ? " SPID" : ""))</span>
+            <span class="navbar-text text-dark">
+                @EligereRoles.UserDisplayName(User)
+                <text>(
+                    @(EligereRoles.UserId(User))
+                    @if (EligereRoles.Provider(User, null) != null)
+                    {
+                        <span>@EligereRoles.Provider(User, null)</span>
+                    });
+                )</text>
+            </span>
         </li>
         <li class="nav-item">
             @if (EligereRoles.Provider(this.User, null) == "Spid")
             {
-                <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>                
-            } else
+                <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
+            }
+            else
             {
-                <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>                
+                <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
             }
         </li>
-}
-else
-{
+    }
+    else
+    {
         <li class="nav-item">
             <!--
             <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accedi</a>
             -->
         </li>
-}
+    }
 </ul>
