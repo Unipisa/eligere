@@ -100,9 +100,9 @@ namespace EligereES.Models
             IEnumerable<ClaimsIdentity> i = principal.Identities.Where(c => c.AuthenticationType == Constants.Federation);
             if (i.Any())
             {
-                IEnumerable<Claim> cc = i.First().Claims.Where(x=>x.Type == ClaimTypes.NameIdentifier && x.Issuer == Constants.SAML2Issuer);
-                if(cc.Any())
-                    return cc.First().Value;    
+                IEnumerable<Claim> cc = i.First().Claims.Where(x => x.Type == ClaimTypes.NameIdentifier && x.Issuer == Constants.SAML2Issuer);
+                if (cc.Any())
+                    return cc.First().Value;
             }
 
             return principal.Identity.Name;
@@ -167,16 +167,24 @@ namespace EligereES.Models
                 else
                 {
                     var username = EligereRoles.UserId(principal);
+                    if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
+                    {
+                        var u = from l in esdb.UserLogin where Constants.Federation == l.Provider && username == l.UserId select l;
+                        if (await u.CountAsync() == 1) // Should be either 0 or 1
+                            personFk = u.First().PersonFk;
+                    }
+                    else
+                    {
+                        var u = from l in esdb.UserLogin where defaultProvider == l.Provider && username == l.UserId select l;
+                        if (await u.CountAsync() == 1) // Should be either 0 or 1
+                            personFk = u.First().PersonFk;
+                    }
 
-                    var u = from l in esdb.UserLogin where defaultProvider == l.Provider && username == l.UserId select l;
-                    if (await u.CountAsync() == 1) // Should be either 0 or 1
-                        personFk = u.First().PersonFk;
+                    await EligereRoles.UpdateRoles(principal, esdb, personFk);
                 }
 
-                await EligereRoles.UpdateRoles(principal, esdb, personFk);
+                return principal;
             }
-
-            return principal;
         }
     }
 }
