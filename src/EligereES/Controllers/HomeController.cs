@@ -68,6 +68,7 @@ namespace EligereES.Controllers
             ViewData["PendingUserLoginRequest"] = pendingUserLoginRequest;
             ViewData["SpidEnabled"] = _config.GetValue<bool?>("Spid:Enabled") ?? false;
             ViewData["SAML2Enabled"] = _config.GetValue<bool?>("SAML2:Enabled") ?? false;
+            ViewData["AzureADEnabled"] = _config.GetValue<bool?>("AzureAd:Enabled") ?? false;
             return View();
         }
 

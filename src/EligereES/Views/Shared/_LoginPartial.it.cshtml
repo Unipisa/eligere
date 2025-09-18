@@ -1,4 +1,9 @@
 ﻿@using System.Security.Principal
+@using System.Security.Claims;
+
+@{
+    var i = User.Identity as ClaimsIdentity;
+}
 
 <ul class="navbar-nav">
     @if (User.Identity.IsAuthenticated)
@@ -6,17 +11,18 @@
         <li class="nav-item">
             <span class="navbar-text text-dark">
                 @EligereRoles.UserDisplayName(User)
-                <text>(
+                <text>
+                    (
                     @(EligereRoles.UserId(User))
                     @if (EligereRoles.Provider(User, null) != null)
                     {
                         <span>@EligereRoles.Provider(User, null)</span>
-                    });
-                )</text>
+                    })
+                </text>
             </span>
         </li>
         <li class="nav-item">
-            @if (EligereRoles.Provider(this.User, null) == "Spid")
+            @if (EligereRoles.Provider(this.User, null) == Constants.Spid)
             {
                 <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
             }

@@ -109,9 +109,12 @@
             }
             @if (ViewData["SAML2Enabled"] != null && (bool)ViewData["SAML2Enabled"])
             {
-                <a class="nav-link text-dark" href="/Saml2/SignIn?ReturnUrl=/">Accesso con SAML2</a>
+                <a class="nav-link text-dark" href="/Saml2/SignIn?ReturnUrl=/">Accesso con credenziali di ateneo</a>
             }
-        <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accesso con credenziali federate</a>
+            @if (ViewData["AzureADEnabled"] != null && (bool)ViewData["AzureADEnabled"])
+            {
+                <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accesso con credenziali federate</a>
+            }
     </div>
     <div class="text-center">
         <a class="nav-link text-dark" href="https://su.unipi.it/UsareEligere" target="_blank">Istruzioni</a>

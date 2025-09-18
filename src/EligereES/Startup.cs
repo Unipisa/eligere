@@ -73,8 +73,11 @@ namespace EligereES
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization();
 
-            //services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-            //    .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+            if (Configuration.GetValue<bool?>("AzureAd:Enabled") ?? false)
+            {
+                services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+                .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+            }
 
             if (Configuration.GetValue<bool?>("SAML2:Enabled") ?? false)
             {
@@ -95,25 +98,28 @@ namespace EligereES
                         });
                     options.Notifications.AcsCommandResultCreated = new Action<Sustainsys.Saml2.WebSso.CommandResult, Sustainsys.Saml2.Saml2P.Saml2Response>((commandResult, saml2Response) =>
                     {
-                        string ClaimsIssuer = "SAML2";
                         bool StrongAuthentication = Configuration.GetValue<bool?>("SAML2:StrongAuthentication") ?? false;
                         var identity = (ClaimsIdentity)commandResult.Principal.Identity;
 
                         string name = identity.Claims.Where(c => c.Type == "Name").First().Value;
                         string familyName = identity.Claims.Where(c => c.Type == "familyName").First().Value;
-                        string fiscalNumber = identity.Claims.Where(c => c.Type == "codice_fiscale").First().Value;
+                        string fiscalNumber = identity.Claims.Where(c => c.Type == "codice_fiscale").First().Value.Trim();
+
+                        // strip unnecessary prefix from fiscal number
+                        if(fiscalNumber.Length > 16)
+                            fiscalNumber = fiscalNumber.Substring(fiscalNumber.Length - 16, 16);
 
                         // string dateOfBirth = identity.Claims.Where(c => c.Type == "dateOfBirth").First().Value;
                         // dateOfBirth not used 
 
                         string email = "", userid = "";
 
-                        identity.AddClaim(new Claim(ClaimTypes.GivenName, name, ClaimValueTypes.String, ClaimsIssuer));
-                        identity.AddClaim(new Claim(ClaimTypes.Surname, familyName, ClaimValueTypes.String, ClaimsIssuer));
-                        identity.AddClaim(new Claim(ClaimTypes.Name, $"{name} {familyName}", ClaimValueTypes.String, ClaimsIssuer));
-                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fiscalNumber, ClaimValueTypes.String, ClaimsIssuer));
-                        identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, ClaimsIssuer));
-                        identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, ClaimsIssuer));
+                        identity.AddClaim(new Claim(ClaimTypes.GivenName, name, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Surname, familyName, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Name, $"{name} {familyName}", ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fiscalNumber, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, Models.Constants.SAML2Issuer));
                     });
                 });
             }
