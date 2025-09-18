@@ -117,6 +117,46 @@ namespace EligereES
                         identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fiscalNumber, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
                         identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
                         identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+
+                        //TODO: is this one the right place?
+                        var opt = new DbContextOptionsBuilder<ESDB>();
+                        using (var db = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
+                        {
+                            var p = db.Person.Where(pp => pp.PublicId == fiscalNumber).FirstOrDefault();
+                            Guid PersonPK;
+                            if (p != null)
+                            {
+                                PersonPK = p.Id;
+                            }
+                            else
+                            {
+                                PersonPK = Guid.NewGuid();
+                                p = new Person()
+                                {
+                                    Id = PersonPK,
+                                    PublicId = fiscalNumber,
+                                    FirstName = name,
+                                    LastName = familyName
+                                };
+                                db.Person.Add(p);
+                                db.SaveChanges();
+                                PersonPK = p.Id;
+                            }
+                            
+                            var ul = db.UserLogin.Where(uu => uu.UserId == p.PublicId && uu.Provider == Models.Constants.Federation).FirstOrDefault();
+                            if(ul == null)
+                            {
+                                ul = new UserLogin()
+                                {
+                                    Id = Guid.NewGuid(),
+                                    UserId = p.PublicId,
+                                    Provider = Models.Constants.Federation,
+                                    PersonFk = PersonPK
+                                };
+                                db.UserLogin.Add(ul);
+                                db.SaveChanges();
+                            }
+                        };
                     });
                 });
             }
@@ -158,6 +198,8 @@ namespace EligereES
                                 context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, context.Options.ClaimsIssuer));
 
                                 context.Identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, context.Options.ClaimsIssuer));
+
+
                             }
                         };
                     });
