@@ -104,15 +104,12 @@ namespace EligereES
                         string name = identity.Claims.Where(c => c.Type == "Name").First().Value;
                         string familyName = identity.Claims.Where(c => c.Type == "familyName").First().Value;
                         string fiscalNumber = identity.Claims.Where(c => c.Type == "codice_fiscale").First().Value.Trim();
-
                         // strip unnecessary prefix from fiscal number
                         if(fiscalNumber.Length > 16)
                             fiscalNumber = fiscalNumber.Substring(fiscalNumber.Length - 16, 16);
 
-                        // string dateOfBirth = identity.Claims.Where(c => c.Type == "dateOfBirth").First().Value;
-                        // dateOfBirth not used 
-
-                        string email = "", userid = "";
+                        //string dateOfBirth = identity.Claims.Where(c => c.Type == "dateOfBirth").First().Value;
+                        string email = "";
 
                         identity.AddClaim(new Claim(ClaimTypes.GivenName, name, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
                         identity.AddClaim(new Claim(ClaimTypes.Surname, familyName, ClaimValueTypes.String, Models.Constants.SAML2Issuer));

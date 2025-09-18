@@ -103,19 +103,6 @@ namespace EligereES.Models
                 IEnumerable<Claim> cc = i.First().Claims.Where(x=>x.Type == ClaimTypes.NameIdentifier && x.Issuer == Constants.SAML2Issuer);
                 if(cc.Any())
                     return cc.First().Value;    
-                //string ret = "";
-                //foreach (var c in i)
-                //{
-                //    foreach(var cc in c.Claims)
-                //    {
-                //        if (cc.Type == ClaimTypes.NameIdentifier)
-                //            ret += c.AuthenticationType + ":" + cc.Issuer + cc.Value + ";";
-                //    }
-                //    //ret += c.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).First().Value + ";";
-                //}
-                //return ret;
-
-                //return i.First().Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).First().Value;
             }
 
             return principal.Identity.Name;
