@@ -119,6 +119,8 @@ namespace EligereES
                         identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, Models.Constants.SAML2Issuer));
 
                         //TODO: is this one the right place?
+                        // The answer is NO: you shall not add any user at login time!
+                        /*
                         var opt = new DbContextOptionsBuilder<ESDB>();
                         using (var db = new ESDB(opt.UseSqlServer(Configuration.GetConnectionString("ESDB")).Options))
                         {
@@ -157,6 +159,7 @@ namespace EligereES
                                 db.SaveChanges();
                             }
                         };
+                        */
                     });
                 });
             }
