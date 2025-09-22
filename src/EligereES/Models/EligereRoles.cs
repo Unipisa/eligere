@@ -169,9 +169,9 @@ namespace EligereES.Models
                     var username = EligereRoles.UserId(principal);
                     if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
                     {
-                        var u = from l in esdb.UserLogin where Constants.Federation == l.Provider && username == l.UserId select l;
-                        if (await u.CountAsync() == 1) // Should be either 0 or 1
-                            personFk = u.First().PersonFk;
+                        var pp = from p in esdb.Person where p.PublicId == username select p;
+                        if (await pp.CountAsync() == 1)
+                            personFk = pp.First().Id;
                     }
                     else
                     {

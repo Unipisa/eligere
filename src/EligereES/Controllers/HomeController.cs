@@ -72,6 +72,7 @@ namespace EligereES.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         public IActionResult SAMLLogin()
         {
             /*

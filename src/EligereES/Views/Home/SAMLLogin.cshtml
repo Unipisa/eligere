@@ -6,6 +6,15 @@
 }
 <h1>@ViewData["Title"]</h1>
 
+<h2>Identity RAW</h2>
+<p>
+    <div>@User.Identity.Name</div>
+    @foreach (var x in User.Claims)
+    {
+        <div>@x.Value: <strong> @x.Type </strong></div>
+    }
+</p>
+
 <h2>Autenticazione</h2>
 <p>
     @foreach (var x in a)
