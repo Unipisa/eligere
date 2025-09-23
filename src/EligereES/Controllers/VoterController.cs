@@ -1,13 +1,4 @@
-﻿using System;
-using System.Buffers.Text;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using EligereES.Models;
+﻿using EligereES.Models;
 using EligereES.Models.Client;
 using EligereES.Models.DB;
 using EligereES.Models.Extensions;
@@ -19,6 +10,16 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using System;
+using System.Buffers.Text;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace EligereES.Controllers
 {
@@ -256,6 +257,9 @@ namespace EligereES.Controllers
         {
             var pfk = EligereRoles.PersonFK(this.User); // If AuthenticatedPerson person should be populated
             var person = await _context.Person.FindAsync(pfk);
+
+            TempData["OTPHintText"] = Configuration.GetValue(typeof(string), "OTPHintText") as string;
+            TempData["CommissionContactText"] = Configuration.GetValue(typeof(string), "CommissionContactText") as string;
 
             return View((ReadElectionConf(), person, await GetElections(person), isDesktopOS(Request.Headers["User-Agent"])));
         }

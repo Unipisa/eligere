@@ -6,7 +6,6 @@
 @{
     ViewData["Title"] = "Elettore";
     var (conf, voter, availableVotes, isDesktop) = Model;
-
 }
 
 @functions {
@@ -111,13 +110,13 @@
 *@
                                         <hr />
                                         <div class="input-group mb-3 w-75 offset-2">
-                                            <input type="text" class="form-control" autocomplete="off" placeholder="Codice accesso" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
+                                            <input type="text" class="form-control" autocomplete="off" placeholder="OTP" id="otpid" aria-label="Codice usa e getta per accedere al voto" aria-describedby="basic-addon2">
                                             <div class="input-group-append">
                                                 <button class="btn btn-outline-secondary" type="button" onclick="vote()">Procedi al voto</button>
                                             </div>
                                         </div>
-                                                    <p>Inserire il codice OTP ricevuto via Email all'indirizzo @EligereRoles.UserId(this.User).</p>
-                <p><em>In caso di mancata ricezione del messaggio di posta elettronica contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>
+                            <p>@TempData["OTPHintText"]</p>
+                            <p><em>@TempData["CommissionContactText"] <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">Commissione</a></em></p>
                 @*<p>Inserire il codice OTP ricevuto via SMS.</p>
                 <p><em>In caso di mancata ricezione dell'SMS contattare la <a href="@SelectCommissionLink(availableVotes[0].Item3)" style="text-decoration: underline" target="_blank">commissione di seggio</a></em></p>*@
                                         <!--

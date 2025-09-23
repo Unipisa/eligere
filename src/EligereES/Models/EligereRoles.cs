@@ -136,6 +136,20 @@ namespace EligereES.Models
                 return Guid.Parse(cq.First().Value);
             return null;
         }
+
+        public static bool LogoutEnable(ClaimsPrincipal principal, IConfiguration config)
+        {
+            if (principal == null) return false;
+
+            string section = "AzureAD";
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid).Any())
+                section = "Spid";
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
+                section = "SAML2";
+
+            return config.GetValue<bool?>(section + ":LogoutEnable") ?? false;
+        }
+
     }
 
     public class EligereClaimsTransformation : IClaimsTransformation

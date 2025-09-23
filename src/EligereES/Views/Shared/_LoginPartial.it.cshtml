@@ -1,8 +1,19 @@
-﻿@using System.Security.Principal
+﻿@inject IConfiguration _config
+@using System.Security.Principal
 @using System.Security.Claims;
 
 @{
     var i = User.Identity as ClaimsIdentity;
+    // show auth provider, except Federation
+    string provider = EligereRoles.Provider(User, null) ?? "";
+    if(!String.IsNullOrEmpty(provider))
+    {
+        if (provider == Constants.Federation)
+            provider = "";
+        else
+            provider = "[" + provider + "]";
+    }
+    bool showLogoutLink = EligereRoles.LogoutEnable(User, _config);
 }
 
 <ul class="navbar-nav">
@@ -12,23 +23,24 @@
             <span class="navbar-text text-dark">
                 @EligereRoles.UserDisplayName(User)
                 <text>
-                    (
-                    @(EligereRoles.UserId(User))
-                    @if (EligereRoles.Provider(User, null) != null)
-                    {
-                        <span>@EligereRoles.Provider(User, null)</span>
-                    })
+                    (@(EligereRoles.UserId(User)) @provider)
                 </text>
             </span>
         </li>
         <li class="nav-item">
-            @if (EligereRoles.Provider(this.User, null) == Constants.Spid)
+        @* 
+        TODO: verify logout url
+        *@
+            @if(showLogoutLink)
             {
-                <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
-            }
-            else
-            {
-                <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
+                if (EligereRoles.Provider(this.User, null) == Constants.Spid)
+                {
+                    <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
+                }
+                else
+                {
+                    <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
+                }
             }
         </li>
     }
