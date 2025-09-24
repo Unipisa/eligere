@@ -80,15 +80,15 @@ namespace EligereES.Controllers
              * 
              * */
             IDictionary<string, string?> Attributes = new Dictionary<string, string?>();
-            foreach(var i in User.Identities)
+            foreach (var i in User.Identities)
             {
                 foreach (var c in User.Claims)
                 {
                     Attributes["<strong>" + i.AuthenticationType + "</strong> / " + c.Type] = c.Value;
                 }
-                Attributes["-------------------"] = "------------------";   
-            }   
-              
+                Attributes["-------------------"] = "------------------";
+            }
+
             return View("SAMLLogin", Attributes);
         }
 
@@ -149,7 +149,7 @@ namespace EligereES.Controllers
         [AllowAnonymous]
         public IActionResult ExternalLogin()
         {
-            return Challenge(new AuthenticationProperties() { RedirectUri=Url.Action("Index", "Home") },  "Spid");
+            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Index", "Home") }, "Spid");
         }
 
         [Route("spid-logout")]
@@ -157,6 +157,11 @@ namespace EligereES.Controllers
         {
             await HttpContext.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        public async Task<IActionResult> Logout()
+        {
+            return View("Logout");
         }
 
     }
