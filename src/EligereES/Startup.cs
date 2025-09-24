@@ -101,8 +101,8 @@ namespace EligereES
                         bool StrongAuthentication = Configuration.GetValue<bool?>("SAML2:StrongAuthentication") ?? false;
                         var identity = (ClaimsIdentity)commandResult.Principal.Identity;
 
-                        string name = identity.Claims.Where(c => c.Type == "Name").First().Value;
-                        string familyName = identity.Claims.Where(c => c.Type == "familyName").First().Value;
+                        string name = identity.Claims.Where(c => c.Type == "urn:oid:2.5.4.42").First().Value;
+                        string familyName = identity.Claims.Where(c => c.Type == "urn:oid:2.5.4.4").First().Value;
                         string fiscalNumber = identity.Claims.Where(c => c.Type == "codice_fiscale").First().Value.Trim();
                         // strip unnecessary prefix from fiscal number
                         if(fiscalNumber.Length > 16)
