@@ -2,14 +2,17 @@
 
 @model (Person, Dictionary<Guid, Election>, int, List<Voter>)
 
-@{ var (voter, elections, ae, allowedVotes) = Model; }  
+@{
+    var (voter, elections, ae, allowedVotes) = Model;
+}
 
 <div class="container">
     <h1 class="display-4" style="font-size: 1.5rem;">Elettore @Model.Item1.FirstName @Model.Item1.LastName (@Model.Item1.PublicId )</h1>
 
-    @if (ViewData.ContainsKey("OTPResult")) { 
-      <em>Attenzione errore invio OTP: @ViewData["OTPResult"]</em>
-    } 
+    @if (ViewData.ContainsKey("OTPResult"))
+    {
+        <em>Attenzione errore invio OTP: @ViewData["OTPResult"]</em>
+    }
 
     @*Assumption: OTP and expiration for all allowed votes are the same in case of election day*@
     @if (allowedVotes.Count == 0)
@@ -20,6 +23,8 @@
     {
         <h1 class="text-center display-4">@allowedVotes[0].RecognitionFkNavigation.Otp</h1>
         <p>La sessione scadr&agrave; alle @allowedVotes[0].RecognitionFkNavigation.Validity.Value</p>
+        <hr />
+        <a asp-action="Index">Torna alla pagina di ricerca</a>
     }
     else
     {
