@@ -651,7 +651,7 @@ namespace EligereES.Controllers
             return true;
         }
 
-        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        //[AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet("Elections/ApproveUserLoginRequests")]
         public async Task<bool> ApproveUserLoginRequest()
         {

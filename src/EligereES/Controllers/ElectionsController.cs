@@ -27,7 +27,7 @@ namespace EligereES.Controllers
             _context = context;
         }
 
-        private async Task<Dictionary<K,V>> ToDict<G,K, V>(IQueryable<G> q, Func<G,K> keysel, Func<G,V> valsel)
+        private async Task<Dictionary<K, V>> ToDict<G, K, V>(IQueryable<G> q, Func<G, K> keysel, Func<G, V> valsel)
         {
             var ret = new Dictionary<K, V>();
             foreach (var g in (await q.ToListAsync()))
@@ -42,23 +42,24 @@ namespace EligereES.Controllers
         {
             var commissions =
                 await ToDict(from c in _context.PollingStationCommission
-                group c by c.ElectionFk into cg
-                select new { ElectionFk = cg.Key, Count = cg.Count() }, g => g.ElectionFk, g => g.Count);
+                             group c by c.ElectionFk into cg
+                             select new { ElectionFk = cg.Key, Count = cg.Count() }, g => g.ElectionFk, g => g.Count);
             var voters =
                 await ToDict(from v in _context.Voter
-                group v by v.ElectionFk into vg
-                select new { ElectionFk = vg.Key, Count = vg.Count() }, g => g.ElectionFk, g => g.Count);
+                             group v by v.ElectionFk into vg
+                             select new { ElectionFk = vg.Key, Count = vg.Count() }, g => g.ElectionFk, g => g.Count);
             var ballots =
-                await ToDict(from b in _context.BallotName where !b.IsCandidate.HasValue || b.IsCandidate==true
-                group b by b.ElectionFk into bg
-                select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
+                await ToDict(from b in _context.BallotName
+                             where !b.IsCandidate.HasValue || b.IsCandidate == true
+                             group b by b.ElectionFk into bg
+                             select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
             var ballotParties =
                 await ToDict(from b in _context.BallotName
                              where b.IsCandidate == false
                              group b by b.ElectionFk into bg
                              select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
             var elections = await _context.Election.ToListAsync();
-            
+
 
             return View((elections, commissions, voters, ballots, ballotParties));
         }
@@ -234,7 +235,8 @@ namespace EligereES.Controllers
 
             await _context.SaveChangesAsync();
 
-            if (presidentFK.HasValue) { 
+            if (presidentFK.HasValue)
+            {
                 var memb = new PollingStationCommissioner();
                 memb.Id = Guid.NewGuid();
                 memb.PersonFk = presidentFK.Value;
@@ -369,10 +371,10 @@ namespace EligereES.Controllers
 
                 foreach (var a in (from l in lines where l.Status == null && !existingpids.Contains(l.PublicId) select l))
                 {
-                    result.Add((null, a, "Person missing")); 
+                    result.Add((null, a, "Person missing"));
                 }
 
-                var voters = (from v in _context.Voter where v.ElectionFk==id select v.PersonFk).ToArray();
+                var voters = (from v in _context.Voter where v.ElectionFk == id select v.PersonFk).ToArray();
 
                 foreach (var p in (from pp in q where voters.Contains(pp.Id) select pp))
                 {
@@ -415,10 +417,11 @@ namespace EligereES.Controllers
                 searchString = currentFilter;
             }
 
-            var people = from p in _context.Person 
-                         join c in _context.EligibleCandidate on p.Id equals c.PersonFk 
+            var people = from p in _context.Person
+                         join c in _context.EligibleCandidate on p.Id equals c.PersonFk
                          join bn in _context.BallotName on c.BallotNameFk equals bn.Id
-                         where bn.ElectionFk == id select new EligibleCandidateBallotNameViewModel { Person = p, BallotName = bn };
+                         where bn.ElectionFk == id
+                         select new EligibleCandidateBallotNameViewModel { Person = p, BallotName = bn };
             if (!String.IsNullOrEmpty(searchString))
             {
                 people = people.Where(p => p.Person.LastName.Contains(searchString) || p.Person.FirstName.Contains(searchString) || p.Person.PublicId.Contains(searchString));
@@ -530,8 +533,8 @@ namespace EligereES.Controllers
         public async Task<IActionResult> RemoveVoter(Guid electionid, Guid personid)
         {
             var v = await (from c in _context.Voter
-                              where c.ElectionFk == electionid && c.PersonFk == personid
-                              select c).FirstOrDefaultAsync();
+                           where c.ElectionFk == electionid && c.PersonFk == personid
+                           select c).FirstOrDefaultAsync();
 
             if (v == null) throw new Exception("Voter not found");
 
@@ -582,7 +585,7 @@ namespace EligereES.Controllers
 
             foreach (var com in commissions)
             {
-                if (updatedgid) 
+                if (updatedgid)
                     com.PollingStationGroupId = srce.PollingStationGroupId;
 
                 var ncom = new PollingStationCommission()
@@ -652,7 +655,7 @@ namespace EligereES.Controllers
                              join v in _context.Voter on e.Id equals v.ElectionFk
                              //group new { Election = e, Vote(e, v) } by v.Id into g 
                              where v.Vote.HasValue
-                             select new { ElectionID = e.Id, ElectionName = e.Name, ElectionConfiguration=e.Configuration, Vote = v.Vote };
+                             select new { ElectionID = e.Id, ElectionName = e.Name, ElectionConfiguration = e.Configuration, Vote = v.Vote };
 
             var counters = new Dictionary<Guid, int>();
             foreach (var v in await activeelections.ToListAsync())
@@ -672,6 +675,30 @@ namespace EligereES.Controllers
 
             return View((counters, elnames));
         }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        public async Task<IActionResult> Registry(Guid? id, string searchString, int? pageNumber = 1)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            Election election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            IQueryable<RegistryVoter> voters = ElectionMgmt.GetVoters(id.Value, _context);
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                voters = voters.Where(v => v.LastName.Contains(searchString) || v.PublicID.Contains(searchString));
+            }
+            return View((await PaginatedList<RegistryVoter>.CreateAsync(voters, (int)pageNumber, 50), election.Description));
+        }
+
 
         private async Task<List<Election>> GetUpcomingElections()
         {

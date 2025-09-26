@@ -81,7 +81,8 @@
                     </a>
                 </td>
                 <td>
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a><br/>
+                    <a asp-action="Registry" asp-route-id="@item.Id">Registro votanti</a>
                     @if (!item.Started.HasValue)
                     {
                         <text>
@@ -128,7 +129,8 @@
                     </dl>
                 </td>
                 <td>
-                    <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a><br/>
+                    <a asp-action="Registry" asp-route-id="@item.Id">Registro votanti</a>
                 </td>
             </tr>
         }
