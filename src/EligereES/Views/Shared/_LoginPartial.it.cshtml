@@ -6,7 +6,7 @@
     var i = User.Identity as ClaimsIdentity;
     // show auth provider, except Federation
     string provider = EligereRoles.Provider(User, null) ?? "";
-    if(!String.IsNullOrEmpty(provider))
+    if (!String.IsNullOrEmpty(provider))
     {
         if (provider == Constants.Federation)
             provider = "";
@@ -28,20 +28,39 @@
             </span>
         </li>
         <li class="nav-item">
-        @* 
+            @* 
         TODO: verify logout url
         *@
-            @if(showLogoutLink)
+            @if (showLogoutLink)
             {
-                if (EligereRoles.Provider(this.User, null) == Constants.Spid)
+                switch (EligereRoles.Provider(this.User, null))
                 {
-                    <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
+                    case Constants.Spid:
+                        {
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
+                            break;
+                        }
+                    case Constants.Federation:
+                        {
+                            <a class="nav-link text-dark" asp-controller="SAML2" asp-action="Logout">Disconnetti.</a>
+                            break;
+                        }
+                    default:
+                        {
+                            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
+                            break;
+                        }
                 }
-                else
-                {
-                    <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
-                }
-            } else
+                // if (EligereRoles.Provider(this.User, null) == Constants.Spid)
+                // {
+                //     <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
+                // }
+                // else
+                // {
+                //     <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
+                // }
+            }
+            else
             {
                 <a class="nav-link text-dark" asp-controller="Home" asp-action="Logout">Disconnetti</a>
             }

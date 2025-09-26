@@ -1,0 +1,15 @@
+﻿@model string
+<div class="text-center">
+    <h1 class="display-4">Disconnessione effettuata</h1>
+    <p>
+       Stai per essere reindirizzato alla pagina iniziale di Eligere.
+    </p>
+</div>
+
+@section Scripts {
+    <script>
+            window.setTimeout(function(){
+            window.location.href = "@Model";
+        }, 5000);
+    </script>
+}

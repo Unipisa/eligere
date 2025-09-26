@@ -2,8 +2,8 @@
 {
     public static class Constants
     {
-        public static string Spid = "Spid";
-        public static string Federation = "Federation";
-        public static string SAML2Issuer = "SAML2";
+        public const string Spid = "Spid";
+        public const string Federation = "Federation";
+        public const string SAML2Issuer = "SAML2";
     }
 }
