@@ -700,6 +700,23 @@ namespace EligereES.Controllers
         }
 
 
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        public async Task<IActionResult> RegistryDownload(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            Election election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+
+            IQueryable<RegistryVoter> voters = ElectionMgmt.GetVoters(id.Value, _context);
+            var csvBytes = CsvUtils.ExportToCsv(voters.ToList());
+            return File(csvBytes, "text/csv", "Votanti per " + election.Description.Trim() + ".csv");
+        }
         private async Task<List<Election>> GetUpcomingElections()
         {
             var q = from e in _context.Election

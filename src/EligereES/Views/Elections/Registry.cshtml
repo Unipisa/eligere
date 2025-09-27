@@ -9,12 +9,14 @@
 
 @if(Model.Item1.Any())
 {
+    string id = ViewContext.RouteData.Values["id"]?.ToString();
     <form asp-action="Registry" method="get">
         <div class="form-actions no-color">
             <p>
                 Cerca per cognome o codice fiscale: <input type="text" name="SearchString" value="@ViewData["CurrentFilter"]" />
                 <input type="submit" value="Search" class="btn btn-default" /> |
-                <a asp-action="Registry">Back to Full List</a>
+                <a asp-action="Registry">Back to Full List</a> |
+                <a asp-action="RegistryDownload" asp-route-id="@id">Download</a>
             </p>
         </div>
     </form>
