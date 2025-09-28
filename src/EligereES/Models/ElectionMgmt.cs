@@ -25,7 +25,7 @@ namespace EligereES.Models
             var q = from ev in esdb.Voter
                     join p in esdb.Person on ev.PersonFk equals p.Id
                     join e in esdb.Election on ev.ElectionFk equals e.Id    
-                    where ev.ElectionFk == electionFK
+                    where ev.ElectionFk == electionFK && ev.Vote.HasValue
                     orderby p.LastName, p.FirstName
                     select new RegistryVoter
                     {

@@ -7,8 +7,11 @@
 <h1>@Model.Item2</h1>
 <h3>@ViewData["Title"]</h3>
 
-@if(Model.Item1.Any())
+@if (Model.Item1.Any())
 {
+    <div>
+        Voti registrati: <span class="badge badge-primary badge-pill">@Model.Item1.Count</span>
+    </div>
     string id = ViewContext.RouteData.Values["id"]?.ToString();
     <form asp-action="Registry" method="get">
         <div class="form-actions no-color">
@@ -51,6 +54,12 @@
             }
         </tbody>
     </table>
+}
+else
+{
+    <div>
+        <p>Nessun votante trovato</p>
+    </div>
 }
 
 
