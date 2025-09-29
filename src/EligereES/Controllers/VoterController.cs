@@ -260,7 +260,6 @@ namespace EligereES.Controllers
 
             TempData["OTPHintText"] = Configuration.GetValue(typeof(string), "OTPHintText") as string;
             TempData["CommissionContactText"] = Configuration.GetValue(typeof(string), "CommissionContactText") as string;
-            TempData["CommissionContactUrl"] = Configuration.GetValue(typeof(string), "CommissionContactUrl") as string;
 
             return View((ReadElectionConf(), person, await GetElections(person), isDesktopOS(Request.Headers["User-Agent"])));
         }
