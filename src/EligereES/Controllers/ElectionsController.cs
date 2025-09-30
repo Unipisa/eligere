@@ -692,11 +692,12 @@ namespace EligereES.Controllers
             ViewData["CurrentFilter"] = searchString;
 
             IQueryable<RegistryVoter> voters = ElectionMgmt.GetVoters(id.Value, _context);
+            int count = await voters.CountAsync();
             if (!String.IsNullOrEmpty(searchString))
             {
                 voters = voters.Where(v => v.LastName.Contains(searchString) || v.PublicID.Contains(searchString));
             }
-            return View((await PaginatedList<RegistryVoter>.CreateAsync(voters, (int)pageNumber, 50), election.Description));
+            return View((await PaginatedList<RegistryVoter>.CreateAsync(voters, (int)pageNumber, 50), election.Description, count));
         }
 
 

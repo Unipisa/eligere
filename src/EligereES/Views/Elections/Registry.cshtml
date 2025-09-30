@@ -1,4 +1,4 @@
-﻿@model (PaginatedList<EligereES.Models.RegistryVoter>, string)
+﻿@model (PaginatedList<EligereES.Models.RegistryVoter>, string, int count)
 
 @{
     ViewData["Title"] = "Elenco votanti";
@@ -10,7 +10,7 @@
 @if (Model.Item1.Any())
 {
     <div>
-        Voti registrati: <span class="badge badge-primary badge-pill">@Model.Item1.Count</span>
+        Voti registrati: <span class="badge badge-primary badge-pill">@Model.Item3</span>
     </div>
     string id = ViewContext.RouteData.Values["id"]?.ToString();
     <form asp-action="Registry" method="get">
