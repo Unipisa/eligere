@@ -1,0 +1,105 @@
+﻿@model EligereES.Models.Client.ElectionUI
+
+@{
+    ViewData["Title"] = "Configuration";
+
+    string NoNullVoteChecked = (Model.ElectionConfiguration.NoNullVote) ? "checked" : "";
+    string ActiveForStronglyAuthenticatedUsersChecked = (Model.ElectionConfiguration.ActiveForStronglyAuthenticatedUsers) ? "checked" : "";
+}
+
+<h1>Configuration</h1>
+
+<h4>@Model.Name</h4>
+<hr />
+<div class="row">
+    <div class="col-md-12">
+        <form asp-action="Config">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <div class="card">
+                    @* <div class="card-header">Configuration</div> *@
+                    <div class="card-body">
+
+                        <div class="form-group row">
+                            <label for="CandidatesType" class="col-sm-4 col-form-label">CandidatesType</label>
+                            <div class="col-sm-4">
+                                <select name="CandidatesType" id="CandidatesType" class="custom-select" asp-items="Model.CandidatesTypeOptions">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="NoNullVote" class="col-sm-4 col-form-label">NoNullVote</label>
+                            <div class="col-sm-2">
+                                <input type="checkbox" class="form-check-input" name="NoNullVote" id="NoNullVote" size="2" value="1" @NoNullVoteChecked />
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label for="NumPreferences" class="col-sm-4 col-form-label">NumPreferences</label>
+                            <div class="col-sm-2">
+                                <input type="text" class="form-control" name="NumPreferences" id="NumPreferences" size="2" value="@Model.ElectionConfiguration.NumPreferences" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="NumPartyPreferences" class="col-sm-4 col-form-label">NumPartyPreferences</label>
+                            <div class="col-sm-2">
+                                <input type="text" class="form-control" name="NumPartyPreferences" id="NumPartyPreferences" size="2" value="@Model.ElectionConfiguration.NumPartyPreferences" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="IdentificationType" class="col-sm-4 col-form-label">IdentificationType</label>
+                            <div class="col-sm-4">
+                                <select name="IdentificationType" id="IdentificationType" class="custom-select" asp-items="Model.IdentificationTypeOptions">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="SamplingRate" class="col-sm-4 col-form-label">SamplingRate
+                                <br /><small>Inserire un valore tra 0 e 1</small>
+                            </label>
+                            <div class="col-sm-2">
+                                <input type="text" class="form-control" name="SamplingRate" id="SamplingRate" size="4" value="@Model.ElectionConfiguration.SamplingRate" />
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="ActiveForStronglyAuthenticatedUsers" class="col-sm-4 col-form-label">ActiveForStronglyAuthenticatedUsers</label>
+                            <div class="col-sm-2">
+                                <input type="checkbox" class="form-check-input" name="ActiveForStronglyAuthenticatedUsers" id="ActiveForStronglyAuthenticatedUsers" size="2" value="1" @ActiveForStronglyAuthenticatedUsersChecked />
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function SetVisibility() {
+            $("#NumPartyPreferences").prop("disabled", ($("#CandidatesType").val() != 3));
+            $("#SamplingRate").prop("disabled", ($("#IdentificationType").val() != 2));
+        }
+
+        $(function() {
+            SetVisibility();
+
+            $("#CandidatesType").on("change",SetVisibility);
+            $("#IdentificationType").on("change",SetVisibility);
+        });
+    </script>
+}

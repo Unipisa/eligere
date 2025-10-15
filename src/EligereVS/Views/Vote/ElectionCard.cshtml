@@ -102,9 +102,10 @@
     }
 
     function generateCandidateList(election) {
-        var hasCandidates = election.extensions.HasCandidates != "False";
-        var noNullVote = election.extensions.NoNullVote == "True";
+        var noNullVote = election.
+        NoNullVote == "True";
         var candidateType = election.extensions.CandidatesType;
+        var hasCandidates = candidateType != "Implicit";
         var numvotes = election.votes_allowed;
         var selections = election.ballot_selections;
         var numsel = selections.length;

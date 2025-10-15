@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace EligereES.Models.Extensions
 {
@@ -19,7 +20,7 @@ namespace EligereES.Models.Extensions
         Implicit = 0,
         OnlyExplicit = 1,
         ImplicitAndExplicit = 2,
-        Party=3
+        Party = 3
     }
 
     public enum IdentificationType
@@ -44,6 +45,45 @@ namespace EligereES.Models.Extensions
             return JsonSerializer.Deserialize<ElectionConfiguration>(data);
         }
 
+        public List<SelectListItem> CandidatesTypeOptions()
+        {
+            return Enum.GetValues(typeof(CandidatesType))
+                   .Cast<CandidatesType>()
+                   .Select(e => new SelectListItem
+                   {
+                       Value = ((int)e).ToString(),
+                       Text = e.ToString(),
+                       Selected = (e == CandidatesType)
+                   })
+                   .ToList();
+        }
+        public List<SelectListItem> IdentificationTypeOptions()
+        {
+            return Enum.GetValues(typeof(IdentificationType))
+                   .Cast<IdentificationType>()
+                   .Select(e => new SelectListItem
+                   {
+                       Value = ((int)e).ToString(),
+                       Text = e.ToString(),
+                       Selected = (e == IdentificationType)
+                   })
+                   .ToList();
+        }
+
+        public List<(string, string)> Elements()
+        {
+            List<(string, string)> ret = new();
+            ret.Add(new("CandidatesType", CandidatesType.ToString()));
+            //ret.Add(new("HasCandidates", HasCandidates.ToString()));
+            ret.Add(new("NoNullVote", IdentificationType.ToString()));
+            ret.Add(new("NumPreferences", NumPreferences.ToString()));
+            ret.Add(new("NumPartyPreferences", NumPartyPreferences.ToString()));
+            ret.Add(new("IdentificationType", IdentificationType.ToString()));
+            ret.Add(new("SamplingRate", SamplingRate.ToString()));
+            ret.Add(new("ActiveForStronglyAuthenticatedUsers", ActiveForStronglyAuthenticatedUsers.ToString()));
+            return ret;
+        }
+        #region dismissed properties
         public string Notes { get; set; }
 
         public double ValidityQuorum { get; set; }
@@ -59,13 +99,16 @@ namespace EligereES.Models.Extensions
         public QuorumType RoundQuorumType { get; set; }
 
         public bool WeightedVoters { get; set; }
+        public int EligibleSeats { get; set; }
+
+        #endregion
 
         public int NumPreferences { get; set; }
 
         // Used to have joint or disjoint vote, used only with Party Candidate type
         public int NumPartyPreferences { get; set; }
 
-        // Deprecated
+        // Deprecated, 
         public bool HasCandidates { get; set; }
 
         public CandidatesType CandidatesType { get; set; }
@@ -74,8 +117,6 @@ namespace EligereES.Models.Extensions
 
         // 0 means as much as possible with recognizers
         public double SamplingRate { get; set; }
-
-        public int EligibleSeats { get; set; }
 
         // if true the election card will only contains blank vote not null vote option
         public bool NoNullVote { get; set; }

@@ -1,19 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using CsvHelper;
+using EligereES.Models;
+using EligereES.Models.Client;
+using EligereES.Models.DB;
+using EligereES.Models.Extensions;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using EligereES.Models;
-using EligereES.Models.DB;
-using EligereES.Models.Client;
-using CsvHelper;
-using Microsoft.AspNetCore.Http;
-using System.Globalization;
-using EligereES.Models.Extensions;
-using Microsoft.AspNetCore.Authorization;
 using SQLitePCL;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EligereES.Controllers
 {
@@ -101,7 +102,7 @@ namespace EligereES.Controllers
                 election.Configuration = _context.ElectionType.Single(q => q.Id == election.ElectionTypeFk).DefaultConfiguration;
                 _context.Add(election);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Config", new { id = election.Id });
             }
             ViewData["ElectionTypeFk"] = new SelectList(_context.ElectionType, "Id", "Name", election.ElectionTypeFk);
             return View(election);
@@ -120,7 +121,7 @@ namespace EligereES.Controllers
             {
                 return NotFound();
             }
-            ViewData["ElectionType"] = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
+            ViewBag.ElectionType = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
             return View(election);
         }
 
@@ -209,11 +210,75 @@ namespace EligereES.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ElectionType"] = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
+            ViewBag.ElectionType = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
             return View(election);
         }
 
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        public async Task<IActionResult> Config(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+            ElectionUI ui = new ElectionUI(election);
+            return View(ui);
+        }
+
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Config(Guid? id, int NumPreferences, int NumPartyPreferences, int CandidatesType, int IdentificationType, double SamplingRate, int? NoNullVote, int? ActiveForStronglyAuthenticatedUsers)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            var election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+
+            ElectionConfiguration conf = ElectionConfiguration.FromJson(election.Configuration);
+            try
+            {
+                conf.NumPreferences = NumPreferences;
+                conf.NumPartyPreferences = NumPartyPreferences;
+                conf.CandidatesType = (CandidatesType)CandidatesType;
+                conf.HasCandidates = (conf.CandidatesType != Models.Extensions.CandidatesType.Implicit) ;
+                conf.IdentificationType = (IdentificationType)IdentificationType;
+                conf.SamplingRate = SamplingRate;
+                conf.NoNullVote = NoNullVote == 1;
+                conf.ActiveForStronglyAuthenticatedUsers = ActiveForStronglyAuthenticatedUsers == 1;
+            } catch(Exception)
+            {
+                return View("CustomError",("Parametri di configurazione elezione","Non è stato possibile codificare i parametri di configurazione, verificare il tipo di valori inseriti"));
+            }
+
+            election.Configuration = conf.ToJson();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return View("CustomError", ("Salvataggio configurazione elezione", "Non è stato possibile salvare i parametri di configurazione"));
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+
+
+            [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet]
         public async Task<IActionResult> EditPollingStations(Guid id)
         {
@@ -296,7 +361,7 @@ namespace EligereES.Controllers
         {
             ViewData["electionId"] = id;
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["LastNameSortParam"] = String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
+            ViewData["LastNameSortParam"] = System.String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
             ViewData["CurrentFilter"] = searchString;
 
             if (searchString != null)
@@ -309,7 +374,7 @@ namespace EligereES.Controllers
             }
 
             var people = from p in _context.Person join v in _context.Voter on p.Id equals v.PersonFk where v.ElectionFk == id select p;
-            if (!String.IsNullOrEmpty(searchString))
+            if (!System.String.IsNullOrEmpty(searchString))
             {
                 people = people.Where(p => p.LastName.Contains(searchString) || p.FirstName.Contains(searchString) || p.PublicId.Contains(searchString));
             }
@@ -405,7 +470,7 @@ namespace EligereES.Controllers
         {
             ViewData["electionId"] = id;
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["LastNameSortParam"] = String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
+            ViewData["LastNameSortParam"] = System.String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
             ViewData["CurrentFilter"] = searchString;
 
             if (searchString != null)
@@ -422,7 +487,7 @@ namespace EligereES.Controllers
                          join bn in _context.BallotName on c.BallotNameFk equals bn.Id
                          where bn.ElectionFk == id
                          select new EligibleCandidateBallotNameViewModel { Person = p, BallotName = bn };
-            if (!String.IsNullOrEmpty(searchString))
+            if (!System.String.IsNullOrEmpty(searchString))
             {
                 people = people.Where(p => p.Person.LastName.Contains(searchString) || p.Person.FirstName.Contains(searchString) || p.Person.PublicId.Contains(searchString));
             }
@@ -693,7 +758,7 @@ namespace EligereES.Controllers
 
             IQueryable<RegistryVoter> voters = ElectionMgmt.GetVoters(id.Value, _context);
             int count = await voters.CountAsync();
-            if (!String.IsNullOrEmpty(searchString))
+            if (!System.String.IsNullOrEmpty(searchString))
             {
                 voters = voters.Where(v => v.LastName.Contains(searchString) || v.PublicID.Contains(searchString));
             }

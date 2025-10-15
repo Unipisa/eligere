@@ -152,6 +152,7 @@ else
                     <th>@Html.DisplayNameFor(modelItem => ps.PresidentFkNavigation.PersonFkNavigation.FirstName)</th>
                     <th>@Html.DisplayNameFor(modelItem => ps.PresidentFkNavigation.PersonFkNavigation.LastName)</th>
                     <th>@Html.DisplayNameFor(modelItem => ps.PresidentFkNavigation.PersonFkNavigation.PublicId)</th>
+                    <th>Virtual Room</th>
                     <th></th>
                 </tr>
             </thead>
@@ -166,7 +167,10 @@ else
                         <td>@Html.DisplayFor(modelItem => c.PersonFkNavigation.FirstName)</td>
                         <td>@Html.DisplayFor(modelItem => c.PersonFkNavigation.LastName)</td>
                         <td>@Html.DisplayFor(modelItem => c.PersonFkNavigation.PublicId)</td>
-                        <td>@Html.ActionLink("Remove", "RemovePSCommissioner", new { commissionerId = c.Id })</td>
+                        <td>@Html.DisplayFor(modelItem => c.VirtualRoom)</td>
+                        <td>@Html.ActionLink("Remove", "RemovePSCommissioner", new { commissionerId = c.Id })<br />
+                            @Html.ActionLink("Imposta Virtual room", "SetVR", new { commissionerId = c.Id })
+                        </td>
                     </tr>
                 }
             </tbody>

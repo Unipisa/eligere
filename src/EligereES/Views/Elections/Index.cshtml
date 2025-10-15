@@ -33,9 +33,6 @@
                 Date
             </th>
             <th>
-                Chiusura liste
-            </th>
-            <th>
                 Commissioni
             </th>
             <th>
@@ -63,9 +60,6 @@
                     </dl>                    
                 </td>
                 <td>
-                    <span class="smallerfont">@(item.ElectorateListClosingDate?.ToString("dd/MM/yyyy") ?? "")</span>
-                </td>
-                <td>
                     <a asp-action="EditPollingStations" asp-route-id="@item.Id">
                         @(commissions.ContainsKey(item.Id) ? commissions[item.Id] : 0)
                     </a>
@@ -82,13 +76,13 @@
                 </td>
                 <td>
                     <a asp-action="Details" asp-route-id="@item.Id">Details</a><br/>
-                    <a asp-action="Registry" asp-route-id="@item.Id">Registro votanti</a>
+                    <a asp-action="Registry" asp-route-id="@item.Id">Registro votanti</a><br />
                     @if (!item.Started.HasValue)
                     {
                         <text>
-                    | <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
                     | <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-
+                    | <a asp-action="Config" asp-route-id="@item.Id">Config</a>
                         </text>
                     }
                 </td>
