@@ -113,11 +113,43 @@
     </div>
 </div>
 
+
+<div class="modal" tabindex="-1" id="modal-vr">
+    <div class="modal-dialog  modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Imposta virtual room</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Chiudi" onclick="modalClose();">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="@Url.Action("SetVRLink")" method="POST" name="SetVRLink" id="SetVRLink">
+                    @Html.AntiForgeryToken()
+                    <p>
+                        <span id="vr-name"></span>
+                        <input type="hidden" value="@Model.FirstOrDefault().ElectionFk" name="ElectionId" id="ElectionId" />
+                        <input type="hidden" value="" name="commissionerid" id="commissionerid" />
+                        <input type="text" size="50" value="" name="vr" id="vr" />
+                    </p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="modalClose();">Chiudi</button>
+                <button type="button" class="btn btn-primary" onclick="modalSubmit();">Salva e chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 @if (Model.Count == 0)
 {
     <p>There are no polling stations configured for election <em>@ViewData["ElectionName"]</em></p>
-    <p>Add a <a href="javascript:$('#newcommissionform').modal('show')">new polling station commission</a> to start
-    or <a asp-controller="Elections" asp-action="ClonePSCommissions" asp-route-id="@ViewData["ElectionId"]">clone</a> one from another election</p>
+    <p>
+        Add a <a href="javascript:$('#newcommissionform').modal('show')">new polling station commission</a> to start
+        or <a asp-controller="Elections" asp-action="ClonePSCommissions" asp-route-id="@ViewData["ElectionId"]">clone</a> one from another election
+    </p>
 }
 else
 {
@@ -135,7 +167,9 @@ else
         {
             <h3>
                 #@(count++). Polling station  - @ps.Location @if (ps.DigitalLocation != null)
-                {<span>(<a href="@ps.DigitalLocation">Virtual</a>)</span>}
+                {
+                    <span>(<a href="@ps.DigitalLocation">Virtual</a>)</span>
+                }
             </h3>
         }
 
@@ -159,17 +193,26 @@ else
             <tbody>
                 @foreach (var c in ps.PollingStationCommissioner.OrderBy(c => c.PersonFkNavigation.LastName))
                 {
+                    string vrLabel = c.VirtualRoom == null ? "" : "Test";
+                    string vrLink = "";
+                    if (vrLabel.Length > 0)
+                    {
+                        vrLink = "<a href='" + c.VirtualRoom + "' target='_blank'>" + vrLabel + "</a>";
+                    }
                     <tr>
                         <td>
                             @if (c.Id == ps.PresidentFk)
-                            {<span><em>*</em></span>}
+                            {
+                                <span><em>*</em></span>
+                            }
                         </td>
                         <td>@Html.DisplayFor(modelItem => c.PersonFkNavigation.FirstName)</td>
                         <td>@Html.DisplayFor(modelItem => c.PersonFkNavigation.LastName)</td>
                         <td>@Html.DisplayFor(modelItem => c.PersonFkNavigation.PublicId)</td>
-                        <td>@Html.DisplayFor(modelItem => c.VirtualRoom)</td>
-                        <td>@Html.ActionLink("Remove", "RemovePSCommissioner", new { commissionerId = c.Id })<br />
-                            @Html.ActionLink("Imposta Virtual room", "SetVR", new { commissionerId = c.Id })
+                        <td>@Html.Raw(vrLink)</td>
+                        <td>
+                            @Html.ActionLink("Remove", "RemovePSCommissioner", new { commissionerId = c.Id })<br />
+                            <a href="#" class="vrlink" data-itemid="@c.Id" data-itemvalue="@c.VirtualRoom" data-name="@c.PersonFkNavigation.FirstName @c.PersonFkNavigation.LastName">Imposta Virtual room</a>
                         </td>
                     </tr>
                 }
@@ -201,4 +244,43 @@ else
             </table>
         }
     }
+}
+@section Scripts {
+    <script>
+
+        function modalClose() {
+            $("#modal-vr").hide();
+        }
+
+        function modalSubmit() {
+            linkvalue = $("#vr").val();
+            if(isValidURL(linkvalue))
+                $("#SetVRLink").submit();
+            else
+                window.alert("Url non valida");
+        }
+
+        function isValidURL(str) {
+          try {
+            new URL(str);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        $(function() {
+            $(".vrlink").on("click",function(e) {
+                e.preventDefault();
+                commissionername = $(this).data("name");
+                linkvalue = $(this).data("itemvalue");
+                linkid = $(this).data("itemid");
+                $("#vr").val(linkvalue);
+                $("#commissionerid").val(linkid);
+                $("#vr-name").text(commissionername);
+                $("#modal-vr").show();
+            });
+
+        });
+    </script>
 }

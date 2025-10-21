@@ -253,14 +253,15 @@ namespace EligereES.Controllers
                 conf.NumPreferences = NumPreferences;
                 conf.NumPartyPreferences = NumPartyPreferences;
                 conf.CandidatesType = (CandidatesType)CandidatesType;
-                conf.HasCandidates = (conf.CandidatesType != Models.Extensions.CandidatesType.Implicit) ;
+                conf.HasCandidates = (conf.CandidatesType != Models.Extensions.CandidatesType.Implicit);
                 conf.IdentificationType = (IdentificationType)IdentificationType;
                 conf.SamplingRate = SamplingRate;
                 conf.NoNullVote = NoNullVote == 1;
                 conf.ActiveForStronglyAuthenticatedUsers = ActiveForStronglyAuthenticatedUsers == 1;
-            } catch(Exception)
+            }
+            catch (Exception)
             {
-                return View("CustomError",("Parametri di configurazione elezione","Non è stato possibile codificare i parametri di configurazione, verificare il tipo di valori inseriti"));
+                return View("CustomError", ("Parametri di configurazione elezione", "Non è stato possibile codificare i parametri di configurazione, verificare il tipo di valori inseriti"));
             }
 
             election.Configuration = conf.ToJson();
@@ -278,7 +279,7 @@ namespace EligereES.Controllers
 
 
 
-            [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet]
         public async Task<IActionResult> EditPollingStations(Guid id)
         {
@@ -783,6 +784,44 @@ namespace EligereES.Controllers
             var csvBytes = CsvUtils.ExportToCsv(voters.ToList());
             return File(csvBytes, "text/csv", "Votanti per " + election.Description.Trim() + ".csv");
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetVRLink(Guid? ElectionId, Guid? commissionerid, string vr)
+        {
+            if (ElectionId == null || commissionerid == null)
+            {
+                return NotFound();
+            }
+            Election election = await _context.Election.FindAsync(ElectionId);
+            if (election == null)
+            {
+                return NotFound();
+            }
+            PollingStationCommissioner c = await _context.PollingStationCommissioner.FindAsync(commissionerid);
+            if (c == null)
+            {
+                return NotFound();
+            }
+            if (System.String.IsNullOrEmpty(vr))
+            {
+                return BadRequest();
+            }
+
+            c.VirtualRoom = vr;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                return View("CustomError", ("Impossibile registrare l'aula virtuale", e.Message));
+            }
+            return RedirectToAction("EditPollingStations", new { id = ElectionId });
+
+        }
+
+
         private async Task<List<Election>> GetUpcomingElections()
         {
             var q = from e in _context.Election
