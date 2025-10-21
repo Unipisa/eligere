@@ -75,7 +75,7 @@ namespace EligereES.Models.Extensions
             List<(string, string)> ret = new();
             ret.Add(new("CandidatesType", CandidatesType.ToString()));
             //ret.Add(new("HasCandidates", HasCandidates.ToString()));
-            ret.Add(new("NoNullVote", IdentificationType.ToString()));
+            ret.Add(new("NoNullVote", NoNullVote.ToString()));
             ret.Add(new("NumPreferences", NumPreferences.ToString()));
             ret.Add(new("NumPartyPreferences", NumPartyPreferences.ToString()));
             ret.Add(new("IdentificationType", IdentificationType.ToString()));
