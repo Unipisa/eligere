@@ -297,7 +297,10 @@ namespace EligereES.Controllers
         {
             var c = new PollingStationCommission();
             c.Id = Guid.NewGuid();
+            // d.b. 22/10/2025 - PSCommission inherits PSGroupId from Election
+            Election e = await _context.Election.FindAsync(comm.ElectionFk);
             comm.UpdatePollingStationCommission(c);
+            c.PollingStationGroupId = e.PollingStationGroupId;
             _context.PollingStationCommission.Add(c);
 
             await _context.SaveChangesAsync();
@@ -314,6 +317,44 @@ namespace EligereES.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction("EditPollingStations", new { id = comm.ElectionFk });
+        }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet]
+        public async Task<IActionResult> DeletePSCommission(Guid? id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+            PollingStationCommission ps = await _context.PollingStationCommission.FindAsync(id);
+            if (ps == null)
+            {
+                return NotFound();
+            }
+
+            Guid ElectionId = ps.ElectionFk;
+            Election e = await _context.Election.FindAsync(ElectionId);
+            if (e == null)
+            {
+                return NotFound();
+            }
+
+            if(e.Active)
+            {
+                return View("CustomError", ("Cancellazione commissione","Impossibile cancellare la commissione di una elezione attiva"));
+            }
+
+            ps.PresidentFk = null;
+            await _context.SaveChangesAsync();
+
+            _context.RelPollingStationSystemPollingStationCommission.RemoveRange(from x in _context.RelPollingStationSystemPollingStationCommission where x.PollingStationCommissionFk == id select x);
+            _context.PollingStationCommissioner.RemoveRange(from x in _context.PollingStationCommissioner where x.PollingStationCommissionFk == id select x);
+            _context.PollingStationCommission.Remove(ps);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("EditPollingStations", new { id = ElectionId });
         }
 
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
@@ -338,7 +379,6 @@ namespace EligereES.Controllers
         }
 
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
-
         [HttpGet]
         public async Task<IActionResult> RemovePSCommissioner(Guid commissionerId)
         {
@@ -351,6 +391,18 @@ namespace EligereES.Controllers
             }
             _context.PollingStationCommissioner.Remove(c);
 
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("EditPollingStations", new { id = pc.ElectionFk });
+        }
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet]
+        public async Task<IActionResult> SetAsPresident(Guid commissionerId)
+        {
+            var c = await _context.PollingStationCommissioner.FindAsync(commissionerId);
+            var pc = await _context.PollingStationCommission.FindAsync(c.PollingStationCommissionFk);
+
+            pc.PresidentFk = commissionerId;
             await _context.SaveChangesAsync();
 
             return RedirectToAction("EditPollingStations", new { id = pc.ElectionFk });

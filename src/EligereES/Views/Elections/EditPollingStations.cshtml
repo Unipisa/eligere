@@ -128,7 +128,7 @@
                     @Html.AntiForgeryToken()
                     <p>
                         <span id="vr-name"></span>
-                        <input type="hidden" value="@Model.FirstOrDefault().ElectionFk" name="ElectionId" id="ElectionId" />
+                        <input type="hidden" value="@ViewData["ElectionId"]" name="ElectionId" id="ElectionId" />
                         <input type="hidden" value="" name="commissionerid" id="commissionerid" />
                         <input type="text" size="50" value="" name="vr" id="vr" />
                     </p>
@@ -143,7 +143,7 @@
 </div>
 
 
-@if (Model.Count == 0)
+@if (!Model.Any())
 {
     <p>There are no polling stations configured for election <em>@ViewData["ElectionName"]</em></p>
     <p>
@@ -173,6 +173,7 @@ else
             </h3>
         }
 
+        <a href="@Url.Action("DeletePSCommission", new { id = ps.Id })" class="ps-delete" onclick="return window.confirm('Confermi la cancellazione di questa commisisione?');">Remove</a>
         <p>@ps.Description</p>
 
         <br />
@@ -211,7 +212,13 @@ else
                         <td>@Html.DisplayFor(modelItem => c.PersonFkNavigation.PublicId)</td>
                         <td>@Html.Raw(vrLink)</td>
                         <td>
-                            @Html.ActionLink("Remove", "RemovePSCommissioner", new { commissionerId = c.Id })<br />
+                            @if (c.Id != ps.PresidentFk)
+                            {
+                                @Html.ActionLink("Remove", "RemovePSCommissioner", new { commissionerId = c.Id }) 
+                                <span>|</span>
+                                @Html.ActionLink("Promuovi a presidente", "SetAspresident", new { commissionerId = c.Id })
+                                <br />
+                            }
                             <a href="#" class="vrlink" data-itemid="@c.Id" data-itemvalue="@c.VirtualRoom" data-name="@c.PersonFkNavigation.FirstName @c.PersonFkNavigation.LastName">Imposta Virtual room</a>
                         </td>
                     </tr>
