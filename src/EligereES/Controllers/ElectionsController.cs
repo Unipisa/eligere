@@ -99,6 +99,7 @@ namespace EligereES.Controllers
             if (ModelState.IsValid)
             {
                 election.Id = Guid.NewGuid();
+                election.PollingStationGroupId = Guid.NewGuid();
                 election.Configuration = _context.ElectionType.Single(q => q.Id == election.ElectionTypeFk).DefaultConfiguration;
                 _context.Add(election);
                 await _context.SaveChangesAsync();
