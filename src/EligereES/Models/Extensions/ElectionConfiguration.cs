@@ -26,7 +26,7 @@ namespace EligereES.Models.Extensions
     {
         Individual = 0,
         Public = 1,
-        Sampling = 2,
+        Sampling = 2, // Deprecated
         IndividualAndSPID = 3
     }
 
@@ -72,7 +72,7 @@ namespace EligereES.Models.Extensions
 
         public IdentificationType IdentificationType { get; set; }
 
-        // 0 means as much as possible with recognizers
+        // When used with IndividualAndSPID and Individual IdentificationType: 0 = no sample, 1 = without available commissioners skip, 2 = no identification
         public double SamplingRate { get; set; }
 
         public int EligibleSeats { get; set; }
