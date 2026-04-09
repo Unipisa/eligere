@@ -1,17 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <UserSecretsId>a646c8b2-07ed-45c7-a09a-486b0e32165c</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RocksDbNative" Version="6.2.2" />
-    <PackageReference Include="RocksDbSharp" Version="6.2.2" />
+    <Folder Include="..\..\..\..\Dev%2540Unipi\eligere\src\EligereVS\wwwroot\Data\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="..\..\..\..\Dev%2540Unipi\eligere\src\EligereVS\wwwroot\Data\" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="RocksDB" Version="9.10.0.55496" />
   </ItemGroup>
 
   <ItemGroup>
