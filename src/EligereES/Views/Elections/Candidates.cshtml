@@ -7,7 +7,7 @@
 <h1>Candidates for @this.Model.election.Name</h1>
 
 <p>
-    <a asp-action="Create">Create New</a> | <a href="javascript:$('#bulkform').modal('show')">Bulk upload</a>
+    <a href="javascript:$('#bulkform').modal('show')">Bulk upload</a>
 </p>
 
 <div class="modal" tabindex="-1" role="dialog" id="bulkform">
@@ -54,7 +54,7 @@
     <thead>
         <tr>
             <th>
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["LastNameSortParam"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">@Html.DisplayNameFor(model => model.list.FirstOrDefault().Person.LastName)</a>
+                <a asp-action="Candidates" asp-route-sortOrder="@ViewData["LastNameSortParam"]" asp-route-currentFilter="@ViewData["CurrentFilter"]">@Html.DisplayNameFor(model => model.list.FirstOrDefault().Person.LastName)</a>
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.list.FirstOrDefault().Person.FirstName)

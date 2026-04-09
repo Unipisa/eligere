@@ -281,7 +281,7 @@ namespace EligereES.Controllers
                               where u.PersonFk == voter.Id
                               select u.UserId;
 
-            var voteruid = await voteruseridq.FirstAsync();
+            //var voteruid = await voteruseridq.FirstAsync();
 
             List < Guid > electionKeys = null;
             Dictionary<Guid, Election> elections = null;
@@ -352,23 +352,23 @@ namespace EligereES.Controllers
 
             await _context.SaveChangesAsync();
 
-            if (mobile.Length > 5)
-            {
-                if (mobile.StartsWith("\\u002B"))
-                {
-                    mobile = mobile.Replace("\\u002B", "+");
-                }
-                OTPSender.SendSMS(Configuration, otp, mobile);
-            }
+            //if (mobile.Length > 5)
+            //{
+            //    if (mobile.StartsWith("\\u002B"))
+            //    {
+            //        mobile = mobile.Replace("\\u002B", "+");
+            //    }
+            //    OTPSender.SendSMS(Configuration, otp, mobile);
+            //}
 
             string otpresult = null;
-            try
-            {
-                OTPSender.SendMail(Configuration, otp, voteruid);
-            } catch
-            {
-                otpresult = $"Error sending to {voteruid}";
-            }
+            //try
+            //{
+            //    OTPSender.SendMail(Configuration, otp, voteruid);
+            //} catch
+            //{
+            //    otpresult = $"Error sending to {voteruid}";
+            //}
 
             return RedirectToAction("Identify", new { id = id, otpresult = otpresult });
         }

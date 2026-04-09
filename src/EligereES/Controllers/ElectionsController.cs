@@ -1,19 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using CsvHelper;
+using EligereES.Models;
+using EligereES.Models.Client;
+using EligereES.Models.DB;
+using EligereES.Models.Extensions;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using EligereES.Models;
-using EligereES.Models.DB;
-using EligereES.Models.Client;
-using CsvHelper;
-using Microsoft.AspNetCore.Http;
-using System.Globalization;
-using EligereES.Models.Extensions;
-using Microsoft.AspNetCore.Authorization;
 using SQLitePCL;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EligereES.Controllers
 {
@@ -27,7 +28,7 @@ namespace EligereES.Controllers
             _context = context;
         }
 
-        private async Task<Dictionary<K,V>> ToDict<G,K, V>(IQueryable<G> q, Func<G,K> keysel, Func<G,V> valsel)
+        private async Task<Dictionary<K, V>> ToDict<G, K, V>(IQueryable<G> q, Func<G, K> keysel, Func<G, V> valsel)
         {
             var ret = new Dictionary<K, V>();
             foreach (var g in (await q.ToListAsync()))
@@ -42,23 +43,24 @@ namespace EligereES.Controllers
         {
             var commissions =
                 await ToDict(from c in _context.PollingStationCommission
-                group c by c.ElectionFk into cg
-                select new { ElectionFk = cg.Key, Count = cg.Count() }, g => g.ElectionFk, g => g.Count);
+                             group c by c.ElectionFk into cg
+                             select new { ElectionFk = cg.Key, Count = cg.Count() }, g => g.ElectionFk, g => g.Count);
             var voters =
                 await ToDict(from v in _context.Voter
-                group v by v.ElectionFk into vg
-                select new { ElectionFk = vg.Key, Count = vg.Count() }, g => g.ElectionFk, g => g.Count);
+                             group v by v.ElectionFk into vg
+                             select new { ElectionFk = vg.Key, Count = vg.Count() }, g => g.ElectionFk, g => g.Count);
             var ballots =
-                await ToDict(from b in _context.BallotName where !b.IsCandidate.HasValue || b.IsCandidate==true
-                group b by b.ElectionFk into bg
-                select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
+                await ToDict(from b in _context.BallotName
+                             where !b.IsCandidate.HasValue || b.IsCandidate == true
+                             group b by b.ElectionFk into bg
+                             select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
             var ballotParties =
                 await ToDict(from b in _context.BallotName
                              where b.IsCandidate == false
                              group b by b.ElectionFk into bg
                              select new { ElectionFk = bg.Key, Count = bg.Count() }, g => g.ElectionFk, g => g.Count);
             var elections = await _context.Election.ToListAsync();
-            
+
 
             return View((elections, commissions, voters, ballots, ballotParties));
         }
@@ -97,10 +99,11 @@ namespace EligereES.Controllers
             if (ModelState.IsValid)
             {
                 election.Id = Guid.NewGuid();
+                election.PollingStationGroupId = Guid.NewGuid();
                 election.Configuration = _context.ElectionType.Single(q => q.Id == election.ElectionTypeFk).DefaultConfiguration;
                 _context.Add(election);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Config", new { id = election.Id });
             }
             ViewData["ElectionTypeFk"] = new SelectList(_context.ElectionType, "Id", "Name", election.ElectionTypeFk);
             return View(election);
@@ -119,7 +122,7 @@ namespace EligereES.Controllers
             {
                 return NotFound();
             }
-            ViewData["ElectionType"] = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
+            ViewBag.ElectionType = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
             return View(election);
         }
 
@@ -208,9 +211,74 @@ namespace EligereES.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ElectionType"] = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
+            ViewBag.ElectionType = await _context.ElectionType.FindAsync(election.ElectionTypeFk);
             return View(election);
         }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        public async Task<IActionResult> Config(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+            ElectionUI ui = new ElectionUI(election);
+            return View(ui);
+        }
+
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Config(Guid? id, int NumPreferences, int NumPartyPreferences, int CandidatesType, int IdentificationType, double SamplingRate, int? NoNullVote, int? ActiveForStronglyAuthenticatedUsers)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            var election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+
+            ElectionConfiguration conf = ElectionConfiguration.FromJson(election.Configuration);
+            try
+            {
+                conf.NumPreferences = NumPreferences;
+                conf.NumPartyPreferences = NumPartyPreferences;
+                conf.CandidatesType = (CandidatesType)CandidatesType;
+                conf.HasCandidates = (conf.CandidatesType != Models.Extensions.CandidatesType.Implicit);
+                conf.IdentificationType = (IdentificationType)IdentificationType;
+                conf.SamplingRate = SamplingRate;
+                conf.NoNullVote = NoNullVote == 1;
+                conf.ActiveForStronglyAuthenticatedUsers = ActiveForStronglyAuthenticatedUsers == 1;
+            }
+            catch (Exception)
+            {
+                return View("CustomError", ("Parametri di configurazione elezione", "Non è stato possibile codificare i parametri di configurazione, verificare il tipo di valori inseriti"));
+            }
+
+            election.Configuration = conf.ToJson();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                return View("CustomError", ("Salvataggio configurazione elezione", "Non è stato possibile salvare i parametri di configurazione"));
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+
 
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
         [HttpGet]
@@ -229,12 +297,16 @@ namespace EligereES.Controllers
         {
             var c = new PollingStationCommission();
             c.Id = Guid.NewGuid();
+            // d.b. 22/10/2025 - PSCommission inherits PSGroupId from Election
+            Election e = await _context.Election.FindAsync(comm.ElectionFk);
             comm.UpdatePollingStationCommission(c);
+            c.PollingStationGroupId = e.PollingStationGroupId;
             _context.PollingStationCommission.Add(c);
 
             await _context.SaveChangesAsync();
 
-            if (presidentFK.HasValue) { 
+            if (presidentFK.HasValue)
+            {
                 var memb = new PollingStationCommissioner();
                 memb.Id = Guid.NewGuid();
                 memb.PersonFk = presidentFK.Value;
@@ -245,6 +317,44 @@ namespace EligereES.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction("EditPollingStations", new { id = comm.ElectionFk });
+        }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet]
+        public async Task<IActionResult> DeletePSCommission(Guid? id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+            PollingStationCommission ps = await _context.PollingStationCommission.FindAsync(id);
+            if (ps == null)
+            {
+                return NotFound();
+            }
+
+            Guid ElectionId = ps.ElectionFk;
+            Election e = await _context.Election.FindAsync(ElectionId);
+            if (e == null)
+            {
+                return NotFound();
+            }
+
+            if(e.Active)
+            {
+                return View("CustomError", ("Cancellazione commissione","Impossibile cancellare la commissione di una elezione attiva"));
+            }
+
+            ps.PresidentFk = null;
+            await _context.SaveChangesAsync();
+
+            _context.RelPollingStationSystemPollingStationCommission.RemoveRange(from x in _context.RelPollingStationSystemPollingStationCommission where x.PollingStationCommissionFk == id select x);
+            _context.PollingStationCommissioner.RemoveRange(from x in _context.PollingStationCommissioner where x.PollingStationCommissionFk == id select x);
+            _context.PollingStationCommission.Remove(ps);
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("EditPollingStations", new { id = ElectionId });
         }
 
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
@@ -269,7 +379,6 @@ namespace EligereES.Controllers
         }
 
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
-
         [HttpGet]
         public async Task<IActionResult> RemovePSCommissioner(Guid commissionerId)
         {
@@ -286,6 +395,18 @@ namespace EligereES.Controllers
 
             return RedirectToAction("EditPollingStations", new { id = pc.ElectionFk });
         }
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        [HttpGet]
+        public async Task<IActionResult> SetAsPresident(Guid commissionerId)
+        {
+            var c = await _context.PollingStationCommissioner.FindAsync(commissionerId);
+            var pc = await _context.PollingStationCommission.FindAsync(c.PollingStationCommissionFk);
+
+            pc.PresidentFk = commissionerId;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("EditPollingStations", new { id = pc.ElectionFk });
+        }
 
         [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
 
@@ -294,7 +415,7 @@ namespace EligereES.Controllers
         {
             ViewData["electionId"] = id;
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["LastNameSortParam"] = String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
+            ViewData["LastNameSortParam"] = System.String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
             ViewData["CurrentFilter"] = searchString;
 
             if (searchString != null)
@@ -307,7 +428,7 @@ namespace EligereES.Controllers
             }
 
             var people = from p in _context.Person join v in _context.Voter on p.Id equals v.PersonFk where v.ElectionFk == id select p;
-            if (!String.IsNullOrEmpty(searchString))
+            if (!System.String.IsNullOrEmpty(searchString))
             {
                 people = people.Where(p => p.LastName.Contains(searchString) || p.FirstName.Contains(searchString) || p.PublicId.Contains(searchString));
             }
@@ -369,10 +490,10 @@ namespace EligereES.Controllers
 
                 foreach (var a in (from l in lines where l.Status == null && !existingpids.Contains(l.PublicId) select l))
                 {
-                    result.Add((null, a, "Person missing")); 
+                    result.Add((null, a, "Person missing"));
                 }
 
-                var voters = (from v in _context.Voter where v.ElectionFk==id select v.PersonFk).ToArray();
+                var voters = (from v in _context.Voter where v.ElectionFk == id select v.PersonFk).ToArray();
 
                 foreach (var p in (from pp in q where voters.Contains(pp.Id) select pp))
                 {
@@ -403,7 +524,7 @@ namespace EligereES.Controllers
         {
             ViewData["electionId"] = id;
             ViewData["CurrentSort"] = sortOrder;
-            ViewData["LastNameSortParam"] = String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
+            ViewData["LastNameSortParam"] = System.String.IsNullOrEmpty(sortOrder) ? "lastName_desc" : "";
             ViewData["CurrentFilter"] = searchString;
 
             if (searchString != null)
@@ -415,11 +536,12 @@ namespace EligereES.Controllers
                 searchString = currentFilter;
             }
 
-            var people = from p in _context.Person 
-                         join c in _context.EligibleCandidate on p.Id equals c.PersonFk 
+            var people = from p in _context.Person
+                         join c in _context.EligibleCandidate on p.Id equals c.PersonFk
                          join bn in _context.BallotName on c.BallotNameFk equals bn.Id
-                         where bn.ElectionFk == id select new EligibleCandidateBallotNameViewModel { Person = p, BallotName = bn };
-            if (!String.IsNullOrEmpty(searchString))
+                         where bn.ElectionFk == id
+                         select new EligibleCandidateBallotNameViewModel { Person = p, BallotName = bn };
+            if (!System.String.IsNullOrEmpty(searchString))
             {
                 people = people.Where(p => p.Person.LastName.Contains(searchString) || p.Person.FirstName.Contains(searchString) || p.Person.PublicId.Contains(searchString));
             }
@@ -530,8 +652,8 @@ namespace EligereES.Controllers
         public async Task<IActionResult> RemoveVoter(Guid electionid, Guid personid)
         {
             var v = await (from c in _context.Voter
-                              where c.ElectionFk == electionid && c.PersonFk == personid
-                              select c).FirstOrDefaultAsync();
+                           where c.ElectionFk == electionid && c.PersonFk == personid
+                           select c).FirstOrDefaultAsync();
 
             if (v == null) throw new Exception("Voter not found");
 
@@ -582,7 +704,7 @@ namespace EligereES.Controllers
 
             foreach (var com in commissions)
             {
-                if (updatedgid) 
+                if (updatedgid)
                     com.PollingStationGroupId = srce.PollingStationGroupId;
 
                 var ncom = new PollingStationCommission()
@@ -652,7 +774,7 @@ namespace EligereES.Controllers
                              join v in _context.Voter on e.Id equals v.ElectionFk
                              //group new { Election = e, Vote(e, v) } by v.Id into g 
                              where v.Vote.HasValue
-                             select new { ElectionID = e.Id, ElectionName = e.Name, ElectionConfiguration=e.Configuration, Vote = v.Vote };
+                             select new { ElectionID = e.Id, ElectionName = e.Name, ElectionConfiguration = e.Configuration, Vote = v.Vote };
 
             var counters = new Dictionary<Guid, int>();
             foreach (var v in await activeelections.ToListAsync())
@@ -672,6 +794,86 @@ namespace EligereES.Controllers
 
             return View((counters, elnames));
         }
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        public async Task<IActionResult> Registry(Guid? id, string searchString, int? pageNumber = 1)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            Election election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+
+            ViewData["CurrentFilter"] = searchString;
+
+            IQueryable<RegistryVoter> voters = ElectionMgmt.GetVoters(id.Value, _context);
+            int count = await voters.CountAsync();
+            if (!System.String.IsNullOrEmpty(searchString))
+            {
+                voters = voters.Where(v => v.LastName.Contains(searchString) || v.PublicID.Contains(searchString));
+            }
+            return View((await PaginatedList<RegistryVoter>.CreateAsync(voters, (int)pageNumber, 50), election.Description, count));
+        }
+
+
+        [AuthorizeRoles(EligereRoles.ElectionOfficer, EligereRoles.Admin)]
+        public async Task<IActionResult> RegistryDownload(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            Election election = await _context.Election.FindAsync(id);
+            if (election == null)
+            {
+                return NotFound();
+            }
+
+            IQueryable<RegistryVoter> voters = ElectionMgmt.GetVoters(id.Value, _context);
+            var csvBytes = CsvUtils.ExportToCsv(voters.ToList());
+            return File(csvBytes, "text/csv", "Votanti per " + election.Description.Trim() + ".csv");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetVRLink(Guid? ElectionId, Guid? commissionerid, string vr)
+        {
+            if (ElectionId == null || commissionerid == null)
+            {
+                return NotFound();
+            }
+            Election election = await _context.Election.FindAsync(ElectionId);
+            if (election == null)
+            {
+                return NotFound();
+            }
+            PollingStationCommissioner c = await _context.PollingStationCommissioner.FindAsync(commissionerid);
+            if (c == null)
+            {
+                return NotFound();
+            }
+            if (System.String.IsNullOrEmpty(vr))
+            {
+                return BadRequest();
+            }
+
+            c.VirtualRoom = vr;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                return View("CustomError", ("Impossibile registrare l'aula virtuale", e.Message));
+            }
+            return RedirectToAction("EditPollingStations", new { id = ElectionId });
+
+        }
+
 
         private async Task<List<Election>> GetUpcomingElections()
         {

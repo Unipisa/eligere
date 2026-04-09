@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace EligereES.Controllers
 {
@@ -65,7 +67,29 @@ namespace EligereES.Controllers
             }
             ViewData["PendingUserLoginRequest"] = pendingUserLoginRequest;
             ViewData["SpidEnabled"] = _config.GetValue<bool?>("Spid:Enabled") ?? false;
+            ViewData["SAML2Enabled"] = _config.GetValue<bool?>("SAML2:Enabled") ?? false;
+            ViewData["AzureADEnabled"] = _config.GetValue<bool?>("AzureAd:Enabled") ?? false;
             return View();
+        }
+
+        [AllowAnonymous]
+        public IActionResult SAMLLogin()
+        {
+            /*
+             * debug only: inspect all claims 
+             * 
+             * */
+            IDictionary<string, string?> Attributes = new Dictionary<string, string?>();
+            foreach (var i in User.Identities)
+            {
+                foreach (var c in User.Claims)
+                {
+                    Attributes["<strong>" + i.AuthenticationType + "</strong> / " + c.Type] = c.Value;
+                }
+                Attributes["-------------------"] = "------------------";
+            }
+
+            return View("SAMLLogin", Attributes);
         }
 
         [AllowAnonymous]
@@ -125,7 +149,7 @@ namespace EligereES.Controllers
         [AllowAnonymous]
         public IActionResult ExternalLogin()
         {
-            return Challenge(new AuthenticationProperties() { RedirectUri=Url.Action("Index", "Home") },  "Spid");
+            return Challenge(new AuthenticationProperties() { RedirectUri = Url.Action("Index", "Home") }, "Spid");
         }
 
         [Route("spid-logout")]
@@ -133,6 +157,11 @@ namespace EligereES.Controllers
         {
             await HttpContext.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        public async Task<IActionResult> Logout()
+        {
+            return View("Logout");
         }
 
     }

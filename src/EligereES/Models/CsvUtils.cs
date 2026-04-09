@@ -1,6 +1,12 @@
 ﻿using CsvHelper;
+using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace EligereES.Models
 {
@@ -33,5 +39,37 @@ namespace EligereES.Models
             }
             return lines;
         }
+
+        public static byte[] ExportToCsv<T>(IEnumerable<T> records, char separator = ';')
+        {
+            if (records == null || !records.Any())
+                return Array.Empty<byte>();
+
+            var sb = new StringBuilder();
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            // Header
+            sb.AppendLine(string.Join(separator, properties.Select(p => p.Name)));
+
+            // Rows
+            foreach (var record in records)
+            {
+                var values = properties.Select(p =>
+                {
+                    var val = p.GetValue(record, null)?.ToString() ?? "";
+                    // Gestione escaping se ci sono separatori o virgolette
+                    if (val.Contains(separator) || val.Contains("\""))
+                    {
+                        val = $"\"{val.Replace("\"", "\"\"")}\"";
+                    }
+                    return val;
+                });
+
+                sb.AppendLine(string.Join(separator, values));
+            }
+
+            return Encoding.UTF8.GetBytes(sb.ToString());
+        }
+
     }
 }

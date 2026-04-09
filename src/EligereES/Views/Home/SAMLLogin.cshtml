@@ -1,0 +1,48 @@
+﻿@model IDictionary<string, string?>
+@{
+    Layout = "";
+    ViewData["Title"] = "SAML Attributes Test";
+    var a = User.Identities.Where(i => i.IsAuthenticated).Select(i => new { i.AuthenticationType, i.Name }).ToList();
+}
+<h1>@ViewData["Title"]</h1>
+
+<h2>Identity RAW</h2>
+<p>
+    <div>@User.Identity.Name</div>
+    @foreach (var x in User.Claims)
+    {
+        <div>@x.Value: <strong> @x.Type </strong></div>
+    }
+</p>
+
+<h2>Autenticazione</h2>
+<p>
+    @foreach (var x in a)
+    {
+        <div>Autenticato con: <strong> @x.AuthenticationType </strong> - Utente: <strong> @x.Name </strong></div>
+    }
+</p>
+
+<h2>Elenco attributi</h2>
+
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>Chiave</th>
+            <th>Valore</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var attr in Model)
+        {
+            if (!string.IsNullOrEmpty(attr.Value))
+            {
+                <tr>
+                    <td>@Html.Raw(attr.Key)</td>
+                    <td>@attr.Value</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

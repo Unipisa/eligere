@@ -1,27 +1,77 @@
-﻿@using System.Security.Principal
+﻿@inject IConfiguration _config
+@using System.Security.Principal
+@using System.Security.Claims;
+
+@{
+    var i = User.Identity as ClaimsIdentity;
+    // show auth provider, except Federation
+    string provider = EligereRoles.Provider(User, null) ?? "";
+    if (!String.IsNullOrEmpty(provider))
+    {
+        if (provider == Constants.Federation)
+            provider = "";
+        else
+            provider = "[" + provider + "]";
+    }
+    bool showLogoutLink = EligereRoles.LogoutEnable(User, _config);
+}
 
 <ul class="navbar-nav">
-@if (User.Identity.IsAuthenticated)
-{
+    @if (User.Identity.IsAuthenticated)
+    {
         <li class="nav-item">
-            <span class="navbar-text text-dark">@EligereRoles.UserDisplayName(User) (@(EligereRoles.UserId(User))@(EligereRoles.Provider(this.User, null) == "Spid" ? " SPID" : ""))</span>
+            <span class="navbar-text text-dark">
+                @EligereRoles.UserDisplayName(User)
+                <text>
+                    (@(EligereRoles.UserId(User)) @provider)
+                </text>
+            </span>
         </li>
         <li class="nav-item">
-            @if (EligereRoles.Provider(this.User, null) == "Spid")
+            @* 
+        TODO: verify logout url
+        *@
+            @if (showLogoutLink)
             {
-                <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>                
-            } else
+                switch (EligereRoles.Provider(this.User, null))
+                {
+                    case Constants.Spid:
+                        {
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
+                            break;
+                        }
+                    case Constants.Federation:
+                        {
+                            <a class="nav-link text-dark" asp-controller="SAML2" asp-action="Logout">Disconnetti.</a>
+                            break;
+                        }
+                    default:
+                        {
+                            <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
+                            break;
+                        }
+                }
+                // if (EligereRoles.Provider(this.User, null) == Constants.Spid)
+                // {
+                //     <a class="nav-link text-dark" asp-controller="Home" asp-action="SpidLogout">Disconnetti</a>
+                // }
+                // else
+                // {
+                //     <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>
+                // }
+            }
+            else
             {
-                <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Disconnetti</a>                
+                <a class="nav-link text-dark" asp-controller="Home" asp-action="Logout">Disconnetti</a>
             }
         </li>
-}
-else
-{
+    }
+    else
+    {
         <li class="nav-item">
             <!--
             <a class="nav-link text-dark" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignIn">Accedi</a>
             -->
         </li>
-}
+    }
 </ul>

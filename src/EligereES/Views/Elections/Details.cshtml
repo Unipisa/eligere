@@ -26,7 +26,13 @@
             @Html.DisplayNameFor(model => model.Configuration)
         </dt>
         <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ElectionConfiguration)
+            <ul>
+            @foreach (var x in Model.ElectionConfiguration.Elements())
+            {
+                <li>@x.Item1: @x.Item2</li>
+            }
+            </ul>
+            @* @Html.DisplayFor(model => model.ElectionConfiguration) *@
         </dd>
         <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.PollStartDate)
@@ -41,13 +47,7 @@
             @Html.DisplayFor(model => model.PollEndDate)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ElectorateListClosingDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ElectorateListClosingDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ElectionTypeFkNavigation.Name)
+            Election Type
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.ElectionTypeFkNavigation.Name)

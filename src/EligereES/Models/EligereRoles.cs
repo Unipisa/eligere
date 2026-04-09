@@ -93,8 +93,17 @@ namespace EligereES.Models
         public static string UserId(ClaimsPrincipal principal)
         {
             if (principal == null) return "";
-            if (principal.Identities.Where(c => c.AuthenticationType == "Spid").Any())
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid).Any())
                 return principal.Claims.Where(c => c.Type == ClaimTypes.Email).First().Value;
+
+            /// TODO: Fiscalcode as userid for SAML/CIE/SPID?
+            IEnumerable<ClaimsIdentity> i = principal.Identities.Where(c => c.AuthenticationType == Constants.Federation);
+            if (i.Any())
+            {
+                IEnumerable<Claim> cc = i.First().Claims.Where(x => x.Type == ClaimTypes.NameIdentifier && x.Issuer == Constants.SAML2Issuer);
+                if (cc.Any())
+                    return cc.First().Value;
+            }
 
             return principal.Identity.Name;
         }
@@ -103,8 +112,10 @@ namespace EligereES.Models
         {
             if (principal == null) return defaultProvider;
 
-            if (principal.Identities.Where(c => c.AuthenticationType == "Spid").Any())
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid).Any())
                 return "Spid";
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
+                return Constants.Federation;
 
             return defaultProvider;
         }
@@ -112,7 +123,7 @@ namespace EligereES.Models
         public static string UserDisplayName(ClaimsPrincipal principal)
         {
             if (principal == null) return "";
-            if (principal.Identities.Where(c => c.AuthenticationType == "Spid").Any())
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid || c.AuthenticationType == Constants.Federation).Any())
                 return principal.Identity.Name;
 
             return principal.Claims.Where(c => c.Type == "name").First().Value;
@@ -125,6 +136,20 @@ namespace EligereES.Models
                 return Guid.Parse(cq.First().Value);
             return null;
         }
+
+        public static bool LogoutEnable(ClaimsPrincipal principal, IConfiguration config)
+        {
+            if (principal == null) return false;
+
+            string section = "AzureAD";
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid).Any())
+                section = "Spid";
+            if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
+                section = "SAML2";
+
+            return config.GetValue<bool?>(section + ":LogoutEnable") ?? false;
+        }
+
     }
 
     public class EligereClaimsTransformation : IClaimsTransformation
@@ -156,16 +181,24 @@ namespace EligereES.Models
                 else
                 {
                     var username = EligereRoles.UserId(principal);
+                    if (principal.Identities.Where(c => c.AuthenticationType == Constants.Federation).Any())
+                    {
+                        var pp = from p in esdb.Person where p.PublicId == username select p;
+                        if (await pp.CountAsync() == 1)
+                            personFk = pp.First().Id;
+                    }
+                    else
+                    {
+                        var u = from l in esdb.UserLogin where defaultProvider == l.Provider && username == l.UserId select l;
+                        if (await u.CountAsync() == 1) // Should be either 0 or 1
+                            personFk = u.First().PersonFk;
+                    }
 
-                    var u = from l in esdb.UserLogin where defaultProvider == l.Provider && username == l.UserId select l;
-                    if (await u.CountAsync() == 1) // Should be either 0 or 1
-                        personFk = u.First().PersonFk;
+                    await EligereRoles.UpdateRoles(principal, esdb, personFk);
                 }
 
-                await EligereRoles.UpdateRoles(principal, esdb, personFk);
+                return principal;
             }
-
-            return principal;
         }
     }
 }

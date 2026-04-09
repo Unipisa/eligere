@@ -32,6 +32,13 @@ using System.Net.Http;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+using Sustainsys.Saml2;
+using Sustainsys.Saml2.AspNetCore2;
+using Sustainsys.Saml2.Metadata;
+using Sustainsys.Saml2.Configuration;
+using System.Security.Cryptography;
+using System.Security.Principal;
+
 namespace EligereES
 {
 
@@ -66,14 +73,63 @@ namespace EligereES
                 .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
                 .AddDataAnnotationsLocalization();
 
-            services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+            if (Configuration.GetValue<bool?>("AzureAd:Enabled") ?? false)
+            {
+                services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+            }
+
+            if (Configuration.GetValue<bool?>("SAML2:Enabled") ?? false)
+            {
+                services.AddAuthentication(options =>
+                 {
+                     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                     options.DefaultChallengeScheme = Saml2Defaults.Scheme;
+                 })
+                .AddCookie()
+                .AddSaml2(options =>
+                {
+                    options.SPOptions.EntityId = new EntityId(Configuration["SAML2:EntityID"]);
+                    options.IdentityProviders.Add(
+                        new IdentityProvider(new EntityId(Configuration["SAML2:EntityIDMetadata"]), options.SPOptions)
+                        {
+                            MetadataLocation = Configuration["SAML2:EntityIDMetadata"],
+                            LoadMetadata = true,
+                            DisableOutboundLogoutRequests = false
+                        });
+                    options.Notifications.AcsCommandResultCreated = new Action<Sustainsys.Saml2.WebSso.CommandResult, Sustainsys.Saml2.Saml2P.Saml2Response>((commandResult, saml2Response) =>
+                    {
+                        bool StrongAuthentication = Configuration.GetValue<bool?>("SAML2:StrongAuthentication") ?? false;
+                        var identity = (ClaimsIdentity)commandResult.Principal.Identity;
+
+                        string name = identity.Claims.Where(c => c.Type == "urn:oid:2.5.4.42").First().Value;
+                        string familyName = identity.Claims.Where(c => c.Type == "urn:oid:2.5.4.4").First().Value;
+                        string fiscalNumber = identity.Claims.Where(c => c.Type == "codice_fiscale").First().Value.Trim();
+                        // strip unnecessary prefix from fiscal number
+                        if(fiscalNumber.Length > 16)
+                            fiscalNumber = fiscalNumber.Substring(fiscalNumber.Length - 16, 16);
+
+                        //string dateOfBirth = identity.Claims.Where(c => c.Type == "dateOfBirth").First().Value;
+                        string email = "";
+
+                        identity.AddClaim(new Claim(ClaimTypes.GivenName, name, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Surname, familyName, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Name, $"{name} {familyName}", ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fiscalNumber, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+                        identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, Models.Constants.SAML2Issuer));
+
+                    });
+                });
+            }
+
 
             if (Configuration.GetValue<bool?>("Spid:Enabled") ?? false)
             {
                 services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                     .AddOAuth("Spid", options =>
                     {
+                        bool StrongAuthentication = Configuration.GetValue<bool?>("Spid:StrongAuthentication") ?? false;
                         options.AuthorizationEndpoint = Configuration["Spid:AuthorizationEndpoint"];
                         options.TokenEndpoint = Configuration["Spid:TokenEndpoint"];
                         options.UserInformationEndpoint = Configuration["Spid:UserInformationEndpoint"];
@@ -102,6 +158,10 @@ namespace EligereES
                                 context.Identity.AddClaim(new Claim(ClaimTypes.Name, $"{gn} {ln}", ClaimValueTypes.String, context.Options.ClaimsIssuer));
                                 context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fid, ClaimValueTypes.String, context.Options.ClaimsIssuer));
                                 context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, context.Options.ClaimsIssuer));
+
+                                context.Identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, context.Options.ClaimsIssuer));
+
+
                             }
                         };
                     });
@@ -110,7 +170,8 @@ namespace EligereES
             //.AddAzureAD(options => Configuration.Bind("AzureAd", options));
 
 
-            services.AddDbContext<ESDB>(o => {
+            services.AddDbContext<ESDB>(o =>
+            {
                 o.UseSqlServer(Configuration.GetConnectionString("ESDB"));
             });
 
@@ -135,7 +196,7 @@ namespace EligereES
         {
             _logger = logger;
 
-            if (env.IsDevelopment())
+            if (env.IsDevelopment() || true)
             {
                 app.UseDeveloperExceptionPage();
             }
