@@ -48,7 +48,31 @@
     if (availableVotes.Where(v => now > v.Item2.PollStartDate && now <= v.Item2.PollEndDate && !v.Item5.HasValue && !v.Item4).Count() > 0)
     {
         var currentVotes = availableVotes.Where(v => now > v.Item2.PollStartDate && now <= v.Item2.PollEndDate && !v.Item5.HasValue && !v.Item4);
-        if (EligereRoles.Provider(this.User, null) == "Spid" && currentVotes.Where(v => v.Item2.Active || ElectionConfiguration.FromJson(v.Item2.Configuration).ActiveForStronglyAuthenticatedUsers).Any())
+        // If sampling rate is 2, we can bypass the OTP
+        if (currentVotes.Where(v => v.Item2.Active && (ElectionConfiguration.FromJson(v.Item2.Configuration).IdentificationType == IdentificationType.Individual || ElectionConfiguration.FromJson(v.Item2.Configuration).IdentificationType == IdentificationType.IndividualAndSPID) && ElectionConfiguration.FromJson(v.Item2.Configuration).SamplingRate == 2).Any())
+        {
+            <script type="text/javascript">
+                function vote() {
+                    $.ajax({
+                        url: '@(Url.Content("~"))/Voter/GenerateTicket/@(OTPSender.GenerateOTP().ToUpperInvariant())',
+                        method: 'GET'
+                    }).done((v) => {
+                        $('#ticketdata').val(v);
+                        $('#vsgate').submit();
+                    }).fail((v) => {
+                        alert('Errore interno');
+                    });
+                }
+            </script>
+            <form method="post" id="vsgate" action="@conf.VotingSystemTicketAPI">
+                <input type="hidden" id="ticketdata" name="tickets" />
+            </form>
+            <div class="text-center">
+                <button type="button" class="btn btn-primary btn-lg w-25" onclick="vote()">Vota</button>
+            </div>
+        }
+        // If authenticated with SPID and the election is open for strongly authenticated users skip the OTP dialog
+        else if (EligereRoles.Provider(this.User, null) == "Spid" && currentVotes.Where(v => v.Item2.Active || ElectionConfiguration.FromJson(v.Item2.Configuration).ActiveForStronglyAuthenticatedUsers).Any())
         {
                                 <script type="text/javascript">
                             function vote() {
@@ -70,6 +94,7 @@
                             <button type="button" class="btn btn-primary btn-lg w-25" onclick="vote()">Vota</button>
                         </div>               
         }
+        // Ask for OTP
         else if (currentVotes.Where(v => v.Item2.Active).Count() > 0)
         {
                                 <script type="text/javascript">
