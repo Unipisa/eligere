@@ -163,13 +163,13 @@ namespace EligereES.Controllers
                     if (!idtype.HasValue)
                     {
                         idtype = election.ElectionConfiguration.IdentificationType;
-                        if (idtype == IdentificationType.Sampling)
+                        if (idtype == IdentificationType.Sampling || idtype == IdentificationType.Individual || idtype == IdentificationType.IndividualAndSPID)
                             samplingrate = election.ElectionConfiguration.SamplingRate;
                     } else
                     {
                         if (idtype != election.ElectionConfiguration.IdentificationType)
                             throw new Exception("Identification type should be the same for all elections associated with a voter");
-                        if (idtype == IdentificationType.Sampling && samplingrate != election.ElectionConfiguration.SamplingRate)
+                        if ((idtype == IdentificationType.Sampling || idtype == IdentificationType.Individual || idtype == IdentificationType.IndividualAndSPID) && samplingrate != election.ElectionConfiguration.SamplingRate)
                             throw new Exception("For sampled identification you should use the same rate");
                     }
                     elections.Add(election.Id);
@@ -203,7 +203,7 @@ namespace EligereES.Controllers
                 return Redirect(selectVirtualRoom(selected.VirtualRoom));
             } else
             {
-                if (idtype == IdentificationType.Sampling)
+                if (idtype == IdentificationType.Sampling || ((idtype == IdentificationType.Individual || idtype == IdentificationType.IndividualAndSPID)  &&  samplingrate > 0))
                 {
                     var otp = OTPSender.GenerateOTP();
 
@@ -296,7 +296,13 @@ namespace EligereES.Controllers
             var now = DateTime.Now;
 
             // If strong Authentication recognition is performed automatically
-            if (EligereRoles.Provider(this.User, defaultProvider) == "Spid" && votes.Where(v => ElectionConfiguration.FromJson(v.Item2.Configuration).IdentificationType == IdentificationType.IndividualAndSPID).Any())
+            if (
+                (EligereRoles.Provider(this.User, defaultProvider) == "Spid" && 
+                 votes.Where(v => ElectionConfiguration.FromJson(v.Item2.Configuration).IdentificationType == IdentificationType.IndividualAndSPID).Any())
+                ||
+                (votes.Where(v => (ElectionConfiguration.FromJson(v.Item2.Configuration).IdentificationType == IdentificationType.IndividualAndSPID ||
+                 ElectionConfiguration.FromJson(v.Item2.Configuration).IdentificationType == IdentificationType.Individual) && ElectionConfiguration.FromJson(v.Item2.Configuration).SamplingRate == 2).Any())
+                )
             {
                 var recognitions = await (from v in _context.Voter join r in _context.Recognition on v.RecognitionFk equals r.Id where availableVotes.Contains(v.Id) && !v.Vote.HasValue select r).ToListAsync();
                 var ckrecognition = await (from v in _context.Voter where availableVotes.Contains(v.Id) && !v.Vote.HasValue && !v.RecognitionFk.HasValue select v).ToArrayAsync();
@@ -312,9 +318,9 @@ namespace EligereES.Controllers
                 }
                 foreach (var recognition in recognitions)
                 {
-                    recognition.Idtype = "SpidAuth";
+                    recognition.Idtype = EligereRoles.Provider(this.User, defaultProvider) == "Spid" ? "SpidAuth" : "SimpleAuth";
                     recognition.UserId = EligereRoles.UserId(this.User);
-                    recognition.AccountProvider = "Spid";
+                    recognition.AccountProvider = EligereRoles.Provider(this.User, defaultProvider) == "Spid" ? "Spid" : EligereRoles.Provider(this.User, defaultProvider);
                     recognition.Otp = otp;
                     recognition.State = 0;
                     recognition.Validity = DateTime.Now + TimeSpan.FromMinutes(_otpLifetime);
