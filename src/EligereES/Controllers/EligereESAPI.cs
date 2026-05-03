@@ -6,16 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using EligereES.Models.DB;
 using EligereES.Models.Client;
-
-using SQLitePCL;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.CodeAnalysis.CSharp;
 using CsvHelper;
 using System.Globalization;
 using EligereES.Models.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using EligereES.Models;
-using System.Security.Permissions;
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.DataProtection;

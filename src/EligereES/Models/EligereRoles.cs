@@ -94,7 +94,7 @@ namespace EligereES.Models
         {
             if (principal == null) return "";
             if (principal.Identities.Where(c => c.AuthenticationType == Constants.Spid).Any())
-                return principal.Claims.Where(c => c.Type == ClaimTypes.Email).First().Value;
+                return principal.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).First().Value;
 
             /// TODO: Fiscalcode as userid for SAML/CIE/SPID?
             IEnumerable<ClaimsIdentity> i = principal.Identities.Where(c => c.AuthenticationType == Constants.Federation);
@@ -177,6 +177,8 @@ namespace EligereES.Models
                     var pq = from p in esdb.Person where p.PublicId == pubid select p;
                     if (await pq.CountAsync() == 1) // Should be either 0 or 1
                         personFk = pq.First().Id;
+
+                    await EligereRoles.UpdateRoles(principal, esdb, personFk);
                 }
                 else
                 {

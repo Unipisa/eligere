@@ -11,7 +11,7 @@
         if (provider == Constants.Federation)
             provider = "";
         else
-            provider = "[" + provider + "]";
+            provider = "[" + (provider == "Spid" ? "SPID/CIE" : provider) + "]";
     }
     bool showLogoutLink = EligereRoles.LogoutEnable(User, _config);
 }

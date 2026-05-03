@@ -1,3 +1,5 @@
+SET DATEFORMAT ymd;
+
 declare @StartDate datetime
 declare @EndDate datetime
 declare @ClosingDate datetime

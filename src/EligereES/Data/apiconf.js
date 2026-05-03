@@ -1,1 +1,1 @@
-{"VotingSystemTicketAPI":"https://localhost:44392/Vote/ElectionCard"}
+{"VotingSystemTicketAPI":"https://localhost:32769/Vote/ElectionCard"}

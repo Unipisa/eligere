@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using EligereES.Models;
 using EligereES.Models.DB;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.AzureAD.UI;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Authorization;
@@ -151,13 +150,13 @@ namespace EligereES
                                 var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
                                 var gn = json.RootElement.GetProperty("given_name").GetString();
                                 var ln = json.RootElement.GetProperty("family_name").GetString();
-                                var fid = json.RootElement.GetProperty("fiscalNumber").GetString();
-                                var email = json.RootElement.GetProperty("email").GetString();
+                                var fid = json.RootElement.GetProperty("fiscalNumber").GetString().Trim().ToUpperInvariant();
+                                if (fid.Length > 16)
+                                    fid = fid.Substring(fid.Length - 16, 16);
                                 context.Identity.AddClaim(new Claim(ClaimTypes.GivenName, gn, ClaimValueTypes.String, context.Options.ClaimsIssuer));
                                 context.Identity.AddClaim(new Claim(ClaimTypes.Surname, ln, ClaimValueTypes.String, context.Options.ClaimsIssuer));
                                 context.Identity.AddClaim(new Claim(ClaimTypes.Name, $"{gn} {ln}", ClaimValueTypes.String, context.Options.ClaimsIssuer));
                                 context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, fid, ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                                context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String, context.Options.ClaimsIssuer));
 
                                 context.Identity.AddClaim(new Claim(ClaimTypes.AuthorizationDecision, (StrongAuthentication ? "Authorized" : "Verify"), ClaimValueTypes.String, context.Options.ClaimsIssuer));
 

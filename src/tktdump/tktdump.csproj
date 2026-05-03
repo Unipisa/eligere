@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RocksDB" Version="10.4.2.64152" />
+    <PackageReference Include="RocksDB" Version="10.10.1.649" />
   </ItemGroup>
 
 </Project>
