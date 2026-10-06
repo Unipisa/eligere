@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Web;
+using System.Security.Cryptography;
 
 namespace EligereES
 {
@@ -14,11 +15,10 @@ namespace EligereES
         public static string GenerateOTP(int otpLength = 3)
         {
             var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var rnd = new Random();
-            var ret = new System.Text.StringBuilder();
+            var ret = new System.Text.StringBuilder(otpLength);
             for (var i = 0; i < otpLength; i++)
             {
-                ret.Append(alphabet[rnd.Next(alphabet.Length)]);
+                ret.Append(alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)]);
             }
             return ret.ToString();
         }
